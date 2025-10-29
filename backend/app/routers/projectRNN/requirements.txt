@@ -1,0 +1,21 @@
+# Deep Learning
+tensorflow
+numpy
+
+# API Framework
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Utilities
+pydantic
+python-dotenv
+
+# Visualization
+matplotlib
+seaborn
+plotly
+tensorboard
+
+# Model Persistence
+pickle-mixin

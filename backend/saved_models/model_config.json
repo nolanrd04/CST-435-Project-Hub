@@ -1,0 +1,9 @@
+{
+  "sequence_length": 50,
+  "embedding_dim": 100,
+  "lstm_units": 150,
+  "num_layers": 2,
+  "dropout_rate": 0.2,
+  "vocab_size": 2727,
+  "max_sequence_len": 51
+}

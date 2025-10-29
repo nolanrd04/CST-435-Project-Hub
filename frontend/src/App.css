@@ -1,0 +1,317 @@
+/* App.css - Modern Styling */
+
+/* Main Container */
+.App {
+  text-align: center;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+/* Header Styling */
+.App-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 60px 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+  margin-bottom: 40px;
+  animation: slideDown 0.6s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.title {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.subtitle {
+  font-size: 1.3rem;
+  margin-bottom: 0;
+  font-weight: 300;
+  opacity: 0.95;
+  letter-spacing: 0.5px;
+}
+
+/* Form Container */
+.form {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto 30px;
+  animation: fadeIn 0.6s ease-out 0.2s backwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+/* Form Labels */
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #2d3748;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+}
+
+label .required {
+  color: #e53e3e;
+}
+
+/* Text Input & Textarea */
+.textarea,
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  background-color: #f7fafc;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.textarea:focus,
+.input:focus {
+  outline: none;
+  border-color: #667eea;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 0 0 1px rgba(102, 126, 234, 0.5);
+}
+
+.textarea::placeholder,
+.input::placeholder {
+  color: #a0aec0;
+}
+
+/* Button Styling */
+.button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+
+/* Secondary Button */
+.button.secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  box-shadow: none;
+}
+
+.button.secondary:hover:not(:disabled) {
+  background: #f7fafc;
+}
+
+/* Error & Alert Messages */
+.error {
+  background-color: #fed7d7;
+  color: #c53030;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-top: 15px;
+  border-left: 4px solid #e53e3e;
+  font-weight: 500;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Output Section */
+.output {
+  margin-top: 30px;
+  text-align: left;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  color: #2d3748;
+}
+
+.output h3 {
+  font-size: 1.5rem;
+  color: #2d3748;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+/* Generated Text Box */
+.generated-text {
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  font-family: 'Courier New', Courier, monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.7;
+  font-size: 0.95rem;
+  color: #2d3748;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.generated-text:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Copy Button */
+.copy-button {
+  background: #edf2f7;
+  color: #667eea;
+  border: 2px solid #667eea;
+  padding: 10px 20px;
+  margin-top: 15px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.copy-button:hover {
+  background: #667eea;
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .App {
+    padding: 20px 10px;
+  }
+
+  .App-header {
+    padding: 40px 20px;
+    margin-bottom: 30px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+  }
+
+  .form {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .App-header {
+    padding: 30px 15px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+  }
+
+  .form {
+    padding: 15px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .textarea,
+  .input {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+
+  .button {
+    padding: 12px 24px;
+    font-size: 0.9rem;
+  }
+}

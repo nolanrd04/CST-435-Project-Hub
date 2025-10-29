@@ -16,7 +16,7 @@ function SentimentAnalyzer() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8000/analyze-sentiment', {
+      const response = await fetch('https://cst-435-project-hub.onrender.com/analyze-sentiment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

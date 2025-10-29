@@ -3,13 +3,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os
+import nltk
+
+# Download NLTK data on startup (required for Project4 sentiment analysis)
+try:
+    nltk.download('stopwords', quiet=True)
+    nltk.download('punkt', quiet=True)
+    print("✅ NLTK data downloaded successfully")
+except Exception as e:
+    print(f"⚠️ Warning: Could not download NLTK data: {e}")
 
 app = FastAPI()
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend origin
+    allow_origins=[
+        "http://localhost:3000",  # Local development
+        "https://cst-435-project-hub.onrender.com",  # Deployed frontend
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

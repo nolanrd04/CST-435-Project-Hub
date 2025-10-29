@@ -3,17 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os
-import nltk
+
+app = FastAPI()
 
 # Download NLTK data on startup (required for Project4 sentiment analysis)
+# Do this after app creation to avoid blocking startup
 try:
+    import nltk
     nltk.download('stopwords', quiet=True)
     nltk.download('punkt', quiet=True)
     print("✅ NLTK data downloaded successfully")
 except Exception as e:
     print(f"⚠️ Warning: Could not download NLTK data: {e}")
-
-app = FastAPI()
+    # Don't crash if NLTK download fails - it may already be cached
 
 # Add CORS middleware
 app.add_middleware(
@@ -32,6 +34,7 @@ if os.path.exists("visualizations"):
     app.mount("/visualizations", StaticFiles(directory="visualizations"), name="visualizations")
 
 @app.get("/")
+@app.head("/")
 def read_root():
     return {"message": "Welcome to the Hub API!"}
 

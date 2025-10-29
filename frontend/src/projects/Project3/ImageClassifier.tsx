@@ -96,6 +96,22 @@ function ImageClassifier() {
     <div className="form">
       <h2 className="title" style={{ marginBottom: '20px' }}>🖼️ Vehicle Image Classifier</h2>
 
+      <div style={{
+        backgroundColor: '#ffebebff',
+        border: '2px solid #f56565',
+        borderRadius: '12px',
+        padding: '16px',
+        marginBottom: '25px',
+        color: '#d13939ff',
+        lineHeight: '1.6',
+        fontSize: '14px'
+      }}>
+        <p style={{ margin: 0 }}>
+          WARNING: Model is too large to run on the cloud. Run a local API to use this project.
+        </p>
+      </div>
+      
+
       {/* Project Description */}
       <div style={{
         backgroundColor: '#fff5f0',

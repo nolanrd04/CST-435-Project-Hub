@@ -21,7 +21,9 @@ except Exception as e:
 # Add CORS middleware - MUST be first middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://cst-435-project-hub-frontend.onrender.com",
+                   "http://localhost:3000",  # Local React frontend
+                   "http://127.0.0.1:3000"],
     allow_credentials=False,  # Cannot use True with allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],

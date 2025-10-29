@@ -46,15 +46,20 @@ class VehicleClassifier:
         print(f"📥 Attempting to load model from HuggingFace: {HUGGINGFACE_MODEL_URL}")
         try:
             import tempfile
+            import socket
+
+            # Increase timeout for large model download
+            socket.setdefaulttimeout(120)
+
             with tempfile.NamedTemporaryFile(suffix=".keras", delete=False) as tmp_file:
                 tmp_path = tmp_file.name
 
-            print(f"📥 Downloading from {HUGGINGFACE_MODEL_URL}...")
+            print(f"📥 Downloading from {HUGGINGFACE_MODEL_URL} (this may take a moment)...")
             urllib.request.urlretrieve(HUGGINGFACE_MODEL_URL, tmp_path)
-            print(f"📥 Loading model from {tmp_path}...")
+            print(f"📥 Download complete. Loading model from {tmp_path}...")
             self.model = tf.keras.models.load_model(tmp_path)
             os.remove(tmp_path)
-            print(f"✅ Model loaded from HuggingFace")
+            print(f"✅ Model loaded from HuggingFace successfully")
         except Exception as e:
             print(f"❌ Error loading model from HuggingFace: {e}")
             print(f"⚠️ Model failed to load from both local and remote sources")

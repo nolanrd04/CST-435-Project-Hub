@@ -1,0 +1,11 @@
+numpy
+pandas
+matplotlib
+seaborn
+BeautifulSoup4
+nltk
+scikit-learn
+kagglehub
+streamlit
+protobuf>=3.20.0,<5.0.0
+Pillow>=10.0.0

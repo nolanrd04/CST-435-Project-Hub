@@ -21,10 +21,7 @@ except Exception as e:
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Local development
-        "https://cst-435-project-hub.onrender.com",  # Deployed frontend
-    ],
+    allow_origins=["*"],  # Allow all origins (can restrict later)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

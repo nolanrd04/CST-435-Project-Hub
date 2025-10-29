@@ -18,13 +18,14 @@ except Exception as e:
     print(f"⚠️ Warning: Could not download NLTK data: {e}")
     # Don't crash if NLTK download fails - it may already be cached
 
-# Add CORS middleware
+# Add CORS middleware - MUST be first middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (can restrict later)
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,  # Cannot use True with allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Mount visualizations directory if it exists

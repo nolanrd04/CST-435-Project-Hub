@@ -12,6 +12,7 @@ try:
     import nltk
     nltk.download('stopwords', quiet=True)
     nltk.download('punkt', quiet=True)
+    nltk.download('punkt_tab', quiet=True)
     print("✅ NLTK data downloaded successfully")
 except Exception as e:
     print(f"⚠️ Warning: Could not download NLTK data: {e}")

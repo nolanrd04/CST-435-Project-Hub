@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://cst-435-project-hub.onrender.com';
+// Get API URL based on user preference stored in localStorage
+const apiMode = typeof window !== 'undefined' ? localStorage.getItem('API_MODE') : null;
+const API_BASE_URL = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

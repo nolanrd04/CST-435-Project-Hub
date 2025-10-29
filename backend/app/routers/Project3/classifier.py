@@ -19,7 +19,8 @@ CLASS_NAMES = ["car", "motorbike", "airplane"]
 class VehicleClassifier:
     def __init__(self):
         self.model = None
-        self.load_model()
+        self.model_loaded = False
+        # Don't load model here - load it lazily on first use
 
     def load_model(self):
         """Load the trained model from disk or HuggingFace.
@@ -100,6 +101,12 @@ class VehicleClassifier:
 
     def classify(self, image_bytes):
         """Classify the provided image."""
+        # Load model on first use (lazy loading)
+        if not self.model_loaded:
+            print("📂 Model not loaded yet, loading now...")
+            self.load_model()
+            self.model_loaded = True
+
         if self.model is None:
             raise RuntimeError("Model not loaded. Cannot classify image.")
 

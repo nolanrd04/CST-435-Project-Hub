@@ -3,9 +3,13 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 from io import BytesIO
+import urllib.request
 
 BASE_DIR = os.path.dirname(__file__)
 MODEL_PATH = os.path.join(BASE_DIR, "vehicle_classifier_model.keras")
+
+# HuggingFace model URL (uploaded model - used when local model is unavailable)
+HUGGINGFACE_MODEL_URL = "https://huggingface.co/nolanrd04/CST-435_Project3_vehicle_classifier_model/resolve/main/vehicle_classifier_model.keras"
 
 # Constants
 IMG_SIZE = (128, 128)
@@ -18,16 +22,38 @@ class VehicleClassifier:
         self.load_model()
 
     def load_model(self):
-        """Load the trained model from disk."""
+        """Load the trained model from disk or HuggingFace.
+
+        Priority:
+        1. Try to load local model from: vehicle_classifier_model.keras
+        2. If local model not found or fails, download from HuggingFace
+        3. If both fail, model remains None (will fail on classification)
+        """
+        # Try local model first
         if os.path.exists(MODEL_PATH):
             try:
                 self.model = tf.keras.models.load_model(MODEL_PATH)
-                print(f"✅ Model loaded from {MODEL_PATH}")
+                print(f"✅ Model loaded from local path: {MODEL_PATH}")
+                return
             except Exception as e:
-                print(f"❌ Error loading model: {e}")
-                self.model = None
+                print(f"❌ Error loading local model: {e}")
         else:
-            print(f"⚠️ Model not found at {MODEL_PATH}")
+            print(f"⚠️ Local model not found at {MODEL_PATH}")
+
+        # Fallback to HuggingFace model (used when deployed on Render)
+        print(f"📥 Attempting to load model from HuggingFace: {HUGGINGFACE_MODEL_URL}")
+        try:
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix=".keras", delete=False) as tmp_file:
+                tmp_path = tmp_file.name
+
+            urllib.request.urlretrieve(HUGGINGFACE_MODEL_URL, tmp_path)
+            self.model = tf.keras.models.load_model(tmp_path)
+            os.remove(tmp_path)
+            print(f"✅ Model loaded from HuggingFace")
+        except Exception as e:
+            print(f"❌ Error loading model from HuggingFace: {e}")
+            print(f"⚠️ Model failed to load from both local and remote sources")
             self.model = None
 
     def preprocess_image(self, image_bytes):

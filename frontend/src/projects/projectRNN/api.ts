@@ -1,11 +1,6 @@
 import axios from 'axios';
-declare const process: {
-  env: {
-    [key: string]: string | undefined;
-  };
-};
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = 'https://cst-435-project-hub.onrender.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

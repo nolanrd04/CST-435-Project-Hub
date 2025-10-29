@@ -26,3 +26,5 @@ CLAUDE.md
 RNN_Activity_Guide.md
 RNN_Algorithm_Diagram.md
 Neural_Networks_Comparison.md
+node_modules/
+backend/app/routers/project3/vehicle_classifier_model.keras

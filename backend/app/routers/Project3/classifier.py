@@ -37,6 +37,8 @@ class VehicleClassifier:
                 return
             except Exception as e:
                 print(f"❌ Error loading local model: {e}")
+                import traceback
+                traceback.print_exc()
         else:
             print(f"⚠️ Local model not found at {MODEL_PATH}")
 
@@ -47,13 +49,17 @@ class VehicleClassifier:
             with tempfile.NamedTemporaryFile(suffix=".keras", delete=False) as tmp_file:
                 tmp_path = tmp_file.name
 
+            print(f"📥 Downloading from {HUGGINGFACE_MODEL_URL}...")
             urllib.request.urlretrieve(HUGGINGFACE_MODEL_URL, tmp_path)
+            print(f"📥 Loading model from {tmp_path}...")
             self.model = tf.keras.models.load_model(tmp_path)
             os.remove(tmp_path)
             print(f"✅ Model loaded from HuggingFace")
         except Exception as e:
             print(f"❌ Error loading model from HuggingFace: {e}")
             print(f"⚠️ Model failed to load from both local and remote sources")
+            import traceback
+            traceback.print_exc()
             self.model = None
 
     def preprocess_image(self, image_bytes):

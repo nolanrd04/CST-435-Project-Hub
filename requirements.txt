@@ -1,6 +1,22 @@
-streamlit
+# FastAPI & Backend Dependencies
+fastapi
+uvicorn
+python-multipart
+pydantic
+
+# Machine Learning & Data Processing
 tensorflow
+keras
 numpy
-Pillow
-matplotlib
 scikit-learn
+matplotlib
+seaborn
+
+# Image Processing
+pillow
+
+# Utilities
+python-dotenv
+
+# Frontend Dependencies (install via npm in frontend directory)
+# See frontend/package.json for React, TypeScript, and other frontend packages

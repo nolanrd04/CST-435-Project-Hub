@@ -10,8 +10,10 @@ keras
 kagglehub
 numpy
 scikit-learn
+pandas
 matplotlib
 seaborn
+nltk
 
 # Image Processing
 pillow

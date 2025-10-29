@@ -17,7 +17,9 @@ function TextGenerator() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8000/generate-text', {
+      const apiMode = localStorage.getItem('API_MODE');
+      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
+      const response = await fetch(`${apiUrl}/generate-text`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

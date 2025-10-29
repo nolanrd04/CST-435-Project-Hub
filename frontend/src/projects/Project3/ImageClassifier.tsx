@@ -41,7 +41,9 @@ function ImageClassifier() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('http://localhost:8000/classify-image', {
+      const apiMode = localStorage.getItem('API_MODE');
+      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
+      const response = await fetch(`${apiUrl}/classify-image`, {
         method: 'POST',
         body: formData,
       });

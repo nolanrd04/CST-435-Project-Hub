@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TextGenerator from './components/TextGenerator';
 import ImageClassifier from './components/ImageClassifier';
 import SentimentAnalyzer from './projects/Project4/SentimentAnalyzer';
@@ -7,6 +7,18 @@ type ProjectType = 'rnn' | 'cnn' | 'sentiment';
 
 function App() {
   const [activeProject, setActiveProject] = useState<ProjectType>('rnn');
+  const [useLocalAPI, setUseLocalAPI] = useState(() => {
+    // Load preference from localStorage
+    const saved = localStorage.getItem('useLocalAPI');
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  // Save preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('useLocalAPI', JSON.stringify(useLocalAPI));
+    // Also update the global API config
+    window.localStorage.setItem('API_MODE', useLocalAPI ? 'local' : 'deployed');
+  }, [useLocalAPI]);
 
   const projects = [
     { id: 'rnn', name: 'RNN Text Generator', icon: '✨', description: 'Generate text with LSTM' },
@@ -25,6 +37,21 @@ function App() {
           <p className="text-xl text-indigo-100">
             Explore Neural Networks & Machine Learning
           </p>
+
+          {/* API Mode Toggle */}
+          <div className="mt-6 flex justify-center">
+            <label className="flex items-center gap-3 bg-yellow-300 text-gray-900 px-6 py-3 rounded-lg font-bold cursor-pointer hover:bg-yellow-200 transition-all">
+              <input
+                type="checkbox"
+                checked={useLocalAPI}
+                onChange={(e) => setUseLocalAPI(e.target.checked)}
+                className="w-5 h-5 cursor-pointer"
+              />
+              <span>
+                {useLocalAPI ? '🏠 Using Local API (localhost:8000)' : '☁️ Using Deployed API (Render)'}
+              </span>
+            </label>
+          </div>
         </header>
 
         {/* Project Navigation */}

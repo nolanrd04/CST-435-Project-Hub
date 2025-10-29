@@ -32,6 +32,7 @@ class VehicleClassifier:
         # Try local model first
         if os.path.exists(MODEL_PATH):
             try:
+                print(f"📂 Loading local model from: {MODEL_PATH}")
                 self.model = tf.keras.models.load_model(MODEL_PATH)
                 print(f"✅ Model loaded from local path: {MODEL_PATH}")
                 return
@@ -44,20 +45,26 @@ class VehicleClassifier:
 
         # Fallback to HuggingFace model (used when deployed on Render)
         print(f"📥 Attempting to load model from HuggingFace: {HUGGINGFACE_MODEL_URL}")
+        print(f"⏱️  Note: First load may take 1-2 minutes due to model size (~88MB)")
         try:
             import tempfile
             import socket
 
             # Increase timeout for large model download
-            socket.setdefaulttimeout(120)
+            socket.setdefaulttimeout(300)  # 5 minute timeout
 
             with tempfile.NamedTemporaryFile(suffix=".keras", delete=False) as tmp_file:
                 tmp_path = tmp_file.name
+                print(f"📥 Temporary file created at: {tmp_path}")
 
-            print(f"📥 Downloading from {HUGGINGFACE_MODEL_URL} (this may take a moment)...")
+            print(f"📥 Downloading from HuggingFace (this may take 1-2 minutes for 88MB model)...")
             urllib.request.urlretrieve(HUGGINGFACE_MODEL_URL, tmp_path)
-            print(f"📥 Download complete. Loading model from {tmp_path}...")
+            print(f"✅ Download complete ({os.path.getsize(tmp_path) / 1024 / 1024:.1f}MB)")
+
+            print(f"📥 Loading model from temporary file...")
             self.model = tf.keras.models.load_model(tmp_path)
+
+            print(f"🧹 Cleaning up temporary file...")
             os.remove(tmp_path)
             print(f"✅ Model loaded from HuggingFace successfully")
         except Exception as e:

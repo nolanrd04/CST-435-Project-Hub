@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RNN Deployment Cost Analysis Activity</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+        .important-note {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .key-concept {
+            background-color: #d1ecf1;
+            border-left: 5px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .deliverables {
+            background-color: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #c7254e;
+        }
+        .code-block {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .formula {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RNN Deployment Cost Analysis Activity</h1>
+
+        <div class="key-concept">
+            <h3>🎯 Learning Objective</h3>
+            <p><strong>Understanding and quantifying the cost of deploying and running machine learning models is a critical skill in production environments.</strong> Cost analysis directly impacts decisions about algorithm selection, architecture design, and deployment strategies. An algorithm that performs marginally better but costs 10x more to run may not be the right choice for production.</p>
+        </div>
+
+        <p>In this activity, you will develop a comprehensive cost model for your RNN deployment. This exercise will help you understand the real-world economic implications of machine learning infrastructure and prepare you for making data-driven decisions in professional settings.</p>
+
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+        <h2>Section 1: Research and Identify Cost Parameters</h2>
+
+        <p>Before building a cost model, you must understand what resources your RNN consumes and how cloud providers price those resources.</p>
+
+        <h3>1.1 Primary Cost Components</h3>
+        <p>Research and document pricing for the following categories on your chosen cloud platform:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Cost Component</th>
+                    <th>What to Research</th>
+                    <th>Why It Matters</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Compute</strong></td>
+                    <td>CPU/GPU instance types, pricing per hour, pricing models (on-demand, spot, reserved)</td>
+                    <td>Training and inference operations require computational resources</td>
+                </tr>
+                <tr>
+                    <td><strong>Memory</strong></td>
+                    <td>RAM requirements, included vs. additional memory costs</td>
+                    <td>RNNs store hidden states and model parameters in memory</td>
+                </tr>
+                <tr>
+                    <td><strong>Storage</strong></td>
+                    <td>Persistent storage (SSD/HDD) pricing per GB/month, I/O costs</td>
+                    <td>Model checkpoints, datasets, and logs require storage</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Transfer</strong></td>
+                    <td>Ingress (incoming) and egress (outgoing) data transfer rates</td>
+                    <td>API calls, data loading, and result delivery incur transfer costs</td>
+                </tr>
+                <tr>
+                    <td><strong>Additional Services</strong></td>
+                    <td>Load balancers, monitoring, logging, container orchestration</td>
+                    <td>Production deployments require supporting infrastructure</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>1.2 Where to Find Pricing Information</h3>
+        <ul>
+            <li><strong>Official pricing pages:</strong> Most cloud providers have detailed pricing calculators (AWS Pricing Calculator, Azure Pricing Calculator, Google Cloud Pricing Calculator)</li>
+            <li><strong>Documentation:</strong> Look for "pricing" or "billing" sections in platform documentation</li>
+            <li><strong>Instance type specifications:</strong> Compare CPU cores, GPU types (if applicable), RAM, and network bandwidth</li>
+            <li><strong>Regional differences:</strong> Costs vary by geographic region; document which region you're targeting</li>
+        </ul>
+
+        <div class="important-note">
+            <h3>⚠️ Making Reasonable Assumptions</h3>
+            <p><strong>Challenge:</strong> Not all costs are immediately clear or easy to find.</p>
+            <p><strong>Approach:</strong></p>
+            <ul>
+                <li>If exact pricing is unclear, use the closest comparable service and document your assumption</li>
+                <li>When ranges exist, consider both best-case and worst-case scenarios</li>
+                <li>For emerging services without clear pricing, estimate based on similar established services</li>
+                <li>Always document your assumptions explicitly - this is standard industry practice</li>
+                <li>Consider using the "free tier" or "spot pricing" vs. "on-demand" pricing and note the trade-offs</li>
+            </ul>
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+        <h2>Section 2: Build Your Cost Model</h2>
+
+        <p>A cost model translates resource consumption into monetary terms. Your model should be structured, formula-based, and easy to update as parameters change.</p>
+
+        <h3>2.1 Cost Model Structure</h3>
+        <p>Create a structured cost model with two main phases:</p>
+
+        <h4>Phase 1: Training Costs (One-time or Periodic)</h4>
+        <div class="formula">
+            Training Cost = (Compute Cost/hour × Training Hours) + (Storage Cost/GB × Dataset Size) + Data Transfer Cost
+        </div>
+
+        <h4>Phase 2: Inference/Deployment Costs (Ongoing)</h4>
+        <div class="formula">
+            Inference Cost = (Compute Cost/hour × Runtime Hours) + (Cost per Request × Number of Requests) + Storage + Data Transfer
+        </div>
+
+        <h3>2.2 Building Your Model Spreadsheet or Script</h3>
+        <p>Create a cost calculation tool (spreadsheet or Python script) with these components:</p>
+
+        <ol>
+            <li><strong>Input Parameters</strong>
+                <ul>
+                    <li>Training time (hours)</li>
+                    <li>Inference requests per day/month</li>
+                    <li>Average latency per request</li>
+                    <li>Model size (MB/GB)</li>
+                    <li>Dataset size (GB)</li>
+                    <li>Deployment duration (days/months)</li>
+                </ul>
+            </li>
+            <li><strong>Pricing Constants</strong>
+                <ul>
+                    <li>Compute cost per hour (specify instance type)</li>
+                    <li>Storage cost per GB per month</li>
+                    <li>Data transfer cost per GB</li>
+                    <li>Any other relevant service costs</li>
+                </ul>
+            </li>
+            <li><strong>Calculation Formulas</strong>
+                <ul>
+                    <li>Training cost calculation</li>
+                    <li>Monthly inference cost calculation</li>
+                    <li>Total cost of ownership calculation</li>
+                </ul>
+            </li>
+            <li><strong>Sensitivity Analysis</strong>
+                <ul>
+                    <li>Show how costs change with different request volumes</li>
+                    <li>Compare different instance types or pricing models</li>
+                </ul>
+            </li>
+        </ol>
+
+        <div class="key-concept">
+            <h3>💡 Industry Best Practice: Total Cost of Ownership (TCO)</h3>
+            <p>Don't just calculate running costs. Include:</p>
+            <ul>
+                <li>Development and training time costs</li>
+                <li>Storage costs over time</li>
+                <li>Monitoring and maintenance overhead</li>
+                <li>Data ingress/egress costs</li>
+                <li>Cost of retaining vs. scaling down during low-usage periods</li>
+            </ul>
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+        <h2>Section 3: Map Your RNN to Cloud Metrics</h2>
+
+        <p>Connect your specific RNN implementation to measurable cloud infrastructure metrics.</p>
+
+        <h3>3.1 Resource Requirements Analysis</h3>
+        <p>For your specific RNN, document:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>RNN Characteristic</th>
+                    <th>Cloud Metric to Measure</th>
+                    <th>How to Determine</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Number of parameters</td>
+                    <td>Memory required (GB)</td>
+                    <td>Calculate: (parameters × 4 bytes) for float32, multiply by ~2-3x for training (optimizer states)</td>
+                </tr>
+                <tr>
+                    <td>Training iterations/epochs</td>
+                    <td>Compute hours needed</td>
+                    <td>Measure actual training time on your development environment, scale to cloud instance</td>
+                </tr>
+                <tr>
+                    <td>Batch size and sequence length</td>
+                    <td>Memory footprint per batch</td>
+                    <td>Profile memory usage during training; this determines instance type selection</td>
+                </tr>
+                <tr>
+                    <td>Inference latency per request</td>
+                    <td>Requests per second capacity</td>
+                    <td>Benchmark: Run 100 inferences, calculate average time</td>
+                </tr>
+                <tr>
+                    <td>Model checkpoint size</td>
+                    <td>Storage requirements (GB)</td>
+                    <td>Check saved model file size on disk</td>
+                </tr>
+                <tr>
+                    <td>Expected request volume</td>
+                    <td>Compute hours per month</td>
+                    <td>Calculate: (requests/day × latency) = active compute time needed</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>3.2 Right-Sizing Your Deployment</h3>
+        <p>Use your measurements to select appropriate infrastructure:</p>
+        <ul>
+            <li><strong>If memory requirements are high:</strong> Choose memory-optimized instances</li>
+            <li><strong>If training is compute-intensive:</strong> Consider GPU instances for training, CPU for inference</li>
+            <li><strong>If inference volume is low:</strong> Consider serverless options or spot instances</li>
+            <li><strong>If inference volume is high:</strong> Consider reserved instances or autoscaling</li>
+        </ul>
+
+        <div class="important-note">
+            <h3>⚠️ Making Assumptions About Scaling</h3>
+            <p>If you don't know expected request volumes:</p>
+            <ul>
+                <li>Define multiple scenarios: low (100 requests/day), medium (10,000 requests/day), high (1M requests/day)</li>
+                <li>Calculate costs for each scenario</li>
+                <li>Document which scenario is most realistic for your application</li>
+                <li>This multi-scenario approach is standard in capacity planning</li>
+            </ul>
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+        <h2>Section 4: Instrument Your Code for Cost Measurement</h2>
+
+        <p>To accurately measure costs, you need to instrument your code to track resource consumption.</p>
+
+        <h3>4.1 Key Metrics to Capture</h3>
+        <p>Add instrumentation to measure:</p>
+
+        <ol>
+            <li><strong>Training Duration</strong>
+                <div class="code-block">import time
+
+start_time = time.time()
+# Training code here
+training_duration = time.time() - start_time
+print(f"Training took {training_duration / 3600:.2f} hours")</div>
+            </li>
+
+            <li><strong>Inference Latency</strong>
+                <div class="code-block">import time
+
+def measure_inference_time(model, input_data, num_runs=100):
+    latencies = []
+    for _ in range(num_runs):
+        start = time.time()
+        output = model(input_data)
+        latency = time.time() - start
+        latencies.append(latency)
+
+    avg_latency = sum(latencies) / len(latencies)
+    print(f"Average inference time: {avg_latency * 1000:.2f} ms")
+    return avg_latency</div>
+            </li>
+
+            <li><strong>Memory Usage</strong>
+                <div class="code-block">import psutil
+import os
+
+def get_memory_usage():
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    print(f"Memory usage: {mem_info.rss / 1024 / 1024:.2f} MB")
+    return mem_info.rss
+
+# For GPU memory (if using PyTorch with CUDA)
+import torch
+if torch.cuda.is_available():
+    print(f"GPU memory allocated: {torch.cuda.memory_allocated() / 1024**3:.2f} GB")
+    print(f"GPU memory cached: {torch.cuda.memory_reserved() / 1024**3:.2f} GB")</div>
+            </li>
+
+            <li><strong>Model Size</strong>
+                <div class="code-block">import os
+
+# After saving your model
+model_path = "rnn_model.pth"
+model_size_mb = os.path.getsize(model_path) / (1024 * 1024)
+print(f"Model size: {model_size_mb:.2f} MB")</div>
+            </li>
+
+            <li><strong>Dataset Size and Transfer</strong>
+                <div class="code-block">import os
+
+def get_directory_size(path):
+    total = 0
+    for dirpath, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            total += os.path.getsize(filepath)
+    return total
+
+dataset_size_gb = get_directory_size("./data") / (1024**3)
+print(f"Dataset size: {dataset_size_gb:.2f} GB")</div>
+            </li>
+        </ol>
+
+        <h3>4.2 Create a Measurement Report Function</h3>
+        <p>Consolidate all measurements into a single report:</p>
+
+        <div class="code-block">def generate_cost_metrics_report(training_hours, inference_latency_ms,
+                                   model_size_mb, dataset_size_gb,
+                                   peak_memory_mb):
+    """
+    Generate a comprehensive metrics report for cost calculation
+    """
+    report = {
+        "training_hours": training_hours,
+        "inference_latency_ms": inference_latency_ms,
+        "inferences_per_hour": 3600 / (inference_latency_ms / 1000),
+        "model_size_mb": model_size_mb,
+        "dataset_size_gb": dataset_size_gb,
+        "peak_memory_mb": peak_memory_mb,
+        "recommended_ram_gb": peak_memory_mb / 1024 * 2  # 2x headroom
+    }
+
+    # Save to JSON for documentation
+    import json
+    with open("cost_metrics_report.json", "w") as f:
+        json.dump(report, f, indent=2)
+
+    return report</div>
+
+        <h3>4.3 Where to Add Measurements</h3>
+        <ul>
+            <li><strong>Training script:</strong> Wrap training loop with time measurements</li>
+            <li><strong>Inference function:</strong> Add latency measurement for each prediction</li>
+            <li><strong>Model initialization:</strong> Measure memory footprint after loading</li>
+            <li><strong>Data loading:</strong> Track data transfer sizes and times</li>
+        </ul>
+
+        <div class="important-note">
+            <h3>⚠️ Assumption: Development vs. Production Performance</h3>
+            <p>Your measurements may be on a laptop or local machine. To translate to cloud costs:</p>
+            <ul>
+                <li>Research the relative performance of your development machine vs. target cloud instance</li>
+                <li>Apply a scaling factor (e.g., "Cloud instance X is 2x faster than my laptop")</li>
+                <li>Document this assumption clearly</li>
+                <li>Better yet: Use cloud provider's free tier to run a single training test and measure directly</li>
+            </ul>
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+        <h2>Section 5: Report Costs Using Industry Standards</h2>
+
+        <p>In industry, cost reporting must be clear, actionable, and aligned with business decision-making.</p>
+
+        <h3>5.1 Standard Cost Reporting Metrics</h3>
+        <p>Your cost report should include:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Description</th>
+                    <th>Why It Matters</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Cost per Inference</strong></td>
+                    <td>Total monthly cost ÷ number of inferences</td>
+                    <td>Key metric for API services; enables pricing decisions</td>
+                </tr>
+                <tr>
+                    <td><strong>Monthly Operating Cost</strong></td>
+                    <td>Ongoing costs assuming continuous deployment</td>
+                    <td>Budget planning and resource allocation</td>
+                </tr>
+                <tr>
+                    <td><strong>Training Cost (TCO)</strong></td>
+                    <td>One-time cost to train model from scratch</td>
+                    <td>Experimentation budget and iteration planning</td>
+                </tr>
+                <tr>
+                    <td><strong>Cost per User/Day</strong></td>
+                    <td>Total cost ÷ active users</td>
+                    <td>Customer acquisition cost analysis</td>
+                </tr>
+                <tr>
+                    <td><strong>Break-even Point</strong></td>
+                    <td>Request volume where reserved > on-demand pricing</td>
+                    <td>Infrastructure optimization decisions</td>
+                </tr>
+                <tr>
+                    <td><strong>Cost Efficiency</strong></td>
+                    <td>Cost per unit of performance (e.g., cost per 1000 accurate predictions)</td>
+                    <td>Compare different model architectures or approaches</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>5.2 Cost Report Template</h3>
+        <p>Structure your cost report as follows:</p>
+
+        <div class="code-block">===== RNN DEPLOYMENT COST ANALYSIS REPORT =====
+
+Project: [Your RNN Project Name]
+Cloud Provider: [AWS/Azure/GCP/Other]
+Region: [e.g., US-East]
+Analysis Date: [Date]
+
+--- MODEL SPECIFICATIONS ---
+Architecture: [e.g., LSTM, GRU, vanilla RNN]
+Parameters: [e.g., 2.5M parameters]
+Model Size: [e.g., 10 MB]
+Dataset Size: [e.g., 5 GB]
+
+--- INFRASTRUCTURE SPECIFICATIONS ---
+Instance Type: [e.g., c5.2xlarge]
+vCPUs: [e.g., 8 cores]
+RAM: [e.g., 16 GB]
+Storage: [e.g., 50 GB SSD]
+
+--- COST BREAKDOWN ---
+
+1. TRAINING COSTS (One-time)
+   Compute: $XX.XX ([X] hours × $Y.YY/hour)
+   Storage: $XX.XX ([X] GB × $Y.YY/GB)
+   Data Transfer: $XX.XX
+   Total Training Cost: $XXX.XX
+
+2. INFERENCE COSTS (Monthly)
+   Compute: $XX.XX ([X] hours × $Y.YY/hour)
+   Storage: $XX.XX
+   Data Transfer: $XX.XX ([X] GB × $Y.YY/GB)
+   Total Monthly Cost: $XXX.XX
+
+3. KEY METRICS
+   Cost per Inference: $X.XXXX
+   Inferences per Dollar: XXX
+   Monthly Inference Capacity: XXX,XXX requests
+
+4. SCALING SCENARIOS
+   Low Volume (100/day): $XX.XX/month
+   Medium Volume (10,000/day): $XX.XX/month
+   High Volume (1M/day): $XX.XX/month
+
+--- ASSUMPTIONS ---
+• [List all assumptions made, e.g., "Assumed 99% uptime"]
+• [e.g., "Used on-demand pricing; reserved instances would reduce cost by ~40%"]
+• [e.g., "Assumed average inference time of 50ms based on local testing"]
+• [e.g., "Data transfer costs assume 10 KB per request"]
+
+--- OPTIMIZATION RECOMMENDATIONS ---
+• [e.g., "Consider spot instances for training to reduce costs by 70%"]
+• [e.g., "Implement model quantization to reduce inference cost"]
+• [e.g., "Use caching for repeated requests"]
+
+--- COST COMPARISON ---
+[Compare with alternative approaches if applicable]
+Alternative Model: [e.g., Transformer model]
+Cost Difference: [e.g., "+150% more expensive"]
+Performance Difference: [e.g., "+10% accuracy"]
+Cost-Efficiency Trade-off: [Analysis]
+
+==========================================</div>
+
+        <h3>5.3 Visualization</h3>
+        <p>Include charts or graphs showing:</p>
+        <ul>
+            <li>Cost breakdown by component (pie chart)</li>
+            <li>Cost scaling with request volume (line chart)</li>
+            <li>Training vs. inference cost comparison (bar chart)</li>
+            <li>Cost comparison with alternative architectures (bar chart)</li>
+        </ul>
+
+        <div class="key-concept">
+            <h3>💡 Why Cost Analysis Matters in Algorithm Selection</h3>
+            <p>A model with 2% better accuracy but 5x higher inference cost may not be the right choice for a production system serving millions of requests. Your cost analysis enables:</p>
+            <ul>
+                <li><strong>Architecture decisions:</strong> Should we use a simpler model that's cheaper to run?</li>
+                <li><strong>Optimization priorities:</strong> Is it worth spending engineering time to optimize inference speed?</li>
+                <li><strong>Business viability:</strong> Can we afford to offer this service at competitive prices?</li>
+                <li><strong>Resource allocation:</strong> Should we invest in model compression, quantization, or distillation?</li>
+            </ul>
+            <p><strong>In industry, cost is often the deciding factor between multiple viable technical solutions.</strong></p>
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+        <div class="deliverables">
+            <h2>📋 Deliverables</h2>
+            <p>Submit the following items to demonstrate your understanding of RNN deployment cost analysis:</p>
+
+            <ol>
+                <li><strong>Cost Research Documentation</strong>
+                    <ul>
+                        <li>Chosen cloud provider and region</li>
+                        <li>Pricing research for compute, storage, data transfer, and any additional services</li>
+                        <li>List of pricing sources (URLs to pricing pages)</li>
+                        <li>Documentation of any assumptions made when information was unclear</li>
+                    </ul>
+                </li>
+
+                <li><strong>Cost Model</strong>
+                    <ul>
+                        <li>Spreadsheet OR Python script that calculates costs</li>
+                        <li>Clear input parameters section</li>
+                        <li>Formulas for training and inference costs</li>
+                        <li>Calculations for at least 3 different scaling scenarios</li>
+                        <li>Sensitivity analysis showing how costs change with key variables</li>
+                    </ul>
+                </li>
+
+                <li><strong>Resource Mapping Document</strong>
+                    <ul>
+                        <li>Table mapping your RNN specifications to cloud metrics</li>
+                        <li>Justification for chosen instance type(s)</li>
+                        <li>Memory, compute, and storage requirements analysis</li>
+                    </ul>
+                </li>
+
+                <li><strong>Instrumented Code</strong>
+                    <ul>
+                        <li>Updated RNN code with measurement instrumentation</li>
+                        <li>Code to measure training time, inference latency, memory usage, and model size</li>
+                        <li>Generated metrics report (JSON or text file) with actual measurements from your RNN</li>
+                    </ul>
+                </li>
+
+                <li><strong>Cost Analysis Report</strong>
+                    <ul>
+                        <li>Comprehensive written report following the template in Section 5</li>
+                        <li>Complete cost breakdown for training and inference</li>
+                        <li>Key cost metrics (cost per inference, monthly operating cost, etc.)</li>
+                        <li>Clear documentation of all assumptions</li>
+                        <li>At least 2 optimization recommendations</li>
+                        <li>At least one visualization (chart/graph) of cost data</li>
+                    </ul>
+                </li>
+
+                <li><strong>Cost Comparison and Justification</strong>
+                    <ul>
+                        <li>Brief analysis (1-2 paragraphs) comparing your RNN deployment cost to at least one alternative approach (e.g., different model architecture, different instance type, serverless approach)</li>
+                        <li>Justification of whether your current approach is cost-effective</li>
+                        <li>Discussion of trade-offs between cost, performance, and accuracy</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+        <h2>Additional Resources</h2>
+
+        <h3>Cloud Provider Resources:</h3>
+        <ul>
+            <li>AWS: <code>aws.amazon.com/pricing/</code> and AWS Pricing Calculator</li>
+            <li>Google Cloud: <code>cloud.google.com/pricing</code> and GCP Pricing Calculator</li>
+            <li>Azure: <code>azure.microsoft.com/pricing/</code> and Azure Pricing Calculator</li>
+        </ul>
+
+        <h3>Monitoring and Profiling Tools:</h3>
+        <ul>
+            <li><strong>Python:</strong> <code>psutil</code> (system monitoring), <code>memory_profiler</code>, <code>py-spy</code></li>
+            <li><strong>PyTorch:</strong> <code>torch.profiler</code>, <code>torch.cuda.memory_summary()</code></li>
+            <li><strong>TensorFlow:</strong> TensorFlow Profiler, <code>tf.profiler</code></li>
+        </ul>
+
+        <h3>Industry Reading:</h3>
+        <ul>
+            <li>Search for "ML model deployment cost optimization" case studies</li>
+            <li>Research papers on model compression and efficient inference</li>
+            <li>Blog posts from companies about reducing ML infrastructure costs</li>
+        </ul>
+
+        <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+        <div class="key-concept">
+            <h3>🎓 Final Thoughts</h3>
+            <p>This activity simulates real-world ML engineering work. In production environments, you'll regularly need to:</p>
+            <ul>
+                <li>Justify infrastructure spending to stakeholders</li>
+                <li>Make trade-offs between model performance and operational costs</li>
+                <li>Optimize systems for cost efficiency</li>
+                <li>Compare the economic viability of different ML approaches</li>
+            </ul>
+            <p><strong>Remember: The best algorithm isn't always the most accurate one—it's the one that best balances accuracy, cost, latency, and business requirements.</strong></p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -7,9 +7,10 @@ def main():
     """Main training pipeline."""
 
     # Configuration
-    DATA_PATH = "data/training_text.txt"
-    MODEL_DIR = "saved_models"
-    VIZ_DIR = "visualizations"
+    FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_PATH = os.path.join(FILE_DIR, "data/training_text.txt")
+    MODEL_DIR = os.path.join(FILE_DIR, "saved_models")
+    VIZ_DIR = os.path.join(FILE_DIR, "visualizations")
 
     # Create directories
     os.makedirs(MODEL_DIR, exist_ok=True)
@@ -40,8 +41,7 @@ def main():
     # Build model
     print("\nBuilding model...")
     model = generator.build_model()
-    model.build(input_shape=X.shape)
-    model.summary()
+    print(model)
 
     # Visualize architecture
     print("\nGenerating architecture visualization...")
@@ -62,9 +62,9 @@ def main():
     generator.plot_training_history(save_path=VIZ_DIR)
 
     # Save final model
-    print("\nSaving model...")
+    print("\nSaving model as model_best.pt and tokenizer.pkl...")
     generator.save_model(
-        f"{MODEL_DIR}/model.h5",
+        f"{MODEL_DIR}/model_best.pt",
         f"{MODEL_DIR}/tokenizer.pkl"
     )
 

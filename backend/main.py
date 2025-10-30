@@ -87,8 +87,8 @@ def get_text_generator():
         from backend.app.routers.projectRNN.text_generator import TextGenerator
         text_generator = TextGenerator()
 
-        # Try to load existing model
-        model_path = "backend/app/routers/projectRNN/saved_models/model.h5"
+        # Try to load existing PyTorch model (model_best.pt)
+        model_path = "backend/app/routers/projectRNN/saved_models/model_best.pt"
         tokenizer_path = "backend/app/routers/projectRNN/saved_models/tokenizer.pkl"
 
         if os.path.exists(model_path) and os.path.exists(tokenizer_path):

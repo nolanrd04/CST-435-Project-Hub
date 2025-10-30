@@ -40,7 +40,7 @@ function App() {
 
           {/* API Mode Toggle */}
           <div className="mt-6 flex justify-center">
-            <label className="flex items-center gap-3 bg-yellow-300 text-gray-900 px-6 py-3 rounded-lg font-bold cursor-pointer hover:bg-yellow-200 transition-all">
+            <label className="flex items-center gap-3 bg-green-300 text-gray-900 px-6 py-3 rounded-lg font-bold cursor-pointer hover:bg-yellow-200 transition-all">
               <input
                 type="checkbox"
                 checked={useLocalAPI}
@@ -48,7 +48,7 @@ function App() {
                 className="w-5 h-5 cursor-pointer"
               />
               <span>
-                {useLocalAPI ? '🏠 Using Local API (localhost:8000)' : '☁️ Using Deployed API (Render)'}
+                Use localhost API instead of cloud API
               </span>
             </label>
           </div>

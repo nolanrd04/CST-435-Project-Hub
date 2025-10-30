@@ -44,7 +44,7 @@ function App() {
                 style={{ width: '20px', height: '20px', cursor: 'pointer' }}
               />
               <span>
-                {useLocalAPI ? '🏠 Local API (localhost:8000)' : '☁️ Deployed API (Render)'}
+                Use localhost API instead of cloud API
               </span>
             </label>
           </div>

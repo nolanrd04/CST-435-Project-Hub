@@ -149,7 +149,7 @@ function CostAnalysis() {
         </div>
 
         <p style={{ margin: '20px 0 0 0', color: '#666', fontSize: '0.9em' }}>
-          ℹ️ To update these values, run:<br/>
+          To update these values, run:<br/>
           <code style={{ backgroundColor: '#e0e7ff', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
             python backend/app/routers/projectRNN/configure_pricing.py
           </code>

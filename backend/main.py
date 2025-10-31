@@ -77,8 +77,23 @@ class SentimentResponse(BaseModel):
     sentiment_label: str
     success: bool
 
+class CostReport(BaseModel):
+    pricing_config: dict
+
+    class Config:
+        extra = "allow"  # Allow extra fields
+
+class PricingUpdate(BaseModel):
+    compute_hourly_rate: float = None
+    storage_per_gb_month: float = None
+    data_transfer_per_gb: float = None
+    instance_type: str = None
+
 # Global variable to store the text generator
 text_generator = None
+
+# Global variable to store cost model
+cost_model = None
 
 def get_text_generator():
     """Initialize or get the text generator instance."""
@@ -248,3 +263,64 @@ async def analyze_sentiment(request: SentimentRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error analyzing sentiment: {str(e)}")
+
+@app.get("/cost-analysis/report")
+def get_cost_analysis_report():
+    """Get comprehensive cost analysis report for RNN deployment."""
+    from backend.app.routers.projectRNN.cost_analysis import RenderPricingConfig, RNNCostModel
+
+    global cost_model
+    if cost_model is None:
+        pricing = RenderPricingConfig()
+        cost_model = RNNCostModel(pricing)
+
+    try:
+        report = cost_model.generate_cost_report()
+        print(f"✅ Cost report generated successfully")
+        return report
+    except Exception as e:
+        print(f"❌ Error generating cost analysis: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error generating cost analysis: {str(e)}")
+
+@app.post("/cost-analysis/update-pricing")
+def update_pricing(pricing_update: PricingUpdate):
+    """Update Render pricing configuration."""
+    from backend.app.routers.projectRNN.cost_analysis import RenderPricingConfig, RNNCostModel
+
+    global cost_model
+    if cost_model is None:
+        pricing = RenderPricingConfig()
+        cost_model = RNNCostModel(pricing)
+
+    try:
+        update_dict = pricing_update.dict(exclude_none=True)
+        cost_model.update_pricing(update_dict)
+        report = cost_model.generate_cost_report()
+        return {"success": True, "message": "Pricing updated successfully", "report": report}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating pricing: {str(e)}")
+
+@app.get("/cost-analysis/images/{image_name}")
+def get_cost_analysis_image(image_name: str):
+    """Get cost analysis visualization images."""
+    import os
+    from fastapi.responses import FileResponse
+
+    valid_images = [
+        "cost_breakdown.png",
+        "cost_scaling.png",
+        "training_vs_inference.png",
+        "cost_per_inference.png"
+    ]
+
+    if image_name not in valid_images:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    image_path = f"backend/app/routers/projectRNN/visualizations/{image_name}"
+
+    if not os.path.exists(image_path):
+        raise HTTPException(status_code=404, detail="Image file not generated yet")
+
+    return FileResponse(image_path)

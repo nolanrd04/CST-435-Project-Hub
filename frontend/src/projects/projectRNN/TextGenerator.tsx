@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import CostAnalysis from './CostAnalysis.tsx';
 
 function TextGenerator() {
+  const [activeTab, setActiveTab] = useState<'generator' | 'cost'>('generator');
   const [seedText, setSeedText] = useState('');
   const [numWords, setNumWords] = useState(50);
   const [temperature, setTemperature] = useState(1.0);
@@ -65,6 +67,50 @@ function TextGenerator() {
   };
 
   return (
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      {/* Tab Navigation */}
+      <div style={{
+        display: 'flex',
+        gap: '10px',
+        marginBottom: '20px',
+        borderBottom: '2px solid #e5e7eb'
+      }}>
+        <button
+          onClick={() => setActiveTab('generator')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: activeTab === 'generator' ? '#667eea' : 'transparent',
+            color: activeTab === 'generator' ? 'white' : '#666',
+            border: 'none',
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'generator' ? 'bold' : 'normal',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          ✨ Text Generator
+        </button>
+        <button
+          onClick={() => setActiveTab('cost')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: activeTab === 'cost' ? '#667eea' : 'transparent',
+            color: activeTab === 'cost' ? 'white' : '#666',
+            border: 'none',
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'cost' ? 'bold' : 'normal',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          💰 Cost Analysis
+        </button>
+      </div>
+
+      {/* Generator Tab */}
+      {activeTab === 'generator' && (
     <div className="form" style={{ maxWidth: '700px', margin: '0 auto' }}>
       <h2 className="title" style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
         <span style={{
@@ -322,6 +368,11 @@ function TextGenerator() {
           </div>
         </div>
       )}
+    </div>
+      )}
+
+      {/* Cost Analysis Tab */}
+      {activeTab === 'cost' && <CostAnalysis />}
     </div>
   );
 }

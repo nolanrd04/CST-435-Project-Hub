@@ -155,6 +155,99 @@ function CostAnalysis() {
           </code>
         </p>
       </div>
+
+      {/* Local Training Cost Display */}
+      <div style={{
+        backgroundColor: '#f0fff5ff',
+        border: '2px solid #0ee950ff',
+        borderRadius: '12px',
+        padding: '30px',
+        marginBottom: '30px'
+      }}>
+        
+
+        <h3 style={{ margin: '0 0 25px 0', color: '#0ee953ff' }}>Local Model Training Cost</h3>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e0e7ff'
+          }}>
+            <p style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9em', fontWeight: '600' }}>
+              Cost per CPU per month
+            </p>
+            <p style={{ margin: 0, fontSize: '1.8em', fontWeight: 'bold', color: '#0dbe2dff' }}>
+              ${costReport.pricing_config.cost_per_cpu_per_month?.toFixed(4) || '0.2969'}
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e0e7ff'
+          }}>
+            <p style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9em', fontWeight: '600' }}>
+              Cost per GB RAM per month
+            </p>
+            <p style={{ margin: 0, fontSize: '1.8em', fontWeight: 'bold', color: '#0dbe2dff' }}>
+              ${costReport.pricing_config.cost_per_gb_ram_per_month?.toFixed(4) || '0.0371'}
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e0e7ff'
+          }}>
+            <p style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9em', fontWeight: '600' }}>
+              Overage Bandwidth Cost
+            </p>
+            <p style={{ margin: 0, fontSize: '1.8em', fontWeight: 'bold', color: '#0dbe2dff' }}>
+              ${costReport.pricing_config.overage_bandwidth_cost_per_gb?.toFixed(2) || '0.10'}/GB
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e0e7ff'
+          }}>
+            <p style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9em', fontWeight: '600' }}>
+              Overage Build Minutes Cost
+            </p>
+            <p style={{ margin: 0, fontSize: '1.8em', fontWeight: 'bold', color: '#0dbe2dff' }}>
+              ${costReport.pricing_config.overage_build_minutes_cost?.toFixed(2) || '0.01'}/min
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e0e7ff'
+          }}>
+            <p style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9em', fontWeight: '600' }}>
+              Additional Storage Cost
+            </p>
+            <p style={{ margin: 0, fontSize: '1.8em', fontWeight: 'bold', color: '#0dbe2dff' }}>
+              ${costReport.pricing_config.additional_storage_cost_per_gb?.toFixed(2) || '0.10'}/GB/mo
+            </p>
+          </div>
+        </div>
+
+        <p style={{ margin: '20px 0 0 0', color: '#666', fontSize: '0.9em' }}>
+          To update these values, run:<br/>
+          <code style={{ backgroundColor: '#e0e7ff', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
+            python backend/app/routers/projectRNN/configure_pricing.py
+          </code>
+        </p>
+      </div>
+
     </div>
   );
 }

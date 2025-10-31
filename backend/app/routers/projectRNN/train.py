@@ -1,7 +1,32 @@
 import sys
 import os
+import json
+import time
 sys.path.append(os.path.abspath(".."))
 from text_generator import TextGenerator
+import psutil
+
+# Local Training Cost = (Compute Cost/hour × Training Hours) + (Storage Cost/GB × Dataset Size)
+FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(FILE_DIR, "render_pricing_config.json")
+MODEL_PATH = os.path.join(FILE_DIR, "saved_models", "model_best.pt")
+
+with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+    pricing_config = json.load(f)
+
+# model file size in mb
+storage_cost = pricing_config["database_cost_per_gb"]
+file_size_bytes = os.path.getsize(MODEL_PATH)
+file_size_mb = file_size_bytes / (1024 * 1024)
+
+# cost for training resources
+process = psutil.Process()
+memory_usage_mb = process.memory_info().rss / (1024 * 1024)
+compute_cost_per_hour = (pricing_config["cost_per_cpu_per_month"] * (1 / 720)) + (pricing_config["cost_per_gb_ram_per_month"] * (1 / 720) * memory_usage_mb) # Assuming 720 hours in a month
+
+training_hours = 0
+
+start_time = time.time()
 
 def main():
     """Main training pipeline."""
@@ -89,3 +114,20 @@ def train_model():
 
 if __name__ == "__main__":
     main()
+
+
+end_time = time.time()
+elapsed_time = end_time - start_time
+print(f"Elapsed time: {elapsed_time:.2f} seconds")
+
+training_hours = elapsed_time / 3600
+local_training_cost = (compute_cost_per_hour * training_hours) + (storage_cost * (file_size_mb / 1024))
+
+# Save local_training_cost to render_pricing_config.json
+pricing_config["local_training_cost"] = local_training_cost
+
+with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
+    json.dump(pricing_config, f, indent=2)
+
+print(f"Local training cost saved to {CONFIG_PATH}")
+

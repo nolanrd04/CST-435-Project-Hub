@@ -6,7 +6,7 @@
   "available_ram_gb": 512.0,
   "database_cost_per_gb": 0.25,
   "fixed_monthly_cost": 19.0,
-  "overage_bandwidth_cost_per_gb": 0.1,
+  "overage_bandwidth_cost_per_gb": 0.038,
   "overage_build_minutes_cost": 0.01,
   "cost_per_cpu_per_month": 0.296875,
   "cost_per_gb_ram_per_month": 0.037109375,

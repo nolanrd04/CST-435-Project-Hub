@@ -79,7 +79,7 @@ def calculate_derived_pricing(config):
 
     # Cost per GB of bandwidth used (over included amount)
     # Assume standard cloud overage pricing: $0.10 per GB
-    config['overage_bandwidth_cost_per_gb'] = 0.10
+    config['overage_bandwidth_cost_per_gb'] = config['monthly_subscription_cost'] / config['included_bandwidth_gb']
 
     # Cost per minute of build pipeline (if over included)
     # Assume: $0.01 per minute of overage
@@ -101,12 +101,20 @@ def calculate_derived_pricing(config):
 
 
 def save_config(config, output_path):
-    """Save configuration to JSON file."""
+    """Save configuration to JSON file, preserving existing values."""
+    # Load existing config if it exists
+    if os.path.exists(output_path):
+        with open(output_path, 'r', encoding='utf-8') as f:
+            existing_config = json.load(f)
+    else:
+        existing_config = {}
 
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    # Merge new config with existing config
+    merged_config = {**existing_config, **config}
 
-    with open(output_path, 'w') as f:
-        json.dump(config, f, indent=2)
+    # Save merged config
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(merged_config, f, indent=2)
 
     return output_path
 

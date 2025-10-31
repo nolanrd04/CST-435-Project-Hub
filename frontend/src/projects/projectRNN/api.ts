@@ -33,7 +33,7 @@ export interface ModelInfo {
 }
 
 export const generateText = async (request: GenerateRequest): Promise<GenerateResponse> => {
-  const response = await api.post<GenerateResponse>('/generate', request);
+  const response = await api.post<GenerateResponse>('/generate-text', request);
   return response.data;
 };
 

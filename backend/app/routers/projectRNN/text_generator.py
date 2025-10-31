@@ -404,15 +404,15 @@ class TextGenerator:
                 # Take last sequence_length tokens
                 token_list = token_list[-(self.sequence_length):]
 
-                # Pad to model input size
-                token_list = pad_sequences(
+                # Pad to model input size (returns torch tensor)
+                token_tensor = pad_sequences(
                     [token_list],
                     maxlen=self.max_sequence_len - 1,
                     padding='pre'
                 )
 
-                # Convert to tensor
-                token_tensor = token_list.to(self.device)
+                # Move tensor to device
+                token_tensor = token_tensor.to(self.device)
 
                 # Predict next word probabilities
                 outputs = self.model(token_tensor)

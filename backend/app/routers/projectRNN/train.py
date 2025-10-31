@@ -2,9 +2,10 @@ import sys
 import os
 import json
 import time
+import threading
+import psutil
 sys.path.append(os.path.abspath(".."))
 from text_generator import TextGenerator
-import psutil
 
 # Local Training Cost = (Compute Cost/hour × Training Hours) + (Storage Cost/GB × Dataset Size)
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,14 +20,25 @@ storage_cost = pricing_config["database_cost_per_gb"]
 file_size_bytes = os.path.getsize(MODEL_PATH)
 file_size_mb = file_size_bytes / (1024 * 1024)
 
-# cost for training resources
-process = psutil.Process()
-memory_usage_mb = process.memory_info().rss / (1024 * 1024)
-compute_cost_per_hour = (pricing_config["cost_per_cpu_per_month"] * (1 / 720)) + (pricing_config["cost_per_gb_ram_per_month"] * (1 / 720) * memory_usage_mb) # Assuming 720 hours in a month
-
+# Initialize variables for cost calculation
 training_hours = 0
+peak_memory_usage = 0
+training = True
+
+# Function to monitor memory usage
+def monitor_memory():
+    global peak_memory_usage, training
+    process = psutil.Process()
+    while training:
+        current_memory = process.memory_info().rss / (1024 * 1024 * 1024)  # Convert to GB
+        peak_memory_usage = max(peak_memory_usage, current_memory)
+        time.sleep(1)  # Adjust the interval as needed
 
 start_time = time.time()
+
+# Start monitoring memory in a separate thread
+monitor_thread = threading.Thread(target=monitor_memory)
+monitor_thread.start()
 
 def main():
     """Main training pipeline."""
@@ -108,17 +120,24 @@ def main():
 
     print("\n✓ Training complete!")
 
-def train_model():
-    # Placeholder logic for model training
-    print("Training the model...")
-
 if __name__ == "__main__":
-    main()
-
+    try:
+        main()
+    finally:
+        # Stop memory monitoring
+        training = False
+        monitor_thread.join()
 
 end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Elapsed time: {elapsed_time:.2f} seconds")
+
+# Use peak memory usage for cost calculation
+compute_cost_per_hour = (
+    pricing_config["cost_per_cpu_per_month"] * (1 / 720)
+) + (
+    pricing_config["cost_per_gb_ram_per_month"] * (1 / 720) * peak_memory_usage
+)
 
 training_hours = elapsed_time / 3600
 local_training_cost = (compute_cost_per_hour * training_hours) + (storage_cost * (file_size_mb / 1024))

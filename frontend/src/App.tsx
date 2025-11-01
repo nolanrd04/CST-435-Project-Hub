@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Link, useNavigate } from 'react
 import TextGenerator from './projects/projectRNN/TextGenerator.tsx';
 import ImageClassifier from './projects/Project3/ImageClassifier.tsx';
 import SentimentAnalyzer from './projects/Project4/SentimentAnalyzer.tsx';
+import RNN from './projects/Project5/RNN.tsx';
 import './App.css';
 
 function App() {
@@ -61,17 +62,23 @@ function App() {
             }}>
               <li>
                 <Link to="/" className="button-link-to-projects">
-                  RNN Text Generator
+                  Text Generator (Nolan's Personal)
                 </Link>
+
               </li>
               <li>
                 <Link to="/image-classifier" className="button-link-to-projects">
-                  Image Classifier
+                  Project3: Image Classifier
                 </Link>
               </li>
               <li>
                 <Link to="/sentiment-analyzer" className="button-link-to-projects">
-                  Sentiment Analyzer
+                  Project4: Sentiment Analyzer
+                </Link>
+              </li>
+              <li>
+                <Link to="/Project5" className="button-link-to-projects">
+                  Project5: RNN
                 </Link>
               </li>
             </ul>
@@ -83,6 +90,7 @@ function App() {
             <Route path="/text-generator" element={<TextGenerator />} />
             <Route path="/image-classifier" element={<ImageClassifier />} />
             <Route path="/sentiment-analyzer" element={<SentimentAnalyzer />} />
+            <Route path="/Project5" element={<RNN />} />
           </Routes>
         </main>
       </div>

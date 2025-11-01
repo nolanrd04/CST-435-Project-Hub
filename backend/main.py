@@ -3,6 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os
+import time
+import psutil
+import json
+import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 app = FastAPI()
 
@@ -48,6 +54,7 @@ class GenerateTextResponse(BaseModel):
     seed_text: str
     num_words: int
     temperature: float
+    query_cost: float  # Add query cost to response model
 
 class ModelInfo(BaseModel):
     vocab_size: int
@@ -113,7 +120,7 @@ def get_text_generator():
 
 @app.post("/generate-text", response_model=GenerateTextResponse)
 def generate_text_endpoint(request: GenerateTextRequest):
-    """Generate text using the trained model."""
+    """Generate text using the trained model and calculate query cost."""
     generator = get_text_generator()
 
     if generator is None:
@@ -123,17 +130,46 @@ def generate_text_endpoint(request: GenerateTextRequest):
         )
 
     try:
+        # Start time and memory usage
+        start_time = time.time()
+        process = psutil.Process()
+        start_memory = process.memory_info().rss / (1024 * 1024 * 1024)  # Convert to GB
+
+        # Generate text
         generated = generator.generate_text(
             seed_text=request.seed_text,
             num_words=request.num_words,
             temperature=request.temperature
         )
 
+        # End time and memory usage
+        end_time = time.time()
+        end_memory = process.memory_info().rss / (1024 * 1024 * 1024)  # Convert to GB
+
+        # Calculate time and memory usage
+        elapsed_time = end_time - start_time
+        memory_used = max(0, end_memory - start_memory)
+
+        # Load pricing configuration
+        with open("backend/app/routers/projectRNN/render_pricing_config.json", "r", encoding="utf-8") as f:
+            pricing_config = json.load(f)
+
+        # Compute cost per hour
+        compute_cost_per_hour = (
+            pricing_config["cost_per_cpu_per_month"] * (1 / 720)
+        ) + (
+            pricing_config["cost_per_gb_ram_per_month"] * (1 / 720) * memory_used
+        )
+
+        # Calculate query cost
+        query_cost = compute_cost_per_hour * (elapsed_time / 3600)
+
         return GenerateTextResponse(
             generated_text=generated,
             seed_text=request.seed_text,
             num_words=request.num_words,
-            temperature=request.temperature
+            temperature=request.temperature,
+            query_cost=query_cost  # Include cost in the response
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")

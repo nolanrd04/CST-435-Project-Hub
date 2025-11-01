@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, useNavigate } from 'react-router-dom';
 import TextGenerator from './projects/projectRNN/TextGenerator.tsx';
 import ImageClassifier from './projects/Project3/ImageClassifier.tsx';
 import SentimentAnalyzer from './projects/Project4/SentimentAnalyzer.tsx';
@@ -60,28 +60,19 @@ function App() {
               flexWrap: 'wrap'
             }}>
               <li>
-                <button
-                  onClick={() => window.location.href = "/"}
-                  className="button-link-to-projects"
-                >
+                <Link to="/" className="button-link-to-projects">
                   RNN Text Generator
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => window.location.href = "/image-classifier"}
-                  className="button-link-to-projects"
-                >
+                <Link to="/image-classifier" className="button-link-to-projects">
                   Image Classifier
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => window.location.href = "/sentiment-analyzer"}
-                  className="button-link-to-projects"
-                >
+                <Link to="/sentiment-analyzer" className="button-link-to-projects">
                   Sentiment Analyzer
-                </button>
+                </Link>
               </li>
             </ul>
           </nav>
@@ -92,6 +83,8 @@ function App() {
             <Route path="/text-generator" element={<TextGenerator />} />
             <Route path="/image-classifier" element={<ImageClassifier />} />
             <Route path="/sentiment-analyzer" element={<SentimentAnalyzer />} />
+            {/* Catch-all route - redirect to home */}
+            <Route path="*" element={<TextGenerator />} />
           </Routes>
         </main>
       </div>

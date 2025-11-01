@@ -20,6 +20,6 @@ pillow
 
 # Utilities
 python-dotenv
-
+psutil
 # Frontend Dependencies (install via npm in frontend directory)
 # See frontend/package.json for React, TypeScript, and other frontend packages

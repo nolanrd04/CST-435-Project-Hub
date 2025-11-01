@@ -80,12 +80,9 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<TextGenerator />} />
-            <Route path="/index.html" element={<TextGenerator />} />
             <Route path="/text-generator" element={<TextGenerator />} />
             <Route path="/image-classifier" element={<ImageClassifier />} />
             <Route path="/sentiment-analyzer" element={<SentimentAnalyzer />} />
-            {/* Catch-all route - redirect to home */}
-            <Route path="*" element={<TextGenerator />} />
           </Routes>
         </main>
       </div>

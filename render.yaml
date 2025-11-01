@@ -1,16 +1,10 @@
 services:
-  # Frontend service - React static site
-  - type: static_site
+  # Frontend service - React web service with SPA routing
+  - type: web_service
     name: cst-435-project-hub-frontend
-    env: static
+    runtime: node
     buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/build
-    # Configure SPA routing - redirect all non-file requests to index.html
-    routes:
-      - path: /static/*
-        destination: /static/:path
-      - path: /*
-        destination: /index.html
+    startCommand: npx serve -s frontend/build -l 3000
 
   # Backend service - FastAPI
   - type: web_service

@@ -1,0 +1,26 @@
+services:
+  # Frontend service - React static site
+  - type: static_site
+    name: cst-435-project-hub-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/build
+    # Configure SPA routing - redirect all non-file requests to index.html
+    routes:
+      - path: /
+        destination: /index.html
+      - path: /static/*
+        destination: /static/:path
+
+  # Backend service - FastAPI
+  - type: web_service
+    name: cst-435-project-hub
+    env: python311
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+    # Expose the port
+    port: 8000

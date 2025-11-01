@@ -8,6 +8,7 @@ pydantic
 tensorflow
 keras
 kagglehub
+torch
 numpy
 scikit-learn
 pandas

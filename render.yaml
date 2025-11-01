@@ -7,10 +7,10 @@ services:
     staticPublishPath: frontend/build
     # Configure SPA routing - redirect all non-file requests to index.html
     routes:
-      - path: /
-        destination: /index.html
       - path: /static/*
         destination: /static/:path
+      - path: /*
+        destination: /index.html
 
   # Backend service - FastAPI
   - type: web_service

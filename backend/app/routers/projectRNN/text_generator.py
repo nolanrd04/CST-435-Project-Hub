@@ -575,16 +575,19 @@ class TextGenerator:
 
         # Load tokenizer with proper error handling
         try:
-            with open(tokenizer_path, 'rb') as f:
-                self.tokenizer = pickle.load(f)
-        except (ModuleNotFoundError, AttributeError) as e:
+            if os.path.exists(tokenizer_path):
+                with open(tokenizer_path, 'rb') as f:
+                    self.tokenizer = pickle.load(f)
+            else:
+                raise FileNotFoundError(f"Tokenizer file not found: {tokenizer_path}")
+        except Exception as e:
             print(f"⚠️ Warning: Could not load pickled tokenizer: {e}")
             print("📝 Recreating tokenizer from scratch...")
             # If pickle fails, create a new tokenizer - it will be used for generation
             self.tokenizer = SimpleTokenizer()
             # Try to load word_index and index_word from config if available
             if 'word_index' in config and 'index_word' in config:
-                self.tokenizer.word_index = {int(k) if k.isdigit() else k: v for k, v in config.get('word_index', {}).items()}
+                self.tokenizer.word_index = config.get('word_index', {})
                 self.tokenizer.index_word = {int(k): v for k, v in config.get('index_word', {}).items()}
 
 def pad_sequences(sequences, maxlen, padding='pre', value=0):

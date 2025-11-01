@@ -11,5 +11,5 @@
   "cost_per_cpu_per_month": 0.296875,
   "cost_per_gb_ram_per_month": 0.037109375,
   "additional_storage_cost_per_gb": 0.1,
-  "local_training_cost": 0.0013014882445337656
+  "local_training_cost": 0.0013036430998027305
 }

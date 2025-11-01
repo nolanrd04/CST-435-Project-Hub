@@ -587,8 +587,21 @@ class TextGenerator:
             self.tokenizer = SimpleTokenizer()
             # Try to load word_index and index_word from config if available
             if 'word_index' in config and 'index_word' in config:
-                self.tokenizer.word_index = config.get('word_index', {})
-                self.tokenizer.index_word = {int(k): v for k, v in config.get('index_word', {}).items()}
+                word_index_data = config.get('word_index', {})
+                index_word_data = config.get('index_word', {})
+
+                # Verify word_index format: should map words (str) -> indices (int)
+                # If the keys are numeric strings, it might be corrupted - use index_word instead
+                sample_key = next(iter(word_index_data.keys())) if word_index_data else None
+                if sample_key and sample_key.isdigit():
+                    # word_index is corrupted (has numeric keys), reconstruct from index_word
+                    print("⚠️ Warning: word_index appears corrupted, reconstructing from index_word...")
+                    self.tokenizer.word_index = {v: int(k) for k, v in index_word_data.items()}
+                    self.tokenizer.index_word = {int(k): v for k, v in index_word_data.items()}
+                else:
+                    # word_index is valid
+                    self.tokenizer.word_index = word_index_data
+                    self.tokenizer.index_word = {int(k): v for k, v in index_word_data.items()}
 
 def pad_sequences(sequences, maxlen, padding='pre', value=0):
     """

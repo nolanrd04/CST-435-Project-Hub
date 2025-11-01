@@ -111,8 +111,13 @@ def get_text_generator():
         model_path = "backend/app/routers/projectRNN/saved_models/model_best.pt"
         tokenizer_path = "backend/app/routers/projectRNN/saved_models/tokenizer.pkl"
 
-        if os.path.exists(model_path) and os.path.exists(tokenizer_path):
-            text_generator.load_model(model_path, tokenizer_path)
+        # Only require model_path to exist; tokenizer can be reconstructed from config
+        if os.path.exists(model_path):
+            try:
+                text_generator.load_model(model_path, tokenizer_path)
+            except Exception as e:
+                print(f"❌ Error loading model: {e}")
+                return None
         else:
             # Return None if no model exists
             return None
@@ -151,14 +156,25 @@ def generate_text_endpoint(request: GenerateTextRequest):
         memory_used = max(0, end_memory - start_memory)
 
         # Load pricing configuration
-        with open("backend/app/routers/projectRNN/render_pricing_config.json", "r", encoding="utf-8") as f:
-            pricing_config = json.load(f)
+        try:
+            pricing_config_path = os.path.join(
+                os.path.dirname(__file__),
+                "app/routers/projectRNN/render_pricing_config.json"
+            )
+            with open(pricing_config_path, "r", encoding="utf-8") as f:
+                pricing_config = json.load(f)
+        except FileNotFoundError:
+            print(f"⚠️ Warning: Pricing config not found at {pricing_config_path}, using defaults")
+            pricing_config = {
+                "cost_per_cpu_per_month": 0.0,
+                "cost_per_gb_ram_per_month": 0.0
+            }
 
         # Compute cost per hour
         compute_cost_per_hour = (
-            pricing_config["cost_per_cpu_per_month"] * (1 / 720)
+            pricing_config.get("cost_per_cpu_per_month", 0) * (1 / 720)
         ) + (
-            pricing_config["cost_per_gb_ram_per_month"] * (1 / 720) * memory_used
+            pricing_config.get("cost_per_gb_ram_per_month", 0) * (1 / 720) * memory_used
         )
 
         # Calculate query cost
@@ -172,6 +188,9 @@ def generate_text_endpoint(request: GenerateTextRequest):
             query_cost=query_cost  # Include cost in the response
         )
     except Exception as e:
+        print(f"❌ Error in generate_text_endpoint: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
 
 @app.get("/model/info", response_model=ModelInfo)

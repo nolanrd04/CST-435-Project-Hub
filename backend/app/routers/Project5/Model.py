@@ -1,0 +1,657 @@
+# THIS FILE SHOULD NOT RUN ON THE FRONT END. DO NOT HAVE ANY API CALLS TO IT.
+# THIS FILE IS SOLELY FOR CREATING AND TRAINING LSTM MODEL FOR LYRIC GENERATION.
+# RUNNING THIS FILE OR ITS FUNCTIONS ON THE FRONT END COULD CAUSE COMPUTATIONAL ERRORS WITH THE LIMITED HARDWARE RESOURCES WE HAVE ON RENDER.
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+import numpy as np
+import json
+import os
+from typing import List, Tuple, Dict, Optional
+from DataPreprocessor import LyricsTokenizer, prepare_dataset
+
+# Set up paths
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+MODEL_PATH = os.path.join(DIR_PATH, "model")
+
+# Create model directory if it doesn't exist
+os.makedirs(MODEL_PATH, exist_ok=True)
+
+# Set device
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"Using device: {device}")
+
+
+class LyricsDataset(Dataset):
+    """
+    PyTorch Dataset for lyrics training data.
+    """
+    
+    def __init__(self, features: List[List[int]], labels: List[int]):
+        self.features = torch.tensor(features, dtype=torch.long)
+        self.labels = torch.tensor(labels, dtype=torch.long)
+    
+    def __len__(self):
+        return len(self.features)
+    
+    def __getitem__(self, idx):
+        return self.features[idx], self.labels[idx]
+
+
+class LyricsLSTM(nn.Module):
+    """
+    LSTM model for lyric generation following the specified architecture:
+    1. Embedding layer (100-dimensional vectors)
+    2. Masking capability (handled by PyTorch automatically with padding)
+    3. LSTM layer with dropout
+    4. Dense layer with ReLU
+    5. Dropout layer
+    6. Output Dense layer with softmax
+    """
+    
+    def __init__(self, vocab_size: int, embedding_dim: int = 200, hidden_size: int = 512, 
+                 num_layers: int = 3, dropout: float = 0.2, pretrained_weights: Optional[torch.Tensor] = None):
+        super(LyricsLSTM, self).__init__()
+        
+        self.vocab_size = vocab_size
+        self.embedding_dim = embedding_dim
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.dropout = dropout
+        
+        # 1. Embedding layer - maps each input word to 100-dimensional vector
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
+        
+        # Load pretrained weights if provided
+        if pretrained_weights is not None:
+            self.embedding.weight.data.copy_(pretrained_weights)
+            # Set trainable to False if using pretrained embeddings (can be changed later)
+            self.embedding.weight.requires_grad = True
+        
+        # 2. Masking is handled automatically by PyTorch when using padding_idx in embedding
+        
+        # 3. LSTM layer with dropout - heart of the network
+        self.lstm = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            dropout=dropout if num_layers > 1 else 0,  # Only apply dropout if multiple layers
+            batch_first=True
+        )
+        
+        # 4. Fully connected Dense layer with ReLU
+        self.dense = nn.Linear(hidden_size, hidden_size)
+        
+        # 5. Dropout layer to prevent overfitting
+        self.dropout_layer = nn.Dropout(dropout)
+        
+        # 6. Output Dense layer - produces probability for every word in vocab
+        self.output = nn.Linear(hidden_size, vocab_size)
+        
+    def forward(self, x, hidden=None):
+        batch_size = x.size(0)
+        
+        # 1. Embedding lookup
+        embedded = self.embedding(x)  # (batch_size, seq_len, embedding_dim)
+        
+        # 2. LSTM forward pass
+        lstm_out, hidden = self.lstm(embedded, hidden)  # (batch_size, seq_len, hidden_size)
+        
+        # Take only the last output for prediction (since we're not returning sequences)
+        lstm_out = lstm_out[:, -1, :]  # (batch_size, hidden_size)
+        
+        # 3. Dense layer with ReLU
+        dense_out = F.relu(self.dense(lstm_out))  # (batch_size, hidden_size)
+        
+        # 4. Dropout
+        dropped = self.dropout_layer(dense_out)  # (batch_size, hidden_size)
+        
+        # 5. Output layer with softmax (applied in loss function for numerical stability)
+        output = self.output(dropped)  # (batch_size, vocab_size)
+        
+        return output, hidden
+    
+    def init_hidden(self, batch_size):
+        """Initialize hidden state for LSTM"""
+        h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(device)
+        c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(device)
+        return (h0, c0)
+    
+    def freeze_embeddings(self):
+        """Freeze embedding weights (set trainable=False)"""
+        self.embedding.weight.requires_grad = False
+        print("Embedding weights frozen")
+    
+    def unfreeze_embeddings(self):
+        """Unfreeze embedding weights (set trainable=True)"""
+        self.embedding.weight.requires_grad = True
+        print("Embedding weights unfrozen")
+
+
+def create_model(vocab_size: int, embedding_dim: int = 200, hidden_size: int = 512,
+                num_layers: int = 3, dropout: float = 0.2, learning_rate: float = 0.005,
+                pretrained_weights: Optional[torch.Tensor] = None) -> Tuple[LyricsLSTM, optim.Adam]:
+    """
+    Create LSTM model with Adam optimizer.
+    
+    Args:
+        vocab_size: Size of vocabulary
+        embedding_dim: Dimension of embedding vectors (default 100)
+        hidden_size: Size of LSTM hidden state
+        num_layers: Number of LSTM layers
+        dropout: Dropout probability
+        learning_rate: Learning rate for Adam optimizer
+        pretrained_weights: Optional pretrained embedding weights
+    
+    Returns:
+        Tuple of (model, optimizer)
+    """
+    # Create model
+    model = LyricsLSTM(
+        vocab_size=vocab_size,
+        embedding_dim=embedding_dim,
+        hidden_size=hidden_size,
+        num_layers=num_layers,
+        dropout=dropout,
+        pretrained_weights=pretrained_weights
+    )
+    
+    # Move model to device
+    model = model.to(device)
+    
+    # Create Adam optimizer
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    
+    print(f"✓ Model created with {sum(p.numel() for p in model.parameters()):,} parameters")
+    print(f"  - Vocabulary size: {vocab_size}")
+    print(f"  - Embedding dimension: {embedding_dim}")
+    print(f"  - Hidden size: {hidden_size}")
+    print(f"  - Number of layers: {num_layers}")
+    print(f"  - Dropout: {dropout}")
+    print(f"  - Learning rate: {learning_rate}")
+    
+    return model, optimizer
+
+
+def train_model(model: LyricsLSTM, optimizer: optim.Adam, 
+               train_features: List[List[int]], train_labels: List[int],
+               test_features: List[List[int]], test_labels: List[int],
+               batch_size: int = 128, epochs: int = 25, 
+               save_path: str = None, clip_grad: float = 0.5) -> Dict:
+    """
+    Train the LSTM model.
+    
+    Args:
+        model: The LSTM model
+        optimizer: Adam optimizer
+        train_features: Training input sequences
+        train_labels: Training labels
+        test_features: Testing input sequences 
+        test_labels: Testing labels
+        batch_size: Batch size for training
+        epochs: Number of epochs to train
+        save_path: Path to save the trained model
+    
+    Returns:
+        Dictionary with training history
+    """
+    # Create datasets and dataloaders
+    train_dataset = LyricsDataset(train_features, train_labels)
+    test_dataset = LyricsDataset(test_features, test_labels)
+    
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    
+    # Loss function (CrossEntropyLoss includes softmax)
+    criterion = nn.CrossEntropyLoss(ignore_index=0)  # Ignore padding tokens
+    
+    # Learning rate scheduler with more aggressive reduction for faster convergence
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.3, 
+                                                     patience=3, min_lr=1e-5)
+    
+    # Early stopping parameters
+    best_test_loss = float('inf')
+    patience_counter = 0
+    early_stop_patience = 7  # Stop if no improvement for 7 epochs
+    
+    # Training history
+    history = {
+        'train_loss': [],
+        'train_acc': [],
+        'test_loss': [],
+        'test_acc': []
+    }
+    
+    print(f"\nStarting training for {epochs} epochs...")
+    print(f"Training samples: {len(train_features):,}")
+    print(f"Testing samples: {len(test_features):,}")
+    print(f"Batch size: {batch_size}")
+    
+    for epoch in range(epochs):
+        # Training phase
+        model.train()
+        train_loss = 0.0
+        train_correct = 0
+        train_total = 0
+        
+        for batch_idx, (data, target) in enumerate(train_loader):
+            data, target = data.to(device), target.to(device)
+            
+            # Zero gradients
+            optimizer.zero_grad()
+            
+            # Forward pass
+            output, _ = model(data)
+            loss = criterion(output, target)
+            
+            # Backward pass
+            loss.backward()
+            
+            # Gradient clipping to prevent exploding gradients
+            if clip_grad > 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_grad)
+            
+            optimizer.step()
+            
+            # Statistics
+            train_loss += loss.item()
+            _, predicted = torch.max(output.data, 1)
+            train_total += target.size(0)
+            train_correct += (predicted == target).sum().item()
+            
+            if batch_idx % 100 == 0:
+                print(f'  Epoch {epoch+1}/{epochs}, Batch {batch_idx}/{len(train_loader)}, Loss: {loss.item():.4f}')
+        
+        # Calculate average training metrics
+        avg_train_loss = train_loss / len(train_loader)
+        train_accuracy = 100 * train_correct / train_total
+        
+        # Testing phase
+        model.eval()
+        test_loss = 0.0
+        test_correct = 0
+        test_total = 0
+        
+        with torch.no_grad():
+            for data, target in test_loader:
+                data, target = data.to(device), target.to(device)
+                output, _ = model(data)
+                loss = criterion(output, target)
+                
+                test_loss += loss.item()
+                _, predicted = torch.max(output.data, 1)
+                test_total += target.size(0)
+                test_correct += (predicted == target).sum().item()
+        
+        # Calculate average testing metrics
+        avg_test_loss = test_loss / len(test_loader)
+        test_accuracy = 100 * test_correct / test_total
+        
+        # Store history
+        history['train_loss'].append(avg_train_loss)
+        history['train_acc'].append(train_accuracy)
+        history['test_loss'].append(avg_test_loss)
+        history['test_acc'].append(test_accuracy)
+        
+        # Step the scheduler with validation loss
+        scheduler.step(avg_test_loss)
+        
+        # Early stopping logic
+        if avg_test_loss < best_test_loss:
+            best_test_loss = avg_test_loss
+            patience_counter = 0
+            # Save best model
+            if save_path:
+                best_model_path = save_path.replace('.pth', '_best.pth')
+                torch.save({
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'history': history,
+                    'vocab_size': model.vocab_size,
+                    'embedding_dim': model.embedding_dim,
+                    'hidden_size': model.hidden_size,
+                    'num_layers': model.num_layers,
+                    'dropout': model.dropout,
+                    'epoch': epoch + 1,
+                    'best_test_loss': best_test_loss
+                }, best_model_path)
+        else:
+            patience_counter += 1
+        
+        print(f'Epoch {epoch+1}/{epochs}:')
+        print(f'  Train Loss: {avg_train_loss:.4f}, Train Acc: {train_accuracy:.2f}%')
+        print(f'  Test Loss: {avg_test_loss:.4f}, Test Acc: {test_accuracy:.2f}%')
+        print(f'  Learning Rate: {optimizer.param_groups[0]["lr"]:.6f}')
+        print(f'  Best Test Loss: {best_test_loss:.4f} (Patience: {patience_counter}/{early_stop_patience})')
+        
+        # Early stopping check
+        if patience_counter >= early_stop_patience:
+            print(f'\n⚠ Early stopping triggered after {epoch+1} epochs (no improvement for {early_stop_patience} epochs)')
+            break
+            
+        print()
+    
+    # Save model if path provided
+    if save_path:
+        torch.save({
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'history': history,
+            'vocab_size': model.vocab_size,
+            'embedding_dim': model.embedding_dim,
+            'hidden_size': model.hidden_size,
+            'num_layers': model.num_layers,
+            'dropout': model.dropout
+        }, save_path)
+        print(f"✓ Model saved to: {save_path}")
+    
+    return history
+
+
+def generate_lyrics(model: LyricsLSTM, tokenizer: LyricsTokenizer, seed_text: str,
+                   max_length: int = 50, temperature: float = 1.0, top_k: int = 50) -> str:
+    """
+    Generate lyrics using the trained model with improved sampling.
+    
+    Args:
+        model: Trained LSTM model
+        tokenizer: Fitted tokenizer
+        seed_text: Starting text for generation
+        max_length: Maximum number of words to generate
+        temperature: Sampling temperature (higher = more random)
+        top_k: Only sample from top k most likely words
+    
+    Returns:
+        Generated lyrics as string
+    """
+    model.eval()
+    
+    # Preprocess seed text to match training data format
+    seed_text = seed_text.lower().strip()
+    print(f"Debug: Original seed: '{seed_text}'")
+    
+    # Tokenize seed text
+    seed_sequence = tokenizer.texts_to_sequences([seed_text], add_start_end=False)[0]
+    print(f"Debug: Seed sequence: {seed_sequence}")
+    print(f"Debug: Seed words: {[tokenizer.index_to_word.get(idx, f'UNK({idx})') for idx in seed_sequence]}")
+    
+    # Start with seed sequence
+    generated_sequence = seed_sequence.copy()
+    
+    with torch.no_grad():
+        for step in range(max_length):
+            # Take last n_words as input (assuming n_words=4 from training)
+            input_seq = generated_sequence[-4:] if len(generated_sequence) >= 4 else generated_sequence
+            
+            # Pad if necessary
+            while len(input_seq) < 4:
+                input_seq = [tokenizer.word_to_index[tokenizer.pad_token]] + input_seq
+            
+            # Convert to tensor
+            input_tensor = torch.tensor([input_seq], dtype=torch.long).to(device)
+            
+            # Get prediction
+            output, _ = model(input_tensor)
+            
+            # Apply temperature sampling with top-k filtering
+            output = output[0] / temperature
+            
+            # Top-k filtering - only keep top k predictions
+            if top_k > 0:
+                top_k_values, top_k_indices = torch.topk(output, min(top_k, output.size(-1)))
+                # Set all non-top-k values to very negative (will become ~0 after softmax)
+                output[output < top_k_values[-1]] = -float('inf')
+            
+            # Remove special tokens from prediction (avoid generating padding, start, end during middle)
+            special_indices = [
+                tokenizer.word_to_index.get(tokenizer.pad_token, -1),
+                tokenizer.word_to_index.get(tokenizer.start_token, -1),
+            ]
+            for idx in special_indices:
+                if idx != -1 and idx < len(output):
+                    output[idx] = -float('inf')
+            
+            probabilities = F.softmax(output, dim=0)
+            
+            # Sample next word
+            next_word_idx = torch.multinomial(probabilities, 1).item()
+            
+            # Stop if end token is generated or unknown token
+            if (next_word_idx == tokenizer.word_to_index.get(tokenizer.end_token, -1) or 
+                next_word_idx == tokenizer.word_to_index.get(tokenizer.oov_token, -1)):
+                break
+            
+            generated_sequence.append(next_word_idx)
+            
+            # Debug: show generation progress
+            if step < 10:  # Only show first 10 steps
+                word = tokenizer.index_to_word.get(next_word_idx, f'UNK({next_word_idx})')
+                print(f"Debug: Step {step+1}, predicted word: '{word}' (idx: {next_word_idx})")
+    
+    # Convert back to text
+    generated_text = tokenizer.sequences_to_texts([generated_sequence], skip_special=True)[0]
+    
+    return generated_text
+
+
+def load_model(model_path: str) -> Tuple[LyricsLSTM, optim.Adam, Dict]:
+    """
+    Load a saved model from file.
+    
+    Args:
+        model_path: Path to the saved model file
+    
+    Returns:
+        Tuple of (model, optimizer, metadata)
+    """
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model file not found: {model_path}")
+    
+    # Load checkpoint
+    checkpoint = torch.load(model_path, map_location=device)
+    
+    # Recreate model
+    model = LyricsLSTM(
+        vocab_size=checkpoint['vocab_size'],
+        embedding_dim=checkpoint['embedding_dim'],
+        hidden_size=checkpoint['hidden_size'],
+        num_layers=checkpoint['num_layers'],
+        dropout=checkpoint['dropout']
+    )
+    
+    # Load model state
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model = model.to(device)
+    
+    # Recreate optimizer
+    optimizer = optim.Adam(model.parameters())
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    
+    # Get metadata
+    metadata = {
+        'vocab_size': checkpoint['vocab_size'],
+        'embedding_dim': checkpoint['embedding_dim'],
+        'hidden_size': checkpoint['hidden_size'],
+        'num_layers': checkpoint['num_layers'],
+        'dropout': checkpoint['dropout'],
+        'history': checkpoint.get('history', {}),
+        'model_path': model_path
+    }
+    
+    print(f"✓ Model loaded from: {model_path}")
+    print(f"  - Vocabulary size: {metadata['vocab_size']}")
+    print(f"  - Parameters: {sum(p.numel() for p in model.parameters()):,}")
+    
+    return model, optimizer, metadata
+
+
+def save_model_config(model_config: Dict, tokenizer_path: str, model_path: str) -> None:
+    """
+    Save model configuration and metadata for easy loading.
+    
+    Args:
+        model_config: Dictionary containing model configuration
+        tokenizer_path: Path to the tokenizer file
+        model_path: Path where the model will be saved
+    """
+    config = {
+        'model_path': model_path,
+        'tokenizer_path': tokenizer_path,
+        'model_config': model_config,
+        'created_at': json.dumps({"timestamp": "generated"}),  # Will be filled during actual training
+        'training_completed': False
+    }
+    
+    config_path = os.path.join(MODEL_PATH, "model_config.json")
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=2)
+    
+    print(f"✓ Model configuration saved to: {config_path}")
+
+
+if __name__ == "__main__":
+    # Improved training with better parameters and techniques
+    try:
+        print("="*60)
+        print("TRAINING IMPROVED LYRICS GENERATION MODEL")
+        print("="*60)
+        
+        # Load dataset with improved parameters
+        print("\n1. Preparing dataset with improved parameters...")
+        tokenizer, (train_features, train_labels, test_features, test_labels), metadata = prepare_dataset(
+            vocab_size=25000,        # Much larger vocabulary to reduce <UNK> tokens
+            max_sequence_length=150, # Longer sequences for better context  
+            n_words=4,              # 4-word context window for richer patterns
+            train_split=0.85        # More training data
+        )
+        
+        print(f"\nDataset Statistics:")
+        print(f"  - Vocabulary size: {metadata['vocab_size']:,}")
+        print(f"  - Training samples: {len(train_features):,}")
+        print(f"  - Testing samples: {len(test_features):,}")
+        print(f"  - Context window: 4 words")
+        print(f"  - Max sequence length: 150")
+        
+        # Check vocabulary coverage
+        print(f"\nVocabulary Analysis:")
+        print(f"  - Most common words: {list(tokenizer.word_counts.most_common(10))}")
+        print(f"  - <UNK> token index: {tokenizer.word_to_index.get(tokenizer.oov_token)}")
+        print(f"  - <PAD> token index: {tokenizer.word_to_index.get(tokenizer.pad_token)}")
+        
+        # Create improved model
+        print("\n2. Creating improved model architecture...")
+        model_config = {
+            'vocab_size': metadata['vocab_size'],
+            'embedding_dim': 200,    # Much larger embeddings for better word representations
+            'hidden_size': 512,      # Significantly larger hidden state for more learning capacity
+            'num_layers': 3,         # Deeper network with 3 layers for complex patterns
+            'dropout': 0.2,          # Reduce dropout to allow more learning (was too restrictive)
+            'learning_rate': 0.005   # Higher learning rate for faster convergence
+        }
+        
+        model, optimizer = create_model(**model_config)
+        
+        print(f"Model Architecture:")
+        print(f"  - Embedding dim: {model_config['embedding_dim']}")
+        print(f"  - Hidden size: {model_config['hidden_size']}")  
+        print(f"  - Layers: {model_config['num_layers']}")
+        print(f"  - Dropout: {model_config['dropout']}")
+        print(f"  - Learning rate: {model_config['learning_rate']}")
+        
+        total_params = sum(p.numel() for p in model.parameters())
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f"  - Total parameters: {total_params:,}")
+        print(f"  - Trainable parameters: {trainable_params:,}")
+        
+        # Save model configuration
+        save_path = os.path.join(MODEL_PATH, "lyrics_model.pth")
+        save_model_config(model_config, metadata['tokenizer_path'], save_path)
+        
+        # Use larger subset for better learning with low accuracy
+        subset_size = min(500000, len(train_features))  # 500k samples for much better learning
+        test_subset_size = min(50000, len(test_features))  # 50k for more robust testing
+        
+        print(f"\n3. Training with improved techniques...")
+        print(f"Using {subset_size:,} training samples and {test_subset_size:,} test samples")
+        
+        history = train_model(
+            model, optimizer,
+            train_features[:subset_size],
+            train_labels[:subset_size],
+            test_features[:test_subset_size],
+            test_labels[:test_subset_size],
+            batch_size=128,    # Even larger batch size for more stable learning
+            epochs=25,         # More epochs needed for complex model to converge  
+            save_path=save_path,
+            clip_grad=0.5      # Tighter gradient clipping for stability with larger model
+        )
+        
+        # Save tokenizer alongside model
+        tokenizer_path = os.path.join(MODEL_PATH, "tokenizer.pkl")
+        tokenizer.save(tokenizer_path)
+        
+        # Test generation with improved parameters
+        print("\n4. Testing generation quality...")
+        test_seeds = [
+            "love is",
+            "when the sun", 
+            "dancing in the",
+            "i feel like",
+            "never gonna"
+        ]
+        
+        print("\nGeneration Results (Temperature = 0.8, Top-k = 30):")
+        print("-" * 50)
+        
+        for seed in test_seeds:
+            try:
+                generated = generate_lyrics(
+                    model=model, 
+                    tokenizer=tokenizer, 
+                    seed_text=seed,
+                    max_length=15,
+                    temperature=0.8,  # Balanced creativity vs coherence
+                    top_k=30         # Focus on top predictions
+                )
+                print(f"Seed: '{seed}'")
+                print(f"Generated: '{generated}'")
+                print()
+            except Exception as e:
+                print(f"Error generating for '{seed}': {e}")
+                print()
+        
+        # Print training summary
+        print("\n5. Training Summary:")
+        print("-" * 50)
+        final_train_loss = history['train_loss'][-1]
+        final_train_acc = history['train_acc'][-1]
+        final_test_loss = history['test_loss'][-1] 
+        final_test_acc = history['test_acc'][-1]
+        
+        print(f"Final Training Loss: {final_train_loss:.4f}")
+        print(f"Final Training Accuracy: {final_train_acc:.2f}%")
+        print(f"Final Test Loss: {final_test_loss:.4f}")
+        print(f"Final Test Accuracy: {final_test_acc:.2f}%")
+        
+        # Check for improvement indicators
+        if final_train_acc > 15:  # Expecting better than 15% now
+            print("✓ Training accuracy improved significantly!")
+        else:
+            print("⚠ Training accuracy still low - may need more data or training time")
+        
+        if final_test_loss < final_train_loss * 2:  # Reasonable overfitting
+            print("✓ Model is not severely overfitting")
+        else:
+            print("⚠ Model may be overfitting - consider more regularization")
+        
+        print(f"\n✓ Model saved to: {save_path}")
+        print(f"✓ Tokenizer saved to: {tokenizer_path}")
+        print("\n🎉 Training completed successfully!")
+        
+    except Exception as e:
+        print(f"\n❌ Training failed: {str(e)}")
+        import traceback
+        traceback.print_exc()

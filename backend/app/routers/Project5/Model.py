@@ -1,7 +1,3 @@
-# THIS FILE SHOULD NOT RUN ON THE FRONT END. DO NOT HAVE ANY API CALLS TO IT.
-# THIS FILE IS SOLELY FOR CREATING AND TRAINING LSTM MODEL FOR LYRIC GENERATION.
-# RUNNING THIS FILE OR ITS FUNCTIONS ON THE FRONT END COULD CAUSE COMPUTATIONAL ERRORS WITH THE LIMITED HARDWARE RESOURCES WE HAVE ON RENDER.
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,12 +6,16 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import json
 import os
+import time
+import threading
+import psutil
 from typing import List, Tuple, Dict, Optional
 from DataPreprocessor import LyricsTokenizer, prepare_dataset
 
 # Set up paths
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 MODEL_PATH = os.path.join(DIR_PATH, "model")
+CONFIG_PATH = os.path.join(DIR_PATH, "render_pricing_config.json")
 
 # Create model directory if it doesn't exist
 os.makedirs(MODEL_PATH, exist_ok=True)
@@ -23,6 +23,23 @@ os.makedirs(MODEL_PATH, exist_ok=True)
 # Set device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
+
+# Initialize variables for cost calculation
+peak_memory_usage = 0
+training_active = False
+
+# Function to monitor memory usage in background thread
+def monitor_memory():
+    """Background thread function to track peak memory usage during training"""
+    global peak_memory_usage, training_active
+    process = psutil.Process()
+    while training_active:
+        try:
+            current_memory = process.memory_info().rss / (1024 * 1024 * 1024)  # Convert to GB
+            peak_memory_usage = max(peak_memory_usage, current_memory)
+        except Exception as e:
+            print(f"Warning: Could not read memory: {e}")
+        time.sleep(0.5)  # Check every 500ms
 
 
 class LyricsDataset(Dataset):
@@ -182,7 +199,7 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
                batch_size: int = 128, epochs: int = 25, 
                save_path: str = None, clip_grad: float = 0.5) -> Dict:
     """
-    Train the LSTM model.
+    Train the LSTM model and track training costs.
     
     Args:
         model: The LSTM model
@@ -198,6 +215,19 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
     Returns:
         Dictionary with training history
     """
+    global peak_memory_usage, training_active
+    
+    # Reset cost tracking variables
+    peak_memory_usage = 0
+    training_active = True
+    
+    # Start memory monitoring in background thread
+    monitor_thread = threading.Thread(target=monitor_memory, daemon=True)
+    monitor_thread.start()
+    
+    # Record start time
+    train_start_time = time.time()
+    
     # Create datasets and dataloaders
     train_dataset = LyricsDataset(train_features, train_labels)
     test_dataset = LyricsDataset(test_features, test_labels)
@@ -222,7 +252,10 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
         'train_loss': [],
         'train_acc': [],
         'test_loss': [],
-        'test_acc': []
+        'test_acc': [],
+        'actual_training_seconds': 0,
+        'actual_training_hours': 0,
+        'peak_memory_gb': 0
     }
     
     print(f"\nStarting training for {epochs} epochs...")
@@ -348,6 +381,58 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
         }, save_path)
         print(f"✓ Model saved to: {save_path}")
     
+    # Stop memory monitoring
+    training_active = False
+    monitor_thread.join(timeout=1)
+    
+    # Calculate actual training time and cost
+    train_end_time = time.time()
+    actual_training_seconds = train_end_time - train_start_time
+    actual_training_hours = actual_training_seconds / 3600
+    
+    # Store actual metrics in history
+    history['actual_training_seconds'] = actual_training_seconds
+    history['actual_training_hours'] = actual_training_hours
+    history['peak_memory_gb'] = peak_memory_usage
+    
+    # Calculate actual training cost
+    try:
+        with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+            pricing_config = json.load(f)
+        
+        # Calculate compute cost per hour based on actual resource usage
+        compute_cost_per_hour = (
+            pricing_config.get("cost_per_cpu_per_month", 0) * (1 / 720)  # Convert monthly to hourly
+        ) + (
+            pricing_config.get("cost_per_gb_ram_per_month", 0) * (1 / 720) * peak_memory_usage
+        )
+        
+        # Calculate storage cost
+        storage_cost_per_gb = pricing_config.get("additional_storage_cost_per_gb", 0.10)
+        model_size_gb = 0.050  # Model checkpoint ~50MB
+        storage_cost = storage_cost_per_gb * model_size_gb
+        
+        # Total actual training cost
+        actual_training_cost = (compute_cost_per_hour * actual_training_hours) + storage_cost
+        
+        # Store cost in config for frontend access
+        pricing_config["actual_training_cost"] = actual_training_cost
+        pricing_config["actual_training_hours"] = actual_training_hours
+        pricing_config["peak_memory_gb"] = peak_memory_usage
+        
+        # Save updated config
+        with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
+            json.dump(pricing_config, f, indent=2)
+        
+        print(f"\n📊 Training Cost Summary:")
+        print(f"   Actual training time: {actual_training_hours:.2f} hours ({actual_training_seconds:.0f} seconds)")
+        print(f"   Peak memory usage: {peak_memory_usage:.2f} GB")
+        print(f"   Actual training cost: ${actual_training_cost:.6f}")
+        print(f"   ✓ Cost saved to {CONFIG_PATH}")
+        
+    except Exception as e:
+        print(f"⚠ Warning: Could not calculate actual training cost: {e}")
+    
     return history
 
 
@@ -367,6 +452,22 @@ def generate_lyrics(model: LyricsLSTM, tokenizer: LyricsTokenizer, seed_text: st
     Returns:
         Generated lyrics as string
     """
+    # Define word blacklist - words to skip during generation
+    # These words will be skipped and not count toward the word limit
+    WORD_BLACKLIST = {
+        # Inappropriate language (add more as needed)
+        'damn', 'hell', 'crap', 'shit', 'fuck', 'ass', 'bitch', 'bastard', 
+        'nigga', 'nigger', 'niggas', 'niggers', 'fag', 'fags', 'faggot', 'faggots',
+        # Structural elements that shouldn't be in lyrics
+        'verse', 'chorus', 'intro', 'outro', 'bridge', 'hook', 'pre-chorus',
+        'verse1', 'verse2', 'verse3', 'chorus1', 'chorus2',
+        '[verse', '[chorus', '[bridge', '[intro', '[outro',  # Bracketed versions
+        # Common filler that degrades quality
+        'oh', 'ah', 'hmm', 'uh', 'um', 'hey', 'yeah', 'yea', 'nah', 'na',
+        # Numbers that shouldn't appear alone (often part of "verse 2" type patterns)
+        '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+    }
+    
     model.eval()
     
     # Preprocess seed text to match training data format
@@ -378,10 +479,30 @@ def generate_lyrics(model: LyricsLSTM, tokenizer: LyricsTokenizer, seed_text: st
     print(f"Debug: Seed sequence: {seed_sequence}")
     print(f"Debug: Seed words: {[tokenizer.index_to_word.get(idx, f'UNK({idx})') for idx in seed_sequence]}")
     
+    # Debug: Print tokenizer info
+    print(f"Debug: Tokenizer vocab_size: {tokenizer.vocab_size}")
+    print(f"Debug: Tokenizer end_token: '{tokenizer.end_token}'")
+    print(f"Debug: Tokenizer end_token index: {tokenizer.word_to_index.get(tokenizer.end_token, 'NOT FOUND')}")
+    print(f"Debug: Tokenizer oov_token: '{tokenizer.oov_token}'")
+    print(f"Debug: Tokenizer oov_token index: {tokenizer.word_to_index.get(tokenizer.oov_token, 'NOT FOUND')}")
+    
+    # Convert blacklist words to indices
+    blacklist_indices = set()
+    for word in WORD_BLACKLIST:
+        idx = tokenizer.word_to_index.get(word, -1)
+        if idx != -1:
+            blacklist_indices.add(idx)
+    
+    print(f"Debug: Blacklist has {len(blacklist_indices)} words in vocabulary")
+    
     # Start with seed sequence
     generated_sequence = seed_sequence.copy()
     
     with torch.no_grad():
+        words_added = 0
+        skipped_unknown = 0
+        hit_end_token = False
+        
         for step in range(max_length):
             # Take last n_words as input (assuming n_words=4 from training)
             input_seq = generated_sequence[-4:] if len(generated_sequence) >= 4 else generated_sequence
@@ -396,8 +517,16 @@ def generate_lyrics(model: LyricsLSTM, tokenizer: LyricsTokenizer, seed_text: st
             # Get prediction
             output, _ = model(input_tensor)
             
+            # Debug on first iteration
+            if step == 0:
+                print(f"Debug: Model output shape: {output.shape}")
+                print(f"Debug: Model vocab_size attr: {model.vocab_size}")
+            
+            # Get first batch element and clamp to valid vocabulary size
+            output = output[0, :tokenizer.vocab_size]
+            
             # Apply temperature sampling with top-k filtering
-            output = output[0] / temperature
+            output = output / temperature
             
             # Top-k filtering - only keep top k predictions
             if top_k > 0:
@@ -409,27 +538,60 @@ def generate_lyrics(model: LyricsLSTM, tokenizer: LyricsTokenizer, seed_text: st
             special_indices = [
                 tokenizer.word_to_index.get(tokenizer.pad_token, -1),
                 tokenizer.word_to_index.get(tokenizer.start_token, -1),
+                tokenizer.word_to_index.get(tokenizer.end_token, -1),  # Also exclude end token from generation
             ]
             for idx in special_indices:
                 if idx != -1 and idx < len(output):
                     output[idx] = -float('inf')
             
+            # Remove blacklisted words from prediction
+            for idx in blacklist_indices:
+                if idx < len(output):
+                    output[idx] = -float('inf')
+            
+            # Apply softmax to get probabilities
             probabilities = F.softmax(output, dim=0)
             
-            # Sample next word
-            next_word_idx = torch.multinomial(probabilities, 1).item()
+            # Handle NaN in probabilities (can happen with all -inf values)
+            if torch.isnan(probabilities).any():
+                # If all values are filtered out, use uniform distribution over remaining indices
+                probabilities = torch.ones_like(output)
+                probabilities[output == -float('inf')] = 0
+                probabilities = probabilities / probabilities.sum()
             
-            # Stop if end token is generated or unknown token
-            if (next_word_idx == tokenizer.word_to_index.get(tokenizer.end_token, -1) or 
-                next_word_idx == tokenizer.word_to_index.get(tokenizer.oov_token, -1)):
-                break
+            # Sample next word
+            try:
+                next_word_idx = torch.multinomial(probabilities, 1).item()
+            except RuntimeError:
+                # If sampling fails (e.g., no valid probabilities), pick the highest probability
+                next_word_idx = torch.argmax(probabilities).item()
+            
+            # Skip unknown tokens (oov_token) - continue generating instead of stopping
+            if next_word_idx == tokenizer.word_to_index.get(tokenizer.oov_token, -1):
+                skipped_unknown += 1
+                if step < 15:
+                    print(f"Debug: Step {step+1}, SKIPPED UNKNOWN TOKEN - continuing")
+                continue
+            
+            # Skip blacklisted words - continue generating without counting toward limit
+            if next_word_idx in blacklist_indices:
+                word = tokenizer.index_to_word.get(next_word_idx, f'UNK({next_word_idx})')
+                if step < 15:
+                    print(f"Debug: Step {step+1}, SKIPPED BLACKLISTED WORD '{word}' - continuing")
+                continue
             
             generated_sequence.append(next_word_idx)
+            words_added += 1
             
             # Debug: show generation progress
             if step < 10:  # Only show first 10 steps
                 word = tokenizer.index_to_word.get(next_word_idx, f'UNK({next_word_idx})')
                 print(f"Debug: Step {step+1}, predicted word: '{word}' (idx: {next_word_idx})")
+        
+        # Print generation statistics
+        print(f"Debug: Loop completed after {step+1} iterations")
+        print(f"Debug: Words added: {words_added}, Skipped unknown: {skipped_unknown}, Hit end token: {hit_end_token}")
+        print(f"Debug: Generated {len(generated_sequence) - len(seed_sequence)} new words (total: {len(generated_sequence)})")
     
     # Convert back to text
     generated_text = tokenizer.sequences_to_texts([generated_sequence], skip_special=True)[0]

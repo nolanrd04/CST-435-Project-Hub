@@ -1,0 +1,14 @@
+{
+  "model_path": "/mnt/c/Users/herna/Documents/GitHub/nlp-react/CST-435-Project-Hub/backend/app/routers/Project5/model/lyrics_model.pth",
+  "tokenizer_path": "/mnt/c/Users/herna/Documents/GitHub/nlp-react/CST-435-Project-Hub/backend/app/routers/Project5/data/lyrics_tokenizer.pkl",
+  "model_config": {
+    "vocab_size": 25000,
+    "embedding_dim": 200,
+    "hidden_size": 512,
+    "num_layers": 3,
+    "dropout": 0.2,
+    "learning_rate": 0.005
+  },
+  "created_at": "{\"timestamp\": \"generated\"}",
+  "training_completed": false
+}

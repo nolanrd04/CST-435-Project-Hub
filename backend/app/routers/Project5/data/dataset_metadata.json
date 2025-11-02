@@ -11,5 +11,5 @@
   "oov_token_id": 1,
   "start_token_id": 2,
   "end_token_id": 3,
-  "tokenizer_path": "C:\\Users\\nolan\\Desktop\\GCU\\Classes Year 4\\CST435\\hub-app\\backend\\app\\routers\\Project5\\data\\lyrics_tokenizer.pkl"
+  "tokenizer_path": "/mnt/c/Users/herna/Documents/GitHub/nlp-react/CST-435-Project-Hub/backend/app/routers/Project5/data/lyrics_tokenizer.pkl"
 }

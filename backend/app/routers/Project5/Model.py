@@ -245,7 +245,7 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
     # Early stopping parameters
     best_test_loss = float('inf')
     patience_counter = 0
-    early_stop_patience = 7  # Stop if no improvement for 7 epochs
+    early_stop_patience = 10  # Stop if no improvement for 10 epochs
     
     # Training history
     history = {

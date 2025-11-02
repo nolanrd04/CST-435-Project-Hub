@@ -89,7 +89,7 @@ function TextGenerator() {
             transition: 'all 0.3s ease'
           }}
         >
-          ✨ Text Generator
+          Text Generator
         </button>
         <button
           onClick={() => setActiveTab('cost')}
@@ -105,7 +105,7 @@ function TextGenerator() {
             transition: 'all 0.3s ease'
           }}
         >
-          💰 Cost Analysis
+          Cost Analysis
         </button>
       </div>
 
@@ -158,7 +158,7 @@ function TextGenerator() {
       {/* Seed Text Section */}
       <div className="form-group">
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-          <span>📝</span>
+          
           Seed Text <span style={{ color: '#e53e3e' }}>*</span>
         </label>
         <textarea
@@ -175,7 +175,7 @@ function TextGenerator() {
           }}
         />
         <p style={{ fontSize: '12px', color: '#718096', marginTop: '8px' }}>
-          💡 The longer and more descriptive your seed text, the better the generated output
+          The longer and more descriptive your seed text, the better the generated output
         </p>
       </div>
 
@@ -188,7 +188,7 @@ function TextGenerator() {
           padding: '20px'
         }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontWeight: '600', color: '#2d3748' }}>
-            <span style={{ fontSize: '18px' }}>📊</span>
+            <span style={{ fontSize: '18px' }}></span>
             Number of Words
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -231,7 +231,7 @@ function TextGenerator() {
           padding: '20px'
         }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontWeight: '600', color: '#2d3748' }}>
-            <span style={{ fontSize: '18px' }}>🔥</span>
+            <span style={{ fontSize: '18px' }}></span>
             Temperature (Creativity)
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -311,7 +311,7 @@ function TextGenerator() {
       {generatedText && (
         <div className="output">
           <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '24px' }}>🎯</span>
+            <span style={{ fontSize: '24px' }}></span>
             Generated Text
             <span style={{
               fontSize: '11px',

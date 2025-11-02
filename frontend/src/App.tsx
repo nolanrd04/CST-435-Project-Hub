@@ -90,7 +90,7 @@ function App() {
             <Route path="/text-generator" element={<TextGenerator />} />
             <Route path="/image-classifier" element={<ImageClassifier />} />
             <Route path="/sentiment-analyzer" element={<SentimentAnalyzer />} />
-            <Route path="/Project5" element={<RNN />} />
+            <Route path="/Project5" element={<RNN activeTab="song-generator" />} />
           </Routes>
         </main>
       </div>

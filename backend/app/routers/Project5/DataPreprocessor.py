@@ -1,13 +1,9 @@
-# THIS FILE SHOULD NOT RUN ON THE FRONT END. DO NOT HAVE ANY API CALLS TO IT.
-# THIS FILE IS SOLELY FOR TOKENIZING AND PREPROCESSING DATASET FOR MODEL TRAINING.
-# RUNNING THIS FILE OR ITS FUNCTIONS ON THE FRONT END COULD CAUSE COMPUTATIONAL ERRORS WITH THE LIMITED HARDWARE RESOURCES WE HAVE ON RENDER.
-
 import os
+import pickle
 import pickle
 import json
 from collections import Counter
 from typing import List, Tuple, Dict, Optional
-from DataImporter import import_spotify_dataset
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = os.path.join(DIR_PATH, "data")
@@ -301,7 +297,8 @@ def split_dataset(features: List[List[int]], labels: List[int],
 
 
 def prepare_dataset(vocab_size: int = 25000, max_sequence_length: int = 150, 
-                   n_words: int = 4, train_split: float = 0.85) -> Tuple[LyricsTokenizer, Tuple[List[List[int]], List[int], List[List[int]], List[int]], Dict]:
+                   n_words: int = 4, train_split: float = 0.85,
+                   lyrics_file: Optional[str] = None) -> Tuple[LyricsTokenizer, Tuple[List[List[int]], List[int], List[List[int]], List[int]], Dict]:
     """
     Prepare the complete dataset for training with features and labels.
     
@@ -310,6 +307,7 @@ def prepare_dataset(vocab_size: int = 25000, max_sequence_length: int = 150,
         max_sequence_length: Maximum length for sequences (will pad/truncate)
         n_words: Number of words to use as features for next-word prediction
         train_split: Fraction of data to use for training (0.0 to 1.0)
+        lyrics_file: Path to preprocessed lyrics file. If None, looks for 'lyrics_preprocessed.txt' in data folder
         
     Returns:
         Tuple of (tokenizer, (train_features, train_labels, test_features, test_labels), metadata)
@@ -318,8 +316,17 @@ def prepare_dataset(vocab_size: int = 25000, max_sequence_length: int = 150,
     print("PREPARING DATASET FOR TRAINING")
     print("="*50)
     
-    # Import data if it doesn't exist
-    lyrics_file = import_spotify_dataset()
+    # Determine lyrics file path
+    if lyrics_file is None:
+        lyrics_file = os.path.join(DATA_PATH, "lyrics_preprocessed.txt")
+    
+    # Check if file exists
+    if not os.path.exists(lyrics_file):
+        raise FileNotFoundError(
+            f"Preprocessed lyrics file not found at: {lyrics_file}\n"
+            f"Please run DataImporter.py first to generate the preprocessed lyrics file.\n"
+            f"Usage: python DataImporter.py"
+        )
     
     # Load preprocessed lyrics
     print(f"\nLoading lyrics from: {lyrics_file}")

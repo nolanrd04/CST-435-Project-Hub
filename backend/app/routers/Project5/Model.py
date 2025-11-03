@@ -466,6 +466,8 @@ def generate_lyrics(model: LyricsLSTM, tokenizer: LyricsTokenizer, seed_text: st
         'oh', 'ah', 'hmm', 'uh', 'um', 'hey', 'yeah', 'yea', 'nah', 'na',
         # Numbers that shouldn't appear alone (often part of "verse 2" type patterns)
         '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+        # Unknown token representation
+        '<unk>', 'unk', '<UNK>',
     }
     
     model.eval()
@@ -595,6 +597,11 @@ def generate_lyrics(model: LyricsLSTM, tokenizer: LyricsTokenizer, seed_text: st
     
     # Convert back to text
     generated_text = tokenizer.sequences_to_texts([generated_sequence], skip_special=True)[0]
+    
+    # Post-process to remove <UNK> tokens from the final output
+    generated_text = generated_text.replace('<UNK>', '').strip()
+    # Clean up multiple spaces
+    generated_text = ' '.join(generated_text.split())
     
     return generated_text
 

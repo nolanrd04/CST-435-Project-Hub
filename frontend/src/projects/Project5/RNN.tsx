@@ -679,60 +679,9 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
                 </div>
               )}
 
-              {/* Model Specifications */}
               {costReport && (
                 <>
-                  <div style={{
-                    backgroundColor: '#f8f9ff',
-                    border: '2px solid #667eea',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    marginBottom: '20px'
-                  }}>
-                    <h3 style={{ margin: '0 0 15px 0', color: '#667eea' }}>Model Specifications</h3>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                      gap: '12px'
-                    }}>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>Vocabulary Size</div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '4px' }}>
-                          {costReport.model_specs.vocab_size.toLocaleString()}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>Embedding Dimension</div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '4px' }}>
-                          {costReport.model_specs.embedding_dim}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>Hidden Size</div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '4px' }}>
-                          {costReport.model_specs.hidden_size}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>Layers</div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '4px' }}>
-                          {costReport.model_specs.num_layers}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>Dataset Size</div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '4px' }}>
-                          {(costReport.model_specs.dataset_size_gb * 1024).toFixed(1)} MB
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>Model Size</div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '4px' }}>
-                          {costReport.model_specs.model_size_mb.toFixed(1)} MB
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  
 
                   {/* Training Configuration */}
                   <div style={{
@@ -781,6 +730,86 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
       )}
       {activeTab === 'requirements' && (
         <div style={{ padding: '20px' }}>
+          {/* Description */}
+          <h2 style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              color: 'white',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px'
+            }}>
+              📋
+            </span>
+            Project Description
+          </h2>
+
+          {/* General Description */}
+          <div style={{
+            backgroundColor: '#f8f9ff',
+            border: '2px solid #667eea',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', color: '#667eea' }}>General Description</h3>
+            <div style={{ marginLeft: '20px', lineHeight: '1.8', color: '#333' }}>
+              <div>This Project uses a Recurrent Neural Network (RNN) architecture to generate lyrics. 
+                This model is trained on a large variety of song lyrics in order to generate new lyrics
+                from a given seed text. The initial dataset, downloaded from Kagglehub at 
+                <code style={{ fontFamily: 'monospace', backgroundColor: '#f5f5f5', padding: '2px 6px', borderRadius: '3px' }}>
+                  kagglehub.dataset_download("devdope/900k-spotify")
+                </code>
+                , contains over 900,000 song lyrics from various artists and genres. We trimmed down the dataset to only include lyrics
+                and converted the json to a txt file that capped out at 20mb. This means that the data was greatly limited for training,
+                due to device hardware and time limitations.
+              </div>
+            </div>
+          </div>
+
+          {/* Pipeline */}
+          <div style={{
+            backgroundColor: '#f8f9ff',
+            border: '2px solid #667eea',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', color: '#667eea' }}>Project Pipeline</h3>
+            <div style={{ marginLeft: '20px', lineHeight: '1.8', color: '#333' }}>
+              <div>1. Run DataPreprocessor.py to download the kaggle dataset. This will download the json, extract the text, preprocess it, and save the "lyrics_preprocessed.txt" file for training.</div>
+              <div>2. Run configure_pricing.py if using a different hosting service than Render. We are using Render so this step can be skipped. This file will create a json file of numbers to use for the cost analysis.</div>
+              <div>3. Run train_model.py to train the LSTM model on the preprocessed lyrics dataset. This will generate a .pth model for generating song lyrics. This file will also handle the training cost calculations.</div>              
+            </div>
+          </div>
+
+          {/* Errors and Issues */}
+          <div style={{
+            backgroundColor: '#f8f9ff',
+            border: '2px solid #667eea',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', color: '#667eea' }}>Possible Issues</h3>
+            <div style={{ marginLeft: '20px', lineHeight: '1.8', color: '#333' }}>
+              <div>There are some issues when it comes to the output of this dataset. The first issue is that the vocabulary of training was severely limited due to hardware limitations of our computers.
+                This causes some tokens (words) to be unrecognizeable during generation which can lead to nonsensical lyrics. Another issue is that because we don't use transformers, grammar management
+                is very poor which also can lead to nonsensical lyrics.
+                The final issue to discuss is the dataset itself. The dataset contains song lyrics, which means a lot of people were freely expressing themselves and were not concerened about proper english sentences.
+                That means the text generator might not generate coherent thoughts.
+                In order to improve the model we could increase the training dataset, increase the vocabulary, and add grammar management (such as no repeated words, 
+                nouns and verbs in correct order, etc.).
+              </div>
+            </div>
+          </div>
+
+
+          {/* Requirements */}
           <h2 style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{
               background: 'linear-gradient(135deg, #667eea, #764ba2)',

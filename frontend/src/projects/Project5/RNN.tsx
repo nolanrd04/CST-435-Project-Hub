@@ -54,7 +54,7 @@ interface GenerateLyricsResponse {
 }
 
 function RNN({ activeTab: initialTab }: { activeTab?: string }) {
-  const [activeTab, setActiveTab] = useState(initialTab || 'generator');
+  const [activeTab, setActiveTab] = useState(initialTab || 'generator' || 'youtube' || 'song-generator' || 'training-cost' || 'requirements');
   const [costSummary, setCostSummary] = useState<CostSummary | null>(null);
   const [costReport, setCostReport] = useState<TrainingCostReport | null>(null);
   const [actualCost, setActualCost] = useState<ActualCost | null>(null);
@@ -210,6 +210,22 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
           }}
         >
           Description and Requirements
+        </button>
+        <button
+          onClick={() => setActiveTab('youtube')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: activeTab === 'youtube' ? '#667eea' : 'transparent',
+            color: activeTab === 'youtube' ? 'white' : '#666',
+            border: 'none',
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'youtube' ? 'bold' : 'normal',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          YouTube Showcase
         </button>
       </div>
 
@@ -916,6 +932,12 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
             </ul>
           </div>
         </div>
+      )}
+      {/* YouTube showcase */}
+      {activeTab === 'youtube' && (
+        <a href="https://youtu.be/v3rsRGiNJSA" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#4f46e5', fontWeight: 'bold', fontSize: '18px' }}>
+          Open YouTube Video
+        </a>
       )}
     </div>
   );

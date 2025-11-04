@@ -121,6 +121,8 @@ class ModelMetadata(BaseModel):
     model_loaded: bool = False
     model_architecture: dict = None
     vocabulary_size: int = 0
+    parameter_count: int = 0
+    parameter_breakdown: dict = None
     special_tokens: dict = None
     model_file: str = None
     tokenizer_file: str = None
@@ -628,6 +630,8 @@ def get_lyric_generator_info():
                 model_loaded=info.get("model_loaded", False),
                 model_architecture=info.get("model_architecture"),
                 vocabulary_size=info.get("vocabulary_size", 0),
+                parameter_count=info.get("parameter_count", 0),
+                parameter_breakdown=info.get("parameter_breakdown"),
                 special_tokens=info.get("special_tokens"),
                 model_file=info.get("model_file"),
                 tokenizer_file=info.get("tokenizer_file"),

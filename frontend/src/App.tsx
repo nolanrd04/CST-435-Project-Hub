@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import TextGenerator from './projects/projectRNN/TextGenerator.tsx';
 import ImageClassifier from './projects/Project3/ImageClassifier.tsx';
 import SentimentAnalyzer from './projects/Project4/SentimentAnalyzer.tsx';
 import RNN from './projects/Project5/RNN.tsx';
+import GeneticAlgorithmPage from './projects/projectGA/GeneticAlgorithm.tsx';
 import './App.css';
 
 function App() {
@@ -67,6 +68,11 @@ function App() {
 
               </li>
               <li>
+                <Link to="/genetic-algorithm" className="button-link-to-projects">
+                  Genetic Algorithm (Nolan's Personal)
+                </Link>
+              </li>
+              <li>
                 <Link to="/image-classifier" className="button-link-to-projects">
                   Project3: Image Classifier
                 </Link>
@@ -91,6 +97,7 @@ function App() {
             <Route path="/image-classifier" element={<ImageClassifier />} />
             <Route path="/sentiment-analyzer" element={<SentimentAnalyzer />} />
             <Route path="/Project5" element={<RNN activeTab="song-generator" />} />
+            <Route path="/genetic-algorithm" element={<GeneticAlgorithmPage />} />
           </Routes>
         </main>
       </div>

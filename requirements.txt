@@ -5,7 +5,7 @@ python-multipart
 pydantic
 
 # Machine Learning & Data Processing
-tensorfl
+tensorflow
 keras
 kagglehub
 torch

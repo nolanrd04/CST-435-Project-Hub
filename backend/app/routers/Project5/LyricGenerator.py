@@ -247,6 +247,8 @@ class SongLyricGenerator:
                     "dropout": self.model.dropout
                 },
                 "vocabulary_size": len(self.tokenizer.word_to_index) if self.tokenizer else 0,
+                "parameter_count": self.model.get_parameter_count(),
+                "parameter_breakdown": self.model.get_parameter_breakdown(),
                 "special_tokens": {
                     "pad_token": self.tokenizer.pad_token if self.tokenizer else None,
                     "oov_token": self.tokenizer.oov_token if self.tokenizer else None,

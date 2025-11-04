@@ -71,10 +71,16 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
   const [generationLoading, setGenerationLoading] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
+  // Model info state
+  const [modelInfo, setModelInfo] = useState<any | null>(null);
+  const [modelInfoLoading, setModelInfoLoading] = useState(false);
+
   // Fetch cost analysis on component mount
   useEffect(() => {
     if (activeTab === 'training-cost') {
       fetchCostAnalysis();
+    } else if (activeTab === 'requirements') {
+      fetchModelInfo();
     }
   }, [activeTab]);
 
@@ -105,6 +111,27 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
       console.error('Error fetching cost analysis:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchModelInfo = async () => {
+    setModelInfoLoading(true);
+    try {
+      const apiMode = localStorage.getItem('API_MODE');
+      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
+      
+      const response = await fetch(`${apiUrl}/project5/lyric-generator-info`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch model info');
+      }
+
+      const info = await response.json();
+      setModelInfo(info);
+    } catch (err) {
+      console.error('Error fetching model info:', err);
+    } finally {
+      setModelInfoLoading(false);
     }
   };
 
@@ -763,6 +790,120 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
             </span>
             Project Description
           </h2>
+
+          {/* Model Architecture & Statistics */}
+          {modelInfoLoading && (
+            <div style={{
+              backgroundColor: '#f8f9ff',
+              border: '2px solid #667eea',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '20px',
+              textAlign: 'center',
+              color: '#667eea'
+            }}>
+              Loading model information...
+            </div>
+          )}
+
+          {modelInfo && modelInfo.success && (
+            <div style={{
+              backgroundColor: '#f0f4ff',
+              border: '2px solid #667eea',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#667eea', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Model Architecture & Statistics
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
+                {/* Parameter Count */}
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Total Parameters</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#667eea' }}>
+                    {modelInfo.parameter_count?.toLocaleString() || 'N/A'}
+                  </div>
+                </div>
+
+                {/* Vocabulary Size */}
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Vocabulary Size</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#764ba2' }}>
+                    {modelInfo.vocabulary_size?.toLocaleString() || 'N/A'}
+                  </div>
+                </div>
+
+                {/* Embedding Dimension */}
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Embedding Dimension</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#48bb78' }}>
+                    {modelInfo.model_architecture?.embedding_dim || 'N/A'}
+                  </div>
+                </div>
+
+                {/* Hidden Size */}
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Hidden Size</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ed8936' }}>
+                    {modelInfo.model_architecture?.hidden_size || 'N/A'}
+                  </div>
+                </div>
+
+                {/* Number of Layers */}
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Number of Layers</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f56565' }}>
+                    {modelInfo.model_architecture?.num_layers || 'N/A'}
+                  </div>
+                </div>
+
+                {/* Device */}
+                <div style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Device</div>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#38a169' }}>
+                    {modelInfo.device || 'N/A'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* General Description */}
           <div style={{

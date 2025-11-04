@@ -42,6 +42,109 @@ def monitor_memory():
         time.sleep(0.5)  # Check every 500ms
 
 
+class TrainingTimeEstimator:
+    """
+    Hybrid approach for estimating remaining training time.
+    Uses EMA for batch timing initially, then switches to actual epoch times after warmup.
+    """
+    
+    def __init__(self, total_epochs: int, warmup_epochs: int = 3):
+        self.total_epochs = total_epochs
+        self.warmup_epochs = warmup_epochs
+        self.epoch_times = []
+        self.batch_times = []
+        self.ema_batch_time = None
+        self.ema_alpha = 0.15  # EMA smoothing factor
+        self.validation_times = []
+        
+    def record_batch_time(self, batch_time: float):
+        """Record a batch execution time and update EMA"""
+        self.batch_times.append(batch_time)
+        
+        if self.ema_batch_time is None:
+            self.ema_batch_time = batch_time
+        else:
+            # Exponential Moving Average: weight recent values more heavily
+            self.ema_batch_time = (self.ema_alpha * batch_time) + ((1 - self.ema_alpha) * self.ema_batch_time)
+    
+    def record_epoch_time(self, epoch_time: float, validation_time: float):
+        """Record full epoch time and validation time"""
+        self.epoch_times.append(epoch_time)
+        self.validation_times.append(validation_time)
+    
+    def estimate_remaining_time(self, current_epoch: int, batches_processed: int, total_batches: int) -> Dict[str, str]:
+        """
+        Estimate remaining training time using hybrid approach.
+        
+        Args:
+            current_epoch: Current epoch number (0-indexed)
+            batches_processed: Batches completed in current epoch
+            total_batches: Total batches per epoch
+            
+        Returns:
+            Dictionary with estimates
+        """
+        remaining_epochs = self.total_epochs - current_epoch - 1
+        remaining_batches_this_epoch = total_batches - batches_processed
+        
+        if remaining_epochs < 0:
+            remaining_epochs = 0
+        
+        # Strategy based on training progress
+        if current_epoch < self.warmup_epochs or len(self.epoch_times) == 0:
+            # Warmup phase: use batch-level EMA
+            if self.ema_batch_time is None:
+                return {'optimistic': 'N/A', 'realistic': 'N/A', 'pessimistic': 'N/A'}
+            
+            # Estimate this epoch
+            this_epoch_estimate = (self.ema_batch_time * remaining_batches_this_epoch) + (self.validation_times[-1] if self.validation_times else self.ema_batch_time * 5)
+            
+            # Average across remaining epochs
+            remaining_time = this_epoch_estimate + (self.ema_batch_time * total_batches + (self.validation_times[-1] if self.validation_times else self.ema_batch_time * 5)) * remaining_epochs
+            
+        else:
+            # Post-warmup: use actual epoch times
+            avg_epoch_time = sum(self.epoch_times) / len(self.epoch_times)
+            
+            # Detect if we're slowing down (learning rate decrease effects)
+            if len(self.epoch_times) >= 2:
+                recent_avg = sum(self.epoch_times[-2:]) / 2
+                trend_factor = recent_avg / avg_epoch_time if avg_epoch_time > 0 else 1.0
+            else:
+                trend_factor = 1.0
+            
+            # Estimate this epoch
+            this_epoch_estimate = (self.ema_batch_time * remaining_batches_this_epoch) + (self.validation_times[-1] if self.validation_times else avg_epoch_time * 0.3)
+            
+            # Remaining epochs with trend adjustment
+            remaining_time = this_epoch_estimate + (avg_epoch_time * trend_factor * remaining_epochs)
+        
+        # Generate estimates with confidence intervals
+        optimistic_time = remaining_time * 0.8   # 20% faster
+        realistic_time = remaining_time
+        pessimistic_time = remaining_time * 1.2  # 20% slower
+        
+        return {
+            'optimistic': self._format_time(optimistic_time),
+            'realistic': self._format_time(realistic_time),
+            'pessimistic': self._format_time(pessimistic_time),
+            'remaining_epochs': remaining_epochs,
+            'in_warmup': current_epoch < self.warmup_epochs
+        }
+    
+    @staticmethod
+    def _format_time(seconds: float) -> str:
+        """Format seconds into human-readable format"""
+        if seconds < 60:
+            return f"{seconds:.0f}s"
+        elif seconds < 3600:
+            minutes = seconds / 60
+            return f"{minutes:.1f}m"
+        else:
+            hours = seconds / 3600
+            return f"{hours:.2f}h"
+
+
 class LyricsDataset(Dataset):
     """
     PyTorch Dataset for lyrics training data.
@@ -146,6 +249,28 @@ class LyricsLSTM(nn.Module):
         """Unfreeze embedding weights (set trainable=True)"""
         self.embedding.weight.requires_grad = True
         print("Embedding weights unfrozen")
+    
+    def get_parameter_count(self) -> int:
+        """
+        Calculate the total number of trainable parameters in the model.
+        
+        Returns:
+            Total number of parameters as an integer
+        """
+        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+    
+    def get_parameter_breakdown(self) -> Dict[str, int]:
+        """
+        Get a breakdown of parameters by layer.
+        
+        Returns:
+            Dictionary with layer names and their parameter counts
+        """
+        breakdown = {}
+        for name, param in self.named_parameters():
+            if param.requires_grad:
+                breakdown[name] = param.numel()
+        return breakdown
 
 
 def create_model(vocab_size: int, embedding_dim: int = 200, hidden_size: int = 512,
@@ -182,7 +307,10 @@ def create_model(vocab_size: int, embedding_dim: int = 200, hidden_size: int = 5
     # Create Adam optimizer
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
-    print(f"✓ Model created with {sum(p.numel() for p in model.parameters()):,} parameters")
+    # Get parameter count
+    total_params = model.get_parameter_count()
+    
+    print(f"✓ Model created with {total_params:,} parameters")
     print(f"  - Vocabulary size: {vocab_size}")
     print(f"  - Embedding dimension: {embedding_dim}")
     print(f"  - Hidden size: {hidden_size}")
@@ -228,6 +356,9 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
     # Record start time
     train_start_time = time.time()
     
+    # Initialize time estimator
+    time_estimator = TrainingTimeEstimator(total_epochs=epochs, warmup_epochs=3)
+    
     # Create datasets and dataloaders
     train_dataset = LyricsDataset(train_features, train_labels)
     test_dataset = LyricsDataset(test_features, test_labels)
@@ -264,6 +395,8 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
     print(f"Batch size: {batch_size}")
     
     for epoch in range(epochs):
+        epoch_start_time = time.time()
+
         # Training phase
         model.train()
         train_loss = 0.0
@@ -271,6 +404,7 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
         train_total = 0
         
         for batch_idx, (data, target) in enumerate(train_loader):
+            batch_start_time = time.time()
             data, target = data.to(device), target.to(device)
             
             # Zero gradients
@@ -295,9 +429,26 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
             train_total += target.size(0)
             train_correct += (predicted == target).sum().item()
             
+            # Record batch time
+            batch_time = time.time() - batch_start_time
+            time_estimator.record_batch_time(batch_time)
+            
             if batch_idx % 100 == 0:
                 print(f'  Epoch {epoch+1}/{epochs}, Batch {batch_idx}/{len(train_loader)}, Loss: {loss.item():.4f}')
-        
+                
+                # Get time estimates
+                estimates = time_estimator.estimate_remaining_time(epoch, batch_idx, len(train_loader))
+                
+                if estimates['optimistic'] != 'N/A':
+                    print(f"  Batch time: {batch_time:.2f}s")
+                    print(f"     Estimated remaining time:")
+                    print(f"     Optimistic: {estimates['optimistic']}")
+                    print(f"     Realistic:  {estimates['realistic']}")
+                    print(f"     Pessimistic: {estimates['pessimistic']}")
+                    if estimates.get('in_warmup'):
+                        print(f"     (Warmup phase - estimates improve after epoch 3)")
+                    print()
+
         # Calculate average training metrics
         avg_train_loss = train_loss / len(train_loader)
         train_accuracy = 100 * train_correct / train_total
@@ -308,6 +459,7 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
         test_correct = 0
         test_total = 0
         
+        validation_start_time = time.time()
         with torch.no_grad():
             for data, target in test_loader:
                 data, target = data.to(device), target.to(device)
@@ -319,15 +471,21 @@ def train_model(model: LyricsLSTM, optimizer: optim.Adam,
                 test_total += target.size(0)
                 test_correct += (predicted == target).sum().item()
         
+        validation_time = time.time() - validation_start_time
+        
         # Calculate average testing metrics
         avg_test_loss = test_loss / len(test_loader)
         test_accuracy = 100 * test_correct / test_total
-        
+
         # Store history
         history['train_loss'].append(avg_train_loss)
         history['train_acc'].append(train_accuracy)
         history['test_loss'].append(avg_test_loss)
         history['test_acc'].append(test_accuracy)
+        
+        # Record epoch time for future estimates
+        epoch_time = time.time() - epoch_start_time
+        time_estimator.record_epoch_time(epoch_time, validation_time)
         
         # Step the scheduler with validation loss
         scheduler.step(avg_test_loss)
@@ -681,6 +839,130 @@ def save_model_config(model_config: Dict, tokenizer_path: str, model_path: str) 
     print(f"✓ Model configuration saved to: {config_path}")
 
 
+def get_model_parameters_from_input() -> Dict[str, int]:
+    """
+    Interactive function to get model parameters from user input.
+    Shows defaults and provides suggestions for 75% size reduction.
+    
+    Returns:
+        Dictionary with model parameters (vocab_size, embedding_dim, hidden_size, num_layers)
+    """
+    # Default values
+    DEFAULT_VOCAB_SIZE = 25000
+    DEFAULT_EMBEDDING_DIM = 200
+    DEFAULT_HIDDEN_SIZE = 512
+    DEFAULT_NUM_LAYERS = 3
+    
+    # Suggested values for 75% size reduction
+    SUGGESTED_VOCAB_SIZE = 25000  # Keep same - vocab size doesn't affect memory as much
+    SUGGESTED_EMBEDDING_DIM = 100  # 50% reduction
+    SUGGESTED_HIDDEN_SIZE = 256    # 50% reduction
+    SUGGESTED_NUM_LAYERS = 2       # 33% reduction (3 to 2)
+    
+    print("\n" + "="*70)
+    print("LSTM MODEL PARAMETER CONFIGURATION")
+    print("="*70)
+    
+    print("\n📊 CURRENT DEFAULTS:")
+    print(f"  • Vocab Size: {DEFAULT_VOCAB_SIZE:,}")
+    print(f"  • Embedding Dimension: {DEFAULT_EMBEDDING_DIM}")
+    print(f"  • Hidden Size: {DEFAULT_HIDDEN_SIZE}")
+    print(f"  • Number of Layers: {DEFAULT_NUM_LAYERS}")
+    print(f"  ➜ Estimated Parameters: ~24 million")
+    
+    print("\n💡 SUGGESTED VALUES FOR 75% MODEL SIZE REDUCTION:")
+    print(f"  • Vocab Size: {SUGGESTED_VOCAB_SIZE:,} (keep same)")
+    print(f"  • Embedding Dimension: {SUGGESTED_EMBEDDING_DIM} (50% reduction)")
+    print(f"  • Hidden Size: {SUGGESTED_HIDDEN_SIZE} (50% reduction)")
+    print(f"  • Number of Layers: {SUGGESTED_NUM_LAYERS} (33% reduction)")
+    print(f"  ➜ Estimated Parameters: ~6 million (75% reduction)")
+    
+    print("\n⚙️  ENTER YOUR PARAMETERS (press Enter to use default):")
+    print("-"*70)
+    
+    # Vocab Size Input
+    while True:
+        try:
+            vocab_input = input(f"Vocab Size [{DEFAULT_VOCAB_SIZE:,}]: ").strip()
+            vocab_size = int(vocab_input) if vocab_input else DEFAULT_VOCAB_SIZE
+            if vocab_size <= 0:
+                print("  ❌ Vocab size must be positive. Try again.")
+                continue
+            break
+        except ValueError:
+            print("  ❌ Invalid input. Please enter a number.")
+    
+    # Embedding Dimension Input
+    while True:
+        try:
+            emb_input = input(f"Embedding Dimension [{DEFAULT_EMBEDDING_DIM}]: ").strip()
+            embedding_dim = int(emb_input) if emb_input else DEFAULT_EMBEDDING_DIM
+            if embedding_dim <= 0:
+                print("  ❌ Embedding dimension must be positive. Try again.")
+                continue
+            break
+        except ValueError:
+            print("  ❌ Invalid input. Please enter a number.")
+    
+    # Hidden Size Input
+    while True:
+        try:
+            hidden_input = input(f"Hidden Size [{DEFAULT_HIDDEN_SIZE}]: ").strip()
+            hidden_size = int(hidden_input) if hidden_input else DEFAULT_HIDDEN_SIZE
+            if hidden_size <= 0:
+                print("  ❌ Hidden size must be positive. Try again.")
+                continue
+            break
+        except ValueError:
+            print("  ❌ Invalid input. Please enter a number.")
+    
+    # Number of Layers Input
+    while True:
+        try:
+            layers_input = input(f"Number of Layers [{DEFAULT_NUM_LAYERS}]: ").strip()
+            num_layers = int(layers_input) if layers_input else DEFAULT_NUM_LAYERS
+            if num_layers <= 0:
+                print("  ❌ Number of layers must be positive. Try again.")
+                continue
+            break
+        except ValueError:
+            print("  ❌ Invalid input. Please enter a number.")
+    
+    # Calculate and display final configuration
+    print("\n" + "="*70)
+    print("✅ FINAL CONFIGURATION:")
+    print("="*70)
+    print(f"  • Vocab Size: {vocab_size:,}")
+    print(f"  • Embedding Dimension: {embedding_dim}")
+    print(f"  • Hidden Size: {hidden_size}")
+    print(f"  • Number of Layers: {num_layers}")
+    
+    # Rough parameter count estimation
+    # LSTM params ≈ 4 * hidden_size * (embedding_dim + hidden_size + 1) * num_layers
+    # Embedding params = vocab_size * embedding_dim
+    # Dense layers ≈ hidden_size * vocab_size + hidden_size^2
+    lstm_params = 4 * hidden_size * (embedding_dim + hidden_size + 1) * num_layers
+    embedding_params = vocab_size * embedding_dim
+    dense_params = hidden_size * hidden_size + hidden_size * vocab_size
+    total_params = lstm_params + embedding_params + dense_params
+    
+    print(f"\n📈 ESTIMATED PARAMETER BREAKDOWN:")
+    print(f"  • LSTM Parameters: {lstm_params:,}")
+    print(f"  • Embedding Parameters: {embedding_params:,}")
+    print(f"  • Dense Layer Parameters: {dense_params:,}")
+    print(f"  • Total Parameters: {total_params:,}")
+    print(f"  • Approx Memory (float32): {(total_params * 4) / (1024*1024):.1f} MB")
+    
+    print("="*70 + "\n")
+    
+    return {
+        'vocab_size': vocab_size,
+        'embedding_dim': embedding_dim,
+        'hidden_size': hidden_size,
+        'num_layers': num_layers
+    }
+
+
 if __name__ == "__main__":
     # Improved training with better parameters and techniques
     try:
@@ -688,10 +970,14 @@ if __name__ == "__main__":
         print("TRAINING IMPROVED LYRICS GENERATION MODEL")
         print("="*60)
         
+        # Get model parameters from user input
+        print("\n0. Configuring model parameters...")
+        model_params = get_model_parameters_from_input()
+        
         # Load dataset with improved parameters
         print("\n1. Preparing dataset with improved parameters...")
         tokenizer, (train_features, train_labels, test_features, test_labels), metadata = prepare_dataset(
-            vocab_size=25000,        # Much larger vocabulary to reduce <UNK> tokens
+            vocab_size=model_params['vocab_size'],
             max_sequence_length=150, # Longer sequences for better context  
             n_words=4,              # 4-word context window for richer patterns
             train_split=0.85        # More training data
@@ -714,11 +1000,11 @@ if __name__ == "__main__":
         print("\n2. Creating improved model architecture...")
         model_config = {
             'vocab_size': metadata['vocab_size'],
-            'embedding_dim': 200,    # Much larger embeddings for better word representations
-            'hidden_size': 512,      # Significantly larger hidden state for more learning capacity
-            'num_layers': 3,         # Deeper network with 3 layers for complex patterns
-            'dropout': 0.2,          # Reduce dropout to allow more learning (was too restrictive)
-            'learning_rate': 0.005   # Higher learning rate for faster convergence
+            'embedding_dim': model_params['embedding_dim'],
+            'hidden_size': model_params['hidden_size'],
+            'num_layers': model_params['num_layers'],
+            'dropout': 0.2,
+            'learning_rate': 0.005
         }
         
         model, optimizer = create_model(**model_config)
@@ -824,3 +1110,127 @@ if __name__ == "__main__":
         print(f"\n❌ Training failed: {str(e)}")
         import traceback
         traceback.print_exc()
+
+
+def get_model_parameters_from_input() -> Dict[str, int]:
+    """
+    Interactive function to get model parameters from user input.
+    Shows defaults and provides suggestions for 75% size reduction.
+    
+    Returns:
+        Dictionary with model parameters (vocab_size, embedding_dim, hidden_size, num_layers)
+    """
+    # Default values
+    DEFAULT_VOCAB_SIZE = 25000
+    DEFAULT_EMBEDDING_DIM = 200
+    DEFAULT_HIDDEN_SIZE = 512
+    DEFAULT_NUM_LAYERS = 3
+    
+    # Suggested values for 75% size reduction
+    SUGGESTED_VOCAB_SIZE = 25000  # Keep same - vocab size doesn't affect memory as much
+    SUGGESTED_EMBEDDING_DIM = 100  # 50% reduction
+    SUGGESTED_HIDDEN_SIZE = 256    # 50% reduction
+    SUGGESTED_NUM_LAYERS = 2       # 33% reduction (3 to 2)
+    
+    print("\n" + "="*70)
+    print("LSTM MODEL PARAMETER CONFIGURATION")
+    print("="*70)
+    
+    print("\n📊 CURRENT DEFAULTS:")
+    print(f"  • Vocab Size: {DEFAULT_VOCAB_SIZE:,}")
+    print(f"  • Embedding Dimension: {DEFAULT_EMBEDDING_DIM}")
+    print(f"  • Hidden Size: {DEFAULT_HIDDEN_SIZE}")
+    print(f"  • Number of Layers: {DEFAULT_NUM_LAYERS}")
+    print(f"  ➜ Estimated Parameters: ~24 million")
+    
+    print("\n💡 SUGGESTED VALUES FOR 75% MODEL SIZE REDUCTION:")
+    print(f"  • Vocab Size: {SUGGESTED_VOCAB_SIZE:,} (keep same)")
+    print(f"  • Embedding Dimension: {SUGGESTED_EMBEDDING_DIM} (50% reduction)")
+    print(f"  • Hidden Size: {SUGGESTED_HIDDEN_SIZE} (50% reduction)")
+    print(f"  • Number of Layers: {SUGGESTED_NUM_LAYERS} (33% reduction)")
+    print(f"  ➜ Estimated Parameters: ~6 million (75% reduction)")
+    
+    print("\n⚙️  ENTER YOUR PARAMETERS (press Enter to use default):")
+    print("-"*70)
+    
+    # Vocab Size Input
+    while True:
+        try:
+            vocab_input = input(f"Vocab Size [{DEFAULT_VOCAB_SIZE:,}]: ").strip()
+            vocab_size = int(vocab_input) if vocab_input else DEFAULT_VOCAB_SIZE
+            if vocab_size <= 0:
+                print("  ❌ Vocab size must be positive. Try again.")
+                continue
+            break
+        except ValueError:
+            print("  ❌ Invalid input. Please enter a number.")
+    
+    # Embedding Dimension Input
+    while True:
+        try:
+            emb_input = input(f"Embedding Dimension [{DEFAULT_EMBEDDING_DIM}]: ").strip()
+            embedding_dim = int(emb_input) if emb_input else DEFAULT_EMBEDDING_DIM
+            if embedding_dim <= 0:
+                print("  ❌ Embedding dimension must be positive. Try again.")
+                continue
+            break
+        except ValueError:
+            print("  ❌ Invalid input. Please enter a number.")
+    
+    # Hidden Size Input
+    while True:
+        try:
+            hidden_input = input(f"Hidden Size [{DEFAULT_HIDDEN_SIZE}]: ").strip()
+            hidden_size = int(hidden_input) if hidden_input else DEFAULT_HIDDEN_SIZE
+            if hidden_size <= 0:
+                print("  ❌ Hidden size must be positive. Try again.")
+                continue
+            break
+        except ValueError:
+            print("  ❌ Invalid input. Please enter a number.")
+    
+    # Number of Layers Input
+    while True:
+        try:
+            layers_input = input(f"Number of Layers [{DEFAULT_NUM_LAYERS}]: ").strip()
+            num_layers = int(layers_input) if layers_input else DEFAULT_NUM_LAYERS
+            if num_layers <= 0:
+                print("  ❌ Number of layers must be positive. Try again.")
+                continue
+            break
+        except ValueError:
+            print("  ❌ Invalid input. Please enter a number.")
+    
+    # Calculate and display final configuration
+    print("\n" + "="*70)
+    print("✅ FINAL CONFIGURATION:")
+    print("="*70)
+    print(f"  • Vocab Size: {vocab_size:,}")
+    print(f"  • Embedding Dimension: {embedding_dim}")
+    print(f"  • Hidden Size: {hidden_size}")
+    print(f"  • Number of Layers: {num_layers}")
+    
+    # Rough parameter count estimation
+    # LSTM params ≈ 4 * hidden_size * (embedding_dim + hidden_size + 1) * num_layers
+    # Embedding params = vocab_size * embedding_dim
+    # Dense layers ≈ hidden_size * vocab_size + hidden_size^2
+    lstm_params = 4 * hidden_size * (embedding_dim + hidden_size + 1) * num_layers
+    embedding_params = vocab_size * embedding_dim
+    dense_params = hidden_size * hidden_size + hidden_size * vocab_size
+    total_params = lstm_params + embedding_params + dense_params
+    
+    print(f"\n📈 ESTIMATED PARAMETER BREAKDOWN:")
+    print(f"  • LSTM Parameters: {lstm_params:,}")
+    print(f"  • Embedding Parameters: {embedding_params:,}")
+    print(f"  • Dense Layer Parameters: {dense_params:,}")
+    print(f"  • Total Parameters: {total_params:,}")
+    print(f"  • Approx Memory (float32): {(total_params * 4) / (1024*1024):.1f} MB")
+    
+    print("="*70 + "\n")
+    
+    return {
+        'vocab_size': vocab_size,
+        'embedding_dim': embedding_dim,
+        'hidden_size': hidden_size,
+        'num_layers': num_layers
+    }

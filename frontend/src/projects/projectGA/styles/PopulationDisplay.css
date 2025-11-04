@@ -1,0 +1,308 @@
+/* PopulationDisplay.css */
+
+.population-display {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-height: 600px;
+  overflow-y: auto;
+}
+
+/* Header Info Cards */
+.header-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.info-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.info-card:nth-child(2) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.info-card:nth-child(3) {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.info-card:nth-child(4) {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.info-label {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* Target Section */
+.target-section {
+  margin-bottom: 24px;
+}
+
+.target-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.target-phrase {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  font-family: "Courier New", monospace;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #333;
+}
+
+/* Gene Display */
+.gene-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.gene-char {
+  padding: 4px 6px;
+  border-radius: 3px;
+  border: 1px solid #ddd;
+}
+
+.gene-char.match {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+  border-color: #4CAF50;
+}
+
+.gene-char.mismatch {
+  background-color: #ffcdd2;
+  color: #c62828;
+  border-color: #f44336;
+}
+
+/* Best Individual Section */
+.best-individual-section {
+  background: #f9f9f9;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border: 2px solid #f5f5f5;
+}
+
+.best-individual-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.best-individual {
+  background: white;
+  padding: 12px;
+  border-radius: 4px;
+}
+
+.best-fitness-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.fitness-fill {
+  flex: 0 0 auto;
+  height: 24px;
+  background: linear-gradient(90deg, #4CAF50, #45a049);
+  border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+
+.fitness-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  min-width: 45px;
+}
+
+/* Population Section */
+.population-section {
+  margin-bottom: 24px;
+}
+
+.population-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.population-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.population-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.population-item:hover {
+  background: #efefef;
+}
+
+.item-rank {
+  font-size: 12px;
+  font-weight: 700;
+  color: #999;
+  min-width: 30px;
+}
+
+.item-fitness-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 80px;
+}
+
+.item-fitness-bar .fitness-fill {
+  height: 16px;
+  background: linear-gradient(90deg, #2196F3, #1976D2);
+}
+
+.item-fitness-bar .fitness-text {
+  font-size: 11px;
+  min-width: 35px;
+}
+
+.item-genes {
+  flex: 1;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+/* No Data Message */
+.no-data {
+  text-align: center;
+  padding: 24px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Completion Message */
+.completion-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+}
+
+.success-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.completion-message h2 {
+  font-size: 28px;
+  color: #4CAF50;
+  margin-bottom: 8px;
+}
+
+.completion-message p {
+  font-size: 16px;
+  color: #666;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Scrollbar Styling */
+.population-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.population-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.population-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.population-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .population-display {
+    min-height: auto;
+  }
+
+  .header-info {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gene-display {
+    font-size: 12px;
+  }
+
+  .gene-char {
+    padding: 2px 4px;
+  }
+}

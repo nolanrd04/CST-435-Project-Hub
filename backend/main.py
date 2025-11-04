@@ -12,6 +12,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 app = FastAPI()
 
+# Include projectGA router
+from backend.app.routers.projectGA.routes import router as projectga_router
+app.include_router(projectga_router)
+
 # Download NLTK data on startup (required for Project4 sentiment analysis)
 # Do this after app creation to avoid blocking startup
 try:

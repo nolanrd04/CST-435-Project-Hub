@@ -1,0 +1,50 @@
+/* FitnessChart.css */
+
+.fitness-chart {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 24px;
+}
+
+.fitness-chart h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  background: #f5f5f5;
+}
+
+.no-data-message {
+  text-align: center;
+  padding: 48px 24px;
+  color: #999;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .chart-canvas {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .fitness-chart {
+    padding: 16px;
+  }
+
+  .fitness-chart h3 {
+    font-size: 14px;
+  }
+}

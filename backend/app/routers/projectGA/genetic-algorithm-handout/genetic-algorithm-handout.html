@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genetic Algorithms: Evolving Shakespearean Phrases</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        h2 {
+            color: #667eea;
+            margin: 30px 0 20px 0;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin: 20px 0 10px 0;
+        }
+
+        .section {
+            margin: 30px 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .diagram-container {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .interactive-demo {
+            background: #f0f4f8;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .population-display {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .individual {
+            padding: 5px;
+            margin: 2px 0;
+            background: #e9ecef;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .best-individual {
+            background: #c3f0ca;
+            font-weight: bold;
+        }
+
+        .activity-box {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 30px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+
+        .step {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .formula {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+
+        ul {
+            margin-left: 20px;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .animated {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧬 Genetic Algorithms in NLP</h1>
+            <p class="subtitle">Evolving Shakespearean Phrases Through Natural Selection</p>
+        </header>
+
+        <div class="content">
+            <section class="section">
+                <h2>📚 Introduction to Genetic Algorithms</h2>
+                <p>
+                    Genetic Algorithms (GAs) are search heuristics inspired by Charles Darwin's theory of natural evolution.
+                    They are particularly powerful for solving optimization problems where traditional methods struggle.
+                </p>
+
+                <div class="highlight-box">
+                    <h3>Why Genetic Algorithms?</h3>
+                    <p>GAs excel at:</p>
+                    <ul>
+                        <li>🎯 Finding good solutions in large, complex search spaces</li>
+                        <li>🔄 Avoiding local optima through population diversity</li>
+                        <li>🧩 Solving problems where the fitness landscape is unknown or irregular</li>
+                        <li>💡 Discovering creative solutions humans might not consider</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>🔬 Core Concepts</h2>
+
+                <div class="diagram-container">
+                    <h3>The Genetic Algorithm Cycle</h3>
+                    <svg width="800" height="400" viewBox="0 0 800 400">
+                        <!-- Background -->
+                        <rect width="800" height="400" fill="#f8f9fa"/>
+
+                        <!-- Title -->
+                        <text x="400" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#667eea">
+                            Genetic Algorithm Lifecycle
+                        </text>
+
+                        <!-- Initial Population -->
+                        <rect x="50" y="60" width="120" height="60" fill="#667eea" rx="10"/>
+                        <text x="110" y="90" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                            Initial Population
+                        </text>
+                        <text x="110" y="105" text-anchor="middle" fill="white" font-size="12">
+                            (Random)
+                        </text>
+
+                        <!-- Fitness Evaluation -->
+                        <rect x="230" y="60" width="120" height="60" fill="#764ba2" rx="10"/>
+                        <text x="290" y="90" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                            Fitness
+                        </text>
+                        <text x="290" y="105" text-anchor="middle" fill="white" font-size="12">
+                            Evaluation
+                        </text>
+
+                        <!-- Selection -->
+                        <rect x="410" y="60" width="120" height="60" fill="#f06292" rx="10"/>
+                        <text x="470" y="90" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                            Selection
+                        </text>
+                        <text x="470" y="105" text-anchor="middle" fill="white" font-size="12">
+                            (Parents)
+                        </text>
+
+                        <!-- Crossover -->
+                        <rect x="590" y="60" width="120" height="60" fill="#ff6b6b" rx="10"/>
+                        <text x="650" y="90" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                            Crossover
+                        </text>
+                        <text x="650" y="105" text-anchor="middle" fill="white" font-size="12">
+                            (Recombination)
+                        </text>
+
+                        <!-- Mutation -->
+                        <rect x="590" y="180" width="120" height="60" fill="#ffa726" rx="10"/>
+                        <text x="650" y="210" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                            Mutation
+                        </text>
+                        <text x="650" y="225" text-anchor="middle" fill="white" font-size="12">
+                            (Variation)
+                        </text>
+
+                        <!-- New Population -->
+                        <rect x="410" y="180" width="120" height="60" fill="#66bb6a" rx="10"/>
+                        <text x="470" y="210" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                            New Population
+                        </text>
+                        <text x="470" y="225" text-anchor="middle" fill="white" font-size="12">
+                            (Offspring)
+                        </text>
+
+                        <!-- Termination Check -->
+                        <rect x="230" y="180" width="120" height="60" fill="#42a5f5" rx="10"/>
+                        <text x="290" y="210" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                            Termination?
+                        </text>
+                        <text x="290" y="225" text-anchor="middle" fill="white" font-size="12">
+                            (Check criteria)
+                        </text>
+
+                        <!-- Solution -->
+                        <rect x="50" y="280" width="120" height="60" fill="#4caf50" rx="10"/>
+                        <text x="110" y="310" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                            Best Solution
+                        </text>
+                        <text x="110" y="325" text-anchor="middle" fill="white" font-size="12">
+                            (Output)
+                        </text>
+
+                        <!-- Arrows -->
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="10"
+                                    refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#333" />
+                            </marker>
+                        </defs>
+
+                        <!-- Flow arrows -->
+                        <path d="M 170 90 L 230 90" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <path d="M 350 90 L 410 90" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <path d="M 530 90 L 590 90" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <path d="M 650 120 L 650 180" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <path d="M 590 210 L 530 210" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <path d="M 410 210 L 350 210" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                        <!-- Loop back arrow -->
+                        <path d="M 290 180 Q 290 150, 290 120" stroke="#333" stroke-width="2"
+                              marker-end="url(#arrowhead)" stroke-dasharray="5,5"/>
+
+                        <!-- To solution arrow -->
+                        <path d="M 230 210 L 170 210 Q 110 210, 110 280" stroke="#4caf50" stroke-width="3"
+                              marker-end="url(#arrowhead)"/>
+
+                        <!-- Labels -->
+                        <text x="290" y="155" text-anchor="middle" fill="#333" font-size="12">
+                            Continue
+                        </text>
+                        <text x="150" y="250" text-anchor="middle" fill="#4caf50" font-size="12" font-weight="bold">
+                            Done!
+                        </text>
+                    </svg>
+                </div>
+
+                <div class="formula">
+                    <strong>Fitness Function:</strong> f(individual) → score ∈ [0, 1]
+                </div>
+
+                <h3>Key Components Explained:</h3>
+                <ul>
+                    <li><strong>Population:</strong> A collection of candidate solutions (individuals)</li>
+                    <li><strong>Chromosome:</strong> The encoded representation of a solution</li>
+                    <li><strong>Gene:</strong> A single element of a chromosome</li>
+                    <li><strong>Fitness Function:</strong> Evaluates how good a solution is</li>
+                    <li><strong>Selection:</strong> Choosing parents based on fitness (survival of the fittest)</li>
+                    <li><strong>Crossover:</strong> Combining parents' genes to create offspring</li>
+                    <li><strong>Mutation:</strong> Random changes to maintain genetic diversity</li>
+                </ul>
+            </section>
+
+            <section class="section">
+                <h2>🎭 Today's Challenge: Evolving Shakespearean Phrases</h2>
+
+                <div class="highlight-box">
+                    <h3>The Problem</h3>
+                    <p>
+                        We'll use a genetic algorithm to evolve random strings of characters into famous
+                        Shakespeare quotes. This problem demonstrates why GAs excel where brute force fails:
+                    </p>
+                    <ul>
+                        <li>🔢 Search space for "To be or not to be": 27^18 ≈ 7.6 × 10^25 possibilities!</li>
+                        <li>⏰ Brute force at 1 billion attempts/second: ~2.4 billion years</li>
+                        <li>🧬 Genetic algorithm: Usually finds solution in &lt;1000 generations (~seconds)</li>
+                    </ul>
+                </div>
+
+                <div class="diagram-container">
+                    <h3>Character Evolution Visualization</h3>
+                    <svg width="700" height="250" viewBox="0 0 700 250">
+                        <rect width="700" height="250" fill="#f8f9fa"/>
+
+                        <text x="350" y="25" text-anchor="middle" font-size="18" font-weight="bold" fill="#667eea">
+                            Evolution of "TO BE OR NOT TO BE"
+                        </text>
+
+                        <!-- Generation 0 -->
+                        <text x="50" y="60" font-size="14" fill="#333">Gen 0:</text>
+                        <rect x="120" y="45" width="500" height="25" fill="#ffcdd2" rx="5"/>
+                        <text x="370" y="62" text-anchor="middle" font-family="monospace" font-size="14">
+                            XQ WK ZP MLQ XZ WK
+                        </text>
+
+                        <!-- Generation 100 -->
+                        <text x="50" y="100" font-size="14" fill="#333">Gen 100:</text>
+                        <rect x="120" y="85" width="500" height="25" fill="#fff9c4" rx="5"/>
+                        <text x="370" y="102" text-anchor="middle" font-family="monospace" font-size="14">
+                            TO BE OR NPT TO BE
+                        </text>
+
+                        <!-- Generation 200 -->
+                        <text x="50" y="140" font-size="14" fill="#333">Gen 200:</text>
+                        <rect x="120" y="125" width="500" height="25" fill="#dcedc8" rx="5"/>
+                        <text x="370" y="142" text-anchor="middle" font-family="monospace" font-size="14">
+                            TO BE OR NOT TO BE
+                        </text>
+
+                        <!-- Fitness scores -->
+                        <text x="630" y="62" font-size="12" fill="#666">Fitness: 11%</text>
+                        <text x="630" y="102" font-size="12" fill="#666">Fitness: 94%</text>
+                        <text x="630" y="142" font-size="12" fill="#4caf50" font-weight="bold">Fitness: 100%</text>
+
+                        <!-- Progress arrow -->
+                        <path d="M 70 180 L 600 180" stroke="#667eea" stroke-width="2"/>
+                        <polygon points="600,175 610,180 600,185" fill="#667eea"/>
+                        <text x="350" y="200" text-anchor="middle" font-size="12" fill="#667eea">
+                            Evolution Progress
+                        </text>
+                    </svg>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>🚀 Interactive Demo</h2>
+                <div class="interactive-demo">
+                    <h3>Try It Yourself!</h3>
+                    <p>Click "Start Evolution" to watch a genetic algorithm evolve the phrase "HELLO WORLD"</p>
+
+                    <div style="margin: 20px 0;">
+                        <label>Target Phrase: </label>
+                        <input type="text" id="targetPhrase" value="HELLO WORLD" style="padding: 5px; font-family: monospace;">
+                        <button onclick="startEvolution()">Start Evolution</button>
+                        <button onclick="stopEvolution()">Stop</button>
+                    </div>
+
+                    <div id="stats" style="margin: 10px 0;">
+                        <strong>Generation:</strong> <span id="generation">0</span> |
+                        <strong>Best Fitness:</strong> <span id="bestFitness">0%</span>
+                    </div>
+
+                    <div class="population-display" id="populationDisplay">
+                        Click "Start Evolution" to begin...
+                    </div>
+                </div>
+            </section>
+
+            <section class="activity-box">
+                <h2>📝 Class Activity: Build Your Own Shakespeare Evolution App</h2>
+
+                <p><strong>Objective:</strong> Create a React application that uses genetic algorithms to evolve random text into Shakespeare quotes.</p>
+
+                <div class="step">
+                    <h3>Step 1: Setup React Project</h3>
+                    <p>Create a new React app with TypeScript for better code organization:</p>
+                    <div class="code-block">
+npx create-react-app shakespeare-ga --template typescript
+cd shakespeare-ga
+npm install
+                    </div>
+                </div>
+
+                <div class="step">
+                    <h3>Step 2: Implement the Genetic Algorithm</h3>
+                    <p>You'll create the following components:</p>
+                    <ul>
+                        <li><strong>GeneticAlgorithm.ts:</strong> Core GA logic</li>
+                        <li><strong>Individual.ts:</strong> Chromosome representation</li>
+                        <li><strong>PopulationDisplay.tsx:</strong> Visualization component</li>
+                        <li><strong>ControlPanel.tsx:</strong> User controls</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h3>Step 3: Key Implementation Details</h3>
+                    <p>Your genetic algorithm should include:</p>
+                    <ul>
+                        <li>📊 <strong>Fitness Function:</strong> Calculate similarity to target phrase</li>
+                        <li>🎯 <strong>Selection Method:</strong> Tournament or roulette wheel selection</li>
+                        <li>🔄 <strong>Crossover:</strong> Single-point or uniform crossover</li>
+                        <li>🎲 <strong>Mutation:</strong> Random character replacement (1-2% rate)</li>
+                        <li>📈 <strong>Elitism:</strong> Keep best individuals across generations</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h3>Step 4: Add Visualizations</h3>
+                    <ul>
+                        <li>Real-time population display</li>
+                        <li>Fitness progress chart</li>
+                        <li>Generation counter</li>
+                        <li>Best individual highlighting</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h3>Step 5: Deploy Your App</h3>
+                    <p><strong>Option A: Deploy to Vercel</strong></p>
+                    <div class="code-block">
+npm install -g vercel
+vercel
+# Follow the prompts
+                    </div>
+
+                    <p><strong>Option B: Deploy to Render.com</strong></p>
+                    <div class="code-block">
+# Push to GitHub first
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin YOUR_GITHUB_REPO
+git push -u origin main
+
+# Then connect to Render.com and deploy
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>🎯 Learning Objectives</h2>
+                <ul>
+                    <li>Understand the principles of evolutionary computation</li>
+                    <li>Implement selection, crossover, and mutation operations</li>
+                    <li>Design effective fitness functions for NLP tasks</li>
+                    <li>Visualize algorithm performance in real-time</li>
+                    <li>Deploy a full-stack application to the cloud</li>
+                </ul>
+            </section>
+
+            <section class="section">
+                <h2>💡 Extension Challenges</h2>
+                <div class="highlight-box">
+                    <h3>Once you complete the basic implementation, try these enhancements:</h3>
+                    <ul>
+                        <li>🎨 Add different selection strategies (tournament, rank-based)</li>
+                        <li>📊 Implement adaptive mutation rates</li>
+                        <li>🌍 Create a "phrase zoo" with multiple evolving populations</li>
+                        <li>🏆 Add a leaderboard for fastest evolution times</li>
+                        <li>🔧 Allow users to tune GA parameters in real-time</li>
+                        <li>📚 Evolve entire paragraphs or poems</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>📚 Resources</h2>
+                <ul>
+                    <li>📖 "Introduction to Evolutionary Computing" - Eiben & Smith</li>
+                    <li>🔗 <a href="https://react.dev/">React Documentation</a></li>
+                    <li>🔗 <a href="https://vercel.com/docs">Vercel Deployment Guide</a></li>
+                    <li>🔗 <a href="https://render.com/docs">Render.com Documentation</a></li>
+                    <li>💻 Complete starter code available in the accompanying repository</li>
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        let evolutionInterval;
+        let generation = 0;
+        let population = [];
+        let target = "HELLO WORLD";
+        const populationSize = 50;
+        const mutationRate = 0.02;
+        const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
+
+        function randomChar() {
+            return charset[Math.floor(Math.random() * charset.length)];
+        }
+
+        function createIndividual(length) {
+            let individual = "";
+            for (let i = 0; i < length; i++) {
+                individual += randomChar();
+            }
+            return individual;
+        }
+
+        function calculateFitness(individual, target) {
+            let score = 0;
+            for (let i = 0; i < target.length; i++) {
+                if (individual[i] === target[i]) {
+                    score++;
+                }
+            }
+            return score / target.length;
+        }
+
+        function selectParent(population) {
+            // Tournament selection
+            const tournamentSize = 5;
+            let best = population[Math.floor(Math.random() * population.length)];
+
+            for (let i = 1; i < tournamentSize; i++) {
+                const contestant = population[Math.floor(Math.random() * population.length)];
+                if (contestant.fitness > best.fitness) {
+                    best = contestant;
+                }
+            }
+            return best;
+        }
+
+        function crossover(parent1, parent2) {
+            const crossoverPoint = Math.floor(Math.random() * parent1.genes.length);
+            const child = parent1.genes.substring(0, crossoverPoint) +
+                         parent2.genes.substring(crossoverPoint);
+            return child;
+        }
+
+        function mutate(individual) {
+            let mutated = "";
+            for (let i = 0; i < individual.length; i++) {
+                if (Math.random() < mutationRate) {
+                    mutated += randomChar();
+                } else {
+                    mutated += individual[i];
+                }
+            }
+            return mutated;
+        }
+
+        function evolvePopulation() {
+            // Calculate fitness for all individuals
+            population = population.map(ind => ({
+                genes: ind.genes || ind,
+                fitness: calculateFitness(ind.genes || ind, target)
+            }));
+
+            // Sort by fitness
+            population.sort((a, b) => b.fitness - a.fitness);
+
+            // Display current population
+            displayPopulation();
+
+            // Check if we found the solution
+            if (population[0].fitness === 1) {
+                stopEvolution();
+                alert(`Solution found in ${generation} generations!`);
+                return;
+            }
+
+            // Create new generation
+            const newPopulation = [];
+
+            // Elitism: Keep best 2 individuals
+            newPopulation.push(population[0]);
+            newPopulation.push(population[1]);
+
+            // Create rest of population through crossover and mutation
+            while (newPopulation.length < populationSize) {
+                const parent1 = selectParent(population);
+                const parent2 = selectParent(population);
+                let child = crossover(parent1, parent2);
+                child = mutate(child);
+                newPopulation.push({ genes: child, fitness: 0 });
+            }
+
+            population = newPopulation;
+            generation++;
+
+            // Update stats
+            document.getElementById('generation').textContent = generation;
+            document.getElementById('bestFitness').textContent =
+                Math.round(population[0].fitness * 100) + '%';
+        }
+
+        function displayPopulation() {
+            const display = document.getElementById('populationDisplay');
+            const topIndividuals = population.slice(0, 10);
+
+            display.innerHTML = topIndividuals.map((ind, i) =>
+                `<div class="individual ${i === 0 ? 'best-individual' : ''}">
+                    <span>${ind.genes}</span>
+                    <span>${Math.round(ind.fitness * 100)}%</span>
+                </div>`
+            ).join('');
+        }
+
+        function startEvolution() {
+            stopEvolution();
+            generation = 0;
+            target = document.getElementById('targetPhrase').value.toUpperCase();
+
+            // Initialize population
+            population = [];
+            for (let i = 0; i < populationSize; i++) {
+                population.push(createIndividual(target.length));
+            }
+
+            // Start evolution loop
+            evolutionInterval = setInterval(evolvePopulation, 100);
+        }
+
+        function stopEvolution() {
+            if (evolutionInterval) {
+                clearInterval(evolutionInterval);
+                evolutionInterval = null;
+            }
+        }
+    </script>
+</body>
+</html>

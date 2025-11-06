@@ -25,29 +25,34 @@ class SongLyricGenerator:
     Handles model loading, seed text validation, and generation with various parameters.
     """
     
-    def __init__(self, model_path: str = None, tokenizer_path: str = None):
+    # Available models
+    AVAILABLE_MODELS = {
+        'lyrics_model': 'lyrics_model.pth',
+        'lyrics_model_2': 'lyrics_model_2.pth'
+    }
+    
+    def __init__(self, model_name: str = 'lyrics_model', tokenizer_path: str = None):
         """
         Initialize the lyric generator.
         
         Args:
-            model_path: Path to the saved model file (e.g., 'lyrics_model.pth')
+            model_name: Name of the model to use ('lyrics_model' or 'lyrics_model_2')
             tokenizer_path: Path to the saved tokenizer file (e.g., 'tokenizer.pkl')
         """
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = None
         self.tokenizer = None
         self.model_loaded = False
-        self.model_path = model_path
+        self.current_model_name = model_name
         self.tokenizer_path = tokenizer_path
         self.generation_config = {}
         
-        # Set default paths if not provided
-        if self.model_path is None:
-            DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-            self.model_path = os.path.join(DIR_PATH, "model", "lyrics_model.pth")
+        # Set model path based on model name
+        DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+        model_filename = self.AVAILABLE_MODELS.get(model_name, 'lyrics_model.pth')
+        self.model_path = os.path.join(DIR_PATH, "model", model_filename)
         
         if self.tokenizer_path is None:
-            DIR_PATH = os.path.dirname(os.path.realpath(__file__))
             self.tokenizer_path = os.path.join(DIR_PATH, "model", "tokenizer.pkl")
     
     def load_model(self) -> bool:
@@ -66,14 +71,14 @@ class SongLyricGenerator:
                 print(f"❌ Tokenizer file not found: {self.tokenizer_path}")
                 return False
             
-            print(f"📖 Loading model from {self.model_path}...")
+            print(f"📖 Loading model '{self.current_model_name}' from {self.model_path}...")
             self.model, _, _ = load_model(self.model_path)
             
             print(f"📚 Loading tokenizer from {self.tokenizer_path}...")
             self.tokenizer = LyricsTokenizer.load(self.tokenizer_path)
             
             self.model_loaded = True
-            print("✅ Model and tokenizer loaded successfully")
+            print(f"✅ Model '{self.current_model_name}' and tokenizer loaded successfully")
             return True
             
         except Exception as e:
@@ -81,6 +86,28 @@ class SongLyricGenerator:
             import traceback
             traceback.print_exc()
             return False
+    
+    def switch_model(self, model_name: str) -> bool:
+        """
+        Switch to a different model.
+        
+        Args:
+            model_name: Name of the model to switch to ('lyrics_model' or 'lyrics_model_2')
+        
+        Returns:
+            True if model switched successfully, False otherwise
+        """
+        if model_name not in self.AVAILABLE_MODELS:
+            print(f"❌ Unknown model: {model_name}. Available models: {list(self.AVAILABLE_MODELS.keys())}")
+            return False
+        
+        self.current_model_name = model_name
+        DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+        model_filename = self.AVAILABLE_MODELS[model_name]
+        self.model_path = os.path.join(DIR_PATH, "model", model_filename)
+        self.model_loaded = False
+        
+        return self.load_model()
     
     def validate_seed_text(self, seed_text: str) -> Tuple[bool, str]:
         """
@@ -118,7 +145,8 @@ class SongLyricGenerator:
                  max_length: int = 50,
                  temperature: float = 1.0,
                  top_k: int = 50,
-                 num_variations: int = 1) -> Dict:
+                 num_variations: int = 1,
+                 model: str = None) -> Dict:
         """
         Generate song lyrics from seed text.
         
@@ -130,10 +158,22 @@ class SongLyricGenerator:
             top_k: Only sample from top k most likely words (default 50)
                    0 = disabled, higher = more conservative
             num_variations: Number of different variations to generate (default 1)
+            model: Name of model to use ('lyrics_model' or 'lyrics_model_2')
         
         Returns:
             Dictionary with generated lyrics and metadata
         """
+        # Switch model if requested
+        if model and model != self.current_model_name:
+            print(f"🔄 Switching to model: {model}")
+            if not self.switch_model(model):
+                return {
+                    "success": False,
+                    "error": f"Failed to load model: {model}",
+                    "generated_text": None,
+                    "variations": []
+                }
+        
         # Check if model is loaded
         if not self.model_loaded:
             if not self.load_model():
@@ -165,6 +205,7 @@ class SongLyricGenerator:
             primary_text = None
             
             print(f"🎵 Generating {num_variations} variation(s) from seed: '{seed_text}'")
+            print(f"   Model: {self.current_model_name}")
             print(f"   Parameters: max_length={max_length}, temperature={temperature}, top_k={top_k}")
             
             for i in range(num_variations):
@@ -191,7 +232,7 @@ class SongLyricGenerator:
                 if i == 0:
                     primary_text = generated_text
             
-            print(f"✅ Successfully generated {num_variations} variation(s)")
+            print(f"✅ Successfully generated {num_variations} variation(s) using {self.current_model_name}")
             
             return {
                 "success": True,
@@ -204,6 +245,7 @@ class SongLyricGenerator:
                     "top_k": top_k,
                     "num_variations": num_variations
                 },
+                "model_used": self.current_model_name,
                 "model_info": {
                     "vocab_size": self.model.vocab_size if self.model else None,
                     "embedding_dim": self.model.embedding_dim if self.model else None,
@@ -239,6 +281,8 @@ class SongLyricGenerator:
             return {
                 "success": True,
                 "model_loaded": self.model_loaded,
+                "current_model": self.current_model_name,
+                "available_models": list(self.AVAILABLE_MODELS.keys()),
                 "model_architecture": {
                     "vocab_size": self.model.vocab_size,
                     "embedding_dim": self.model.embedding_dim,
@@ -264,6 +308,22 @@ class SongLyricGenerator:
                 "success": False,
                 "error": f"Error retrieving model info: {str(e)}"
             }
+    
+    @staticmethod
+    def get_available_models() -> Dict:
+        """
+        Get list of available models.
+        
+        Returns:
+            Dictionary with available models info
+        """
+        return {
+            "available_models": SongLyricGenerator.AVAILABLE_MODELS,
+            "models": [
+                {"id": "lyrics_model", "name": "Large Model", "description": "Full model with better quality"},
+                {"id": "lyrics_model_2", "name": "Small Model", "description": "Compact model with faster inference"}
+            ]
+        }
 
 
 # Global instance for the API

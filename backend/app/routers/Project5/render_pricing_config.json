@@ -11,7 +11,7 @@
   "cost_per_cpu_per_month": 0.296875,
   "cost_per_gb_ram_per_month": 0.037109375,
   "additional_storage_cost_per_gb": 0.1,
-  "actual_training_cost": 0.0051586493683828056,
-  "actual_training_hours": 0.31734387755393983,
-  "peak_memory_gb": 1.6996726989746094
+  "actual_training_cost": 0.005053589878415856,
+  "actual_training_hours": 0.11175135698583391,
+  "peak_memory_gb": 1.3041954040527344
 }

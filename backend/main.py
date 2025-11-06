@@ -105,6 +105,7 @@ class GenerateLyricsRequest(BaseModel):
     temperature: float = 1.0
     top_k: int = 50
     num_variations: int = 1
+    model: str = 'lyrics_model'  # Model to use: 'lyrics_model' or 'lyrics_model_2'
 
 class LyricVariation(BaseModel):
     variation: int
@@ -578,6 +579,7 @@ def generate_song_lyrics(request: GenerateLyricsRequest):
     try:
         print(f"🎵 Received lyric generation request:")
         print(f"   Seed: '{request.seed_text}'")
+        print(f"   Model: {request.model}")
         print(f"   Max length: {request.max_length}")
         print(f"   Temperature: {request.temperature}")
         print(f"   Top-k: {request.top_k}")
@@ -589,7 +591,8 @@ def generate_song_lyrics(request: GenerateLyricsRequest):
             max_length=request.max_length,
             temperature=request.temperature,
             top_k=request.top_k,
-            num_variations=request.num_variations
+            num_variations=request.num_variations,
+            model=request.model
         )
         
         if result["success"]:

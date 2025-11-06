@@ -21,8 +21,22 @@ CONFIG_PATH = os.path.join(DIR_PATH, "render_pricing_config.json")
 os.makedirs(MODEL_PATH, exist_ok=True)
 
 # Set device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print("\n" + "="*70)
+print("DEVICE DETECTION")
+print("="*70)
+print(f"CUDA available: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    print(f"CUDA device count: {torch.cuda.device_count()}")
+    print(f"Current CUDA device: {torch.cuda.current_device()}")
+    print(f"CUDA device name: {torch.cuda.get_device_name(0)}")
+    print(f"CUDA capability: {torch.cuda.get_device_capability(0)}")
+    device = torch.device('cuda')
+else:
+    print("⚠️  CUDA not available - using CPU (training will be slower)")
+    device = torch.device('cpu')
+
 print(f"Using device: {device}")
+print("="*70 + "\n")
 
 # Initialize variables for cost calculation
 peak_memory_usage = 0
@@ -963,6 +977,58 @@ def get_model_parameters_from_input() -> Dict[str, int]:
     }
 
 
+def get_model_choice() -> str:
+    """
+    Prompt user to choose between retraining current model or training a new/specific model.
+    
+    Returns:
+        Path to the model file to save/train
+    """
+    print("\n" + "="*70)
+    print("MODEL SELECTION")
+    print("="*70)
+    print("\n1. Retrain current model (overwrite best existing)")
+    print("2. Train/retrain specific model (enter name)")
+    
+    while True:
+        choice = input("\nEnter choice (1 or 2): ").strip()
+        
+        if choice == "1":
+            # Find current best model
+            best_model = os.path.join(MODEL_PATH, "lyrics_model_best.pth")
+            fallback_model = os.path.join(MODEL_PATH, "lyrics_model.pth")
+            
+            if os.path.exists(best_model):
+                print(f"\n✓ Will retrain: lyrics_model_best.pth")
+                return best_model
+            else:
+                print(f"\n✓ Will retrain: lyrics_model.pth")
+                return fallback_model
+        
+        elif choice == "2":
+            model_name = input("\nEnter model name (e.g., 'lyrics_model_1'): ").strip()
+            
+            if not model_name:
+                print("❌ Model name cannot be empty. Try again.")
+                continue
+            
+            # Ensure .pth extension
+            if not model_name.endswith('.pth'):
+                model_name += '.pth'
+            
+            model_path = os.path.join(MODEL_PATH, model_name)
+            
+            if os.path.exists(model_path):
+                print(f"\n✓ Will overwrite existing: {model_name}")
+            else:
+                print(f"\n✓ Will create new: {model_name}")
+            
+            return model_path
+        
+        else:
+            print("❌ Invalid choice. Enter 1 or 2.")
+
+
 if __name__ == "__main__":
     # Improved training with better parameters and techniques
     try:
@@ -970,12 +1036,16 @@ if __name__ == "__main__":
         print("TRAINING IMPROVED LYRICS GENERATION MODEL")
         print("="*60)
         
+        # Get model choice
+        print("\n0. Selecting model...")
+        save_path = get_model_choice()
+        
         # Get model parameters from user input
-        print("\n0. Configuring model parameters...")
+        print("\n1. Configuring model parameters...")
         model_params = get_model_parameters_from_input()
         
         # Load dataset with improved parameters
-        print("\n1. Preparing dataset with improved parameters...")
+        print("\n2. Preparing dataset with improved parameters...")
         tokenizer, (train_features, train_labels, test_features, test_labels), metadata = prepare_dataset(
             vocab_size=model_params['vocab_size'],
             max_sequence_length=150, # Longer sequences for better context  
@@ -997,7 +1067,7 @@ if __name__ == "__main__":
         print(f"  - <PAD> token index: {tokenizer.word_to_index.get(tokenizer.pad_token)}")
         
         # Create improved model
-        print("\n2. Creating improved model architecture...")
+        print("\n3. Creating improved model architecture...")
         model_config = {
             'vocab_size': metadata['vocab_size'],
             'embedding_dim': model_params['embedding_dim'],
@@ -1022,14 +1092,13 @@ if __name__ == "__main__":
         print(f"  - Trainable parameters: {trainable_params:,}")
         
         # Save model configuration
-        save_path = os.path.join(MODEL_PATH, "lyrics_model.pth")
         save_model_config(model_config, metadata['tokenizer_path'], save_path)
         
         # Use larger subset for better learning with low accuracy
         subset_size = min(500000, len(train_features))  # 500k samples for much better learning
         test_subset_size = min(50000, len(test_features))  # 50k for more robust testing
         
-        print(f"\n3. Training with improved techniques...")
+        print(f"\n4. Training with improved techniques...")
         print(f"Using {subset_size:,} training samples and {test_subset_size:,} test samples")
         
         history = train_model(
@@ -1045,11 +1114,17 @@ if __name__ == "__main__":
         )
         
         # Save tokenizer alongside model
-        tokenizer_path = os.path.join(MODEL_PATH, "tokenizer.pkl")
+        # Extract model name without .pth extension for tokenizer naming
+        model_name = os.path.basename(save_path).replace('.pth', '')
+        tokenizer_path = os.path.join(MODEL_PATH, f"{model_name}_tokenizer.pkl")
         tokenizer.save(tokenizer_path)
         
+        # Also save a shared tokenizer for convenience (same for all models)
+        shared_tokenizer_path = os.path.join(MODEL_PATH, "tokenizer.pkl")
+        tokenizer.save(shared_tokenizer_path)
+        
         # Test generation with improved parameters
-        print("\n4. Testing generation quality...")
+        print("\n5. Testing generation quality...")
         test_seeds = [
             "love is",
             "when the sun", 
@@ -1079,7 +1154,7 @@ if __name__ == "__main__":
                 print()
         
         # Print training summary
-        print("\n5. Training Summary:")
+        print("\n6. Training Summary:")
         print("-" * 50)
         final_train_loss = history['train_loss'][-1]
         final_train_acc = history['train_acc'][-1]

@@ -61,6 +61,13 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Model selection state
+  const [selectedModel, setSelectedModel] = useState('lyrics_model');
+  const AVAILABLE_MODELS = [
+    { id: 'lyrics_model', name: 'Large Model (lyrics_model)', description: 'Full model - Better quality - CAN\'T RUN ON CLOUD!' },
+    { id: 'lyrics_model_2', name: 'Small Model (lyrics_model_2)', description: 'Smaller model - Lower quality' }
+  ];
+
   // Lyric generation state
   const [seedText, setSeedText] = useState('');
   const [maxLength, setMaxLength] = useState(50);
@@ -158,7 +165,8 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
           max_length: maxLength,
           temperature: temperature,
           top_k: topK,
-          num_variations: numVariations
+          num_variations: numVariations,
+          model: selectedModel
         })
       });
 
@@ -303,6 +311,35 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
             marginBottom: '20px'
           }}>
             <h3 style={{ margin: '0 0 20px 0', color: '#667eea' }}>Create Your Song</h3>
+            
+            {/* Model Selection */}
+            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: 'white', borderRadius: '8px', border: '2px solid #e0e0e0' }}>
+              <label style={{ display: 'block', fontSize: '14px', color: '#666', marginBottom: '12px', fontWeight: 'bold' }}>
+                Select Model
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                {AVAILABLE_MODELS.map((model) => (
+                  <button
+                    key={model.id}
+                    onClick={() => setSelectedModel(model.id)}
+                    style={{
+                      padding: '12px 16px',
+                      border: selectedModel === model.id ? '3px solid #667eea' : '2px solid #e0e0e0',
+                      backgroundColor: selectedModel === model.id ? '#f0f4ff' : 'white',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.3s ease',
+                      fontWeight: selectedModel === model.id ? 'bold' : 'normal',
+                      color: selectedModel === model.id ? '#667eea' : '#666'
+                    }}
+                  >
+                    <div style={{ fontSize: '15px', marginBottom: '4px' }}>{model.name}</div>
+                    <div style={{ fontSize: '12px', opacity: 0.7 }}>{model.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
             
             {/* Seed Text Input */}
             <div style={{ marginBottom: '20px' }}>

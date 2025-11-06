@@ -1,11 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
-import TextGenerator from './projects/projectRNN/TextGenerator.tsx';
-import ImageClassifier from './projects/Project3/ImageClassifier.tsx';
-import SentimentAnalyzer from './projects/Project4/SentimentAnalyzer.tsx';
-import RNN from './projects/Project5/RNN.tsx';
-import GeneticAlgorithmPage from './projects/projectGA/GeneticAlgorithm.tsx';
 import './App.css';
+
+// Lazy load all project components for better performance
+const TextGenerator = React.lazy(() =>
+  import('./projects/projectRNN/TextGenerator.tsx').then(module => ({ default: module.default }))
+);
+const ImageClassifier = React.lazy(() =>
+  import('./projects/Project3/ImageClassifier.tsx').then(module => ({ default: module.default }))
+);
+const SentimentAnalyzer = React.lazy(() =>
+  import('./projects/Project4/SentimentAnalyzer.tsx').then(module => ({ default: module.default }))
+);
+const RNN = React.lazy(() =>
+  import('./projects/Project5/RNN.tsx').then(module => ({ default: module.default }))
+);
+const GeneticAlgorithmPage = React.lazy(() =>
+  import('./projects/projectGA/GeneticAlgorithm.tsx').then(module => ({ default: module.default }))
+);
+
+// Loading component shown while chunks are downloading
+function LoadingSpinner() {
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '400px',
+      fontSize: '18px',
+      color: '#999'
+    }}>
+      <span>⏳ Loading project...</span>
+    </div>
+  );
+}
 
 function App() {
   const [useLocalAPI, setUseLocalAPI] = useState(() => {
@@ -91,14 +119,16 @@ function App() {
           </nav>
         </header>
         <main>
-          <Routes>
-            <Route path="/" element={<TextGenerator />} />
-            <Route path="/text-generator" element={<TextGenerator />} />
-            <Route path="/image-classifier" element={<ImageClassifier />} />
-            <Route path="/sentiment-analyzer" element={<SentimentAnalyzer />} />
-            <Route path="/Project5" element={<RNN activeTab="song-generator" />} />
-            <Route path="/genetic-algorithm" element={<GeneticAlgorithmPage />} />
-          </Routes>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              <Route path="/" element={<TextGenerator />} />
+              <Route path="/text-generator" element={<TextGenerator />} />
+              <Route path="/image-classifier" element={<ImageClassifier />} />
+              <Route path="/sentiment-analyzer" element={<SentimentAnalyzer />} />
+              <Route path="/Project5" element={<RNN activeTab="song-generator" />} />
+              <Route path="/genetic-algorithm" element={<GeneticAlgorithmPage />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     </Router>

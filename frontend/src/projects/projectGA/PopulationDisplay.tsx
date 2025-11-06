@@ -107,13 +107,6 @@ const PopulationDisplay: React.FC<PopulationDisplayProps> = ({
         </div>
       </div>
 
-      {isComplete && (
-        <div className="completion-message">
-          <div className="success-icon">🎉</div>
-          <h2>Evolution Complete!</h2>
-          <p>The population has successfully evolved to match the target!</p>
-        </div>
-      )}
     </div>
   );
 };

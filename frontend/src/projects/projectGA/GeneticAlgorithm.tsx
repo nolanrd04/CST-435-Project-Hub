@@ -42,6 +42,12 @@ const GeneticAlgorithmPage: React.FC = () => {
 
   const evolutionLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isEvolving = useRef(false);
+  const stateRef = useRef(state);  // Keep a ref to latest state
+
+  // Update the ref whenever state changes
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // Start evolution
   const handleStart = async (target: string, config: any) => {
@@ -74,8 +80,6 @@ const GeneticAlgorithmPage: React.FC = () => {
         bestFitness: response.best_fitness,
         historyData: [],
       }));
-
-      isEvolving.current = true;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to initialize GA";
@@ -99,10 +103,11 @@ const GeneticAlgorithmPage: React.FC = () => {
       
       isEvolving.current = true;
       try {
-        console.log(`🧬 Starting evolution step at generation ${state.generation}...`);
+        const currentState = stateRef.current;
+        console.log(`🧬 Starting evolution step at generation ${currentState.generation}...`);
         
         // Evolve for 50 generations per step (faster convergence)
-        const evolveResult = await gaService.evolve(state.sessionId!, 50);
+        const evolveResult = await gaService.evolve(currentState.sessionId!, 50);
         
         if (!isMounted) return;
 
@@ -114,17 +119,17 @@ const GeneticAlgorithmPage: React.FC = () => {
         });
 
         // Get current status
-        const status = await gaService.getStatus(state.sessionId!);
+        const status = await gaService.getStatus(currentState.sessionId!);
 
         if (!isMounted) return;
 
         console.log("📊 Status:", status);
 
         // Get population data
-        const popResponse = await gaService.getPopulation(state.sessionId!, 20);
+        const popResponse = await gaService.getPopulation(currentState.sessionId!, 20);
 
         // Get history
-        const historyResponse = await gaService.getHistory(state.sessionId!);
+        const historyResponse = await gaService.getHistory(currentState.sessionId!);
 
         if (!isMounted) return;
 

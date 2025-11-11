@@ -29,5 +29,10 @@ Neural_Networks_Comparison.md
 node_modules/
 backend/app/routers/project3/vehicle_classifier_model.keras
 backend/app/routers/project5/data/900k Definitive Spotify Dataset.json
-*.pth
-*.pkl
+backend/app/routers/project5/data/lyrics_preprocessed_400mb.txt
+backend/app/routers/project5/data/lyrics_tokenizer_400mb.pkl
+backend/app/routers/project5/model/lyrics_model_2_best.pth
+backend/app/routers/project5/model/lyrics_model_2_tokenizer.pkl
+backend/app/routers/project5/model/lyrics_model_2.pth
+backend/app/routers/project5/model/lyrics_model.pth
+backend/app/routers/project5/model/tokenizer.pkl

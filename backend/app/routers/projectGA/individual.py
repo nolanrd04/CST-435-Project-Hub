@@ -48,23 +48,57 @@ class Individual:
                      if i < len(target) and char == target[i])
         self.fitness = (matches / len(target)) * 100.0
 
-    def mutate(self, mutation_rate: float, charset: str) -> "Individual":
+    def mutate(self, mutation_rate: float, charset: str, target: str = "") -> "Individual":
         """
-        Create a new individual with random mutations.
+        Create a new individual with smart mutations.
+        
+        If target is provided, correct characters are protected and incorrect ones
+        are biased toward the target character.
         
         Args:
             mutation_rate: Probability (0-1) of each character mutating
             charset: Available characters for mutation
+            target: Optional target string for smart mutations
             
         Returns:
             A new mutated Individual
         """
         mutated_genes = ""
-        for char in self.genes:
-            if random.random() < mutation_rate:
-                mutated_genes += random.choice(charset)
-            else:
-                mutated_genes += char
+        
+        # Smart mutation: aware of target string
+        if target:
+            for i, char in enumerate(self.genes):
+                if i < len(target):
+                    target_char = target[i]
+                    
+                    # If character is CORRECT, rarely mutate it (10% of normal rate)
+                    if char == target_char:
+                        if random.random() < mutation_rate * 0.1:
+                            mutated_genes += random.choice(charset)
+                        else:
+                            mutated_genes += char  # Keep correct character
+                    
+                    # If character is WRONG, try to fix it
+                    else:
+                        if random.random() < mutation_rate:
+                            # 80% chance to mutate to target, 20% chance random
+                            if random.random() < 0.8:
+                                mutated_genes += target_char
+                            else:
+                                mutated_genes += random.choice(charset)
+                        else:
+                            mutated_genes += char
+                else:
+                    mutated_genes += char
+        
+        # Fallback: regular mutation if no target provided
+        else:
+            for char in self.genes:
+                if random.random() < mutation_rate:
+                    mutated_genes += random.choice(charset)
+                else:
+                    mutated_genes += char
+        
         return Individual(mutated_genes)
 
     def crossover(self, other: "Individual") -> "Individual":

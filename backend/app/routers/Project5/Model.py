@@ -1118,6 +1118,8 @@ if __name__ == "__main__":
         model_name = os.path.basename(save_path).replace('.pth', '')
         tokenizer_path = os.path.join(MODEL_PATH, f"{model_name}_tokenizer.pkl")
         tokenizer.save(tokenizer_path)
+
+        
         
         # Also save a shared tokenizer for convenience (same for all models)
         shared_tokenizer_path = os.path.join(MODEL_PATH, "tokenizer.pkl")

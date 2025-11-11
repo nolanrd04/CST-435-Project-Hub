@@ -138,7 +138,7 @@ class GeneticAlgorithm:
                 child = parent1.copy()
 
             # Mutation
-            child = child.mutate(self.config.mutation_rate, self.config.charset)
+            child = child.mutate(self.config.mutation_rate, self.config.charset, self.target)
 
             new_population.append(child)
 

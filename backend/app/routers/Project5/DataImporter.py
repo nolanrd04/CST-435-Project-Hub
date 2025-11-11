@@ -117,9 +117,13 @@ try:
             print(f"  Processed {i + 1} records... ({size_mb:.2f} MB)")
     
     print(f"\nSuccessfully extracted {len(all_lyrics)} lyric entries")
-    
-    # Save preprocessed lyrics to text file
-    output_file = os.path.join(DATA_PATH, "lyrics_preprocessed.txt")
+
+    print("Enter a txt file to save to, or leave blank to use default (lyrics_preprocessed.txt): ", end="")
+    user_input = input().strip()
+    if user_input:
+        output_file = user_input
+    else:
+        output_file = os.path.join(DATA_PATH, "lyrics_preprocessed.txt")
     
     # Join all lyrics with a newline separator
     combined_text = "\n".join(all_lyrics)
@@ -149,11 +153,20 @@ except json.JSONDecodeError as e:
     print("  - The file is incomplete or corrupted")
     print("  - The file is in NDJSON format (newline-delimited JSON) instead of standard JSON")
     print("\n  Trying alternative parsing method (NDJSON)...")
+
+    print("Enter desired txt file size in mb (max limit 1000mb) (default 20mb): ", end="")
+    size_input = input().strip()
+    try:
+        size_mb = int(size_input)
+        if size_mb <= 0 or size_mb > 1000:
+            size_mb = 20
+    except ValueError:
+        size_mb = 20
     
     try:
         all_lyrics = []
         current_size_bytes = 0
-        max_size_bytes = 20 * 1024 * 1024  # 20 MB limit
+        max_size_bytes = size_mb * 1024 * 1024  # Convert MB to bytes
         
         with open(dst_file, 'r', encoding='utf-8') as f:
             for line_num, line in enumerate(f, 1):
@@ -166,23 +179,29 @@ except json.JSONDecodeError as e:
                             # Check if adding this lyric would exceed the size limit
                             lyric_size = len(preprocessed.encode('utf-8')) + 1  # +1 for newline
                             if current_size_bytes + lyric_size > max_size_bytes:
-                                print(f"\n⚠ Reached 20 MB limit at {line_num} records")
+                                print(f"\n⚠ Reached {max_size_bytes / (1024**2):.2f} MB limit at {line_num} records")
                                 break
                             
                             all_lyrics.append(preprocessed)
                             current_size_bytes += lyric_size
                     
-                    if line_num % 100000 == 0:
+                    if line_num % 10000 == 0:
                         size_mb = current_size_bytes / (1024**2)
-                        print(f"  Processed {line_num} records... ({size_mb:.2f} MB / 20 MB)")
+                        print(f"  Processed {line_num} records... ({size_mb:.2f} MB / {max_size_bytes / (1024**2):.2f} MB)")
                 except json.JSONDecodeError:
                     continue
         
         if all_lyrics:
             print(f"\n✓ Successfully parsed as NDJSON format!")
             print(f"  Extracted {len(all_lyrics)} lyric entries")
-            
-            output_file = os.path.join(DATA_PATH, "lyrics_preprocessed.txt")
+
+            print("Enter a txt file to save to, or leave blank to use default (lyrics_preprocessed.txt): ", end="")
+            user_input = input().strip()
+            if user_input:
+                output_file = os.path.join(DATA_PATH, user_input)
+            else:
+                output_file = os.path.join(DATA_PATH, "lyrics_preprocessed.txt")
+
             combined_text = "\n".join(all_lyrics)
             
             with open(output_file, 'w', encoding='utf-8') as f:
@@ -191,7 +210,7 @@ except json.JSONDecodeError as e:
             file_size_mb = os.path.getsize(output_file) / (1024**2)
             num_chars = len(combined_text)
             
-            print(f"\n✓ Saved preprocessed lyrics to: lyrics_preprocessed.txt")
+            print(f"\n✓ Saved preprocessed lyrics to: {output_file}")
             print(f"  - File size: {file_size_mb:.2f} MB")
             print(f"  - Number of songs/entries: {len(all_lyrics)}")
             print(f"  - Total characters: {num_chars:,}")

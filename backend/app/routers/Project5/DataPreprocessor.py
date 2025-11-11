@@ -315,9 +315,12 @@ def prepare_dataset(vocab_size: int = 25000, max_sequence_length: int = 150,
     print("\n" + "="*50)
     print("PREPARING DATASET FOR TRAINING")
     print("="*50)
-    
-    # Determine lyrics file path
-    if lyrics_file is None:
+
+    print("Enter a specific txt file to load or leave blank to use default (lyrics_preprocessed.txt): ", end="")
+    user_input = input().strip()
+    if user_input:
+        lyrics_file = os.path.join(DATA_PATH, user_input)
+    else:
         lyrics_file = os.path.join(DATA_PATH, "lyrics_preprocessed.txt")
     
     # Check if file exists
@@ -363,7 +366,12 @@ def prepare_dataset(vocab_size: int = 25000, max_sequence_length: int = 150,
     )
     
     # Save tokenizer
-    tokenizer_path = os.path.join(DATA_PATH, "lyrics_tokenizer.pkl")
+    print("Enter a tokenizer file name to save to, or leave blank to use default (lyrics_tokenizer.pkl): ", end="")
+    user_input = input().strip()
+    if user_input:
+        tokenizer_path = os.path.join(DATA_PATH, user_input)
+    else:
+        tokenizer_path = os.path.join(DATA_PATH, "lyrics_tokenizer.pkl")
     tokenizer.save(tokenizer_path)
     
     # Create metadata

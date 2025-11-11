@@ -1,15 +1,15 @@
 {
-  "num_songs": 926916,
-  "vocab_size": 15000,
-  "max_sequence_length": 75,
+  "num_songs": 29409,
+  "vocab_size": 10000,
+  "max_sequence_length": 150,
   "n_words": 4,
   "train_split": 0.85,
-  "total_samples": 65811036,
-  "train_samples": 55939380,
-  "test_samples": 9871656,
+  "total_samples": 4293714,
+  "train_samples": 3649656,
+  "test_samples": 644058,
   "pad_token_id": 0,
   "oov_token_id": 1,
   "start_token_id": 2,
   "end_token_id": 3,
-  "tokenizer_path": "C:\\Users\\nolan\\Desktop\\GCU\\Classes Year 4\\CST435\\hub-app\\backend\\app\\routers\\Project5\\data\\lyrics_tokenizer_400mb.pkl"
+  "tokenizer_path": "C:\\Users\\nolan\\Desktop\\GCU\\Classes Year 4\\CST435\\hub-app\\backend\\app\\routers\\Project5\\data\\lyrics_tokenizer.pkl"
 }

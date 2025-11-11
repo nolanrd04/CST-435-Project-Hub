@@ -1,11 +1,11 @@
 {
-  "model_path": "C:\\Users\\nolan\\Desktop\\GCU\\Classes Year 4\\CST435\\hub-app\\backend\\app\\routers\\Project5\\model\\lyrics_model_2.pth",
+  "model_path": "C:\\Users\\nolan\\Desktop\\GCU\\Classes Year 4\\CST435\\hub-app\\backend\\app\\routers\\Project5\\model\\lyrics_model.pth",
   "tokenizer_path": "C:\\Users\\nolan\\Desktop\\GCU\\Classes Year 4\\CST435\\hub-app\\backend\\app\\routers\\Project5\\data\\lyrics_tokenizer.pkl",
   "model_config": {
-    "vocab_size": 25000,
+    "vocab_size": 10000,
     "embedding_dim": 100,
     "hidden_size": 256,
-    "num_layers": 2,
+    "num_layers": 3,
     "dropout": 0.2,
     "learning_rate": 0.005
   },

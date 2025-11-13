@@ -1,14 +1,19 @@
-import React, { useState, useRef, act } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+import { AiOutlineCamera, AiOutlineSearch, AiOutlineReload, AiOutlineClose, AiOutlineWarning, AiOutlineCheckCircle, AiOutlineDollar, AiOutlineBarChart, AiOutlineDesktop, AiOutlineCloud, AiOutlineHdd, AiOutlineWifi, AiOutlineVideoCamera } from 'react-icons/ai';
+import { MdDirectionsCar, MdAirplaneTicket, MdTwoWheeler } from 'react-icons/md';
 import { getApiUrl } from '../getApiUrl.ts';
 
 function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
-  const [activeTab, setActiveTab] = useState(initialTab || 'classifier' || 'description' || 'youtube');
+  const [activeTab, setActiveTab] = useState(initialTab || 'classifier');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [classification, setClassification] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [modelSource, setModelSource] = useState<'local' | 'huggingface'>('local');
+  const [trainingSummary, setTrainingSummary] = useState<any>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +70,34 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
     }
   };
 
+  const fetchTrainingSummary = useCallback(async () => {
+    setSummaryLoading(true);
+    setSummaryError('');
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/project3/training-summary`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch training summary');
+      }
+
+      const result = await response.json();
+      setTrainingSummary(result);
+    } catch (err) {
+      setSummaryError(err instanceof Error ? err.message : 'Failed to load training summary');
+      console.error('Error fetching training summary:', err);
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, []);
+
+  // Fetch training summary when cost analysis tab is selected
+  React.useEffect(() => {
+    if (activeTab === 'cost-analysis' && !trainingSummary && !summaryLoading) {
+      fetchTrainingSummary();
+    }
+  }, [activeTab, trainingSummary, summaryLoading, fetchTrainingSummary]);
+
   const handleClear = () => {
     setSelectedFile(null);
     setPreview(null);
@@ -81,16 +114,16 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
     return 'bg-orange-100 text-orange-700';
   };
 
-  const getVehicleEmoji = (vehicleType: string) => {
+  const getVehicleIcon = (vehicleType: string) => {
     switch (vehicleType.toLowerCase()) {
       case 'car':
-        return '🚗';
+        return <MdDirectionsCar size={24} />;
       case 'airplane':
-        return '✈️';
+        return <MdAirplaneTicket size={24} />;
       case 'motorbike':
-        return '🏍️';
+        return <MdTwoWheeler size={24} />;
       default:
-        return '🚙';
+        return <MdDirectionsCar size={24} />;
     }
   };
 
@@ -138,6 +171,26 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
           Project Description
         </button>
         <button
+          onClick={() => setActiveTab('cost-analysis')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: activeTab === 'cost-analysis' ? '#667eea' : 'transparent',
+            color: activeTab === 'cost-analysis' ? 'white' : '#666',
+            border: 'none',
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'cost-analysis' ? 'bold' : 'normal',
+            fontSize: '16px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <AiOutlineDollar size={18} />
+          Cost Analysis
+        </button>
+        <button
           onClick={() => setActiveTab('youtube')}
           style={{
             padding: '12px 24px',
@@ -157,7 +210,10 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
 
       {activeTab === 'classifier' && (
         <div>
-          <h2 className="title" style={{ marginBottom: '20px' }}>🖼️ Vehicle Image Classifier</h2>
+          <h2 className="title" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AiOutlineCamera size={28} />
+            Vehicle Image Classifier
+          </h2>
           <div style={{
             backgroundColor: '#f0f9ff',
             border: '2px solid #3b82f6',
@@ -244,9 +300,246 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
       </div>
       )}
 
+      {activeTab === 'cost-analysis' && (
+        <div>
+          <h2 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AiOutlineDollar size={28} />
+            Training Cost Analysis
+          </h2>
+
+          {summaryError && (
+            <div style={{
+              backgroundColor: '#fee2e2',
+              border: '1px solid #fca5a5',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '20px',
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <AiOutlineWarning size={20} />
+              {summaryError}
+            </div>
+          )}
+
+          {summaryLoading ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '12px',
+              border: '2px solid #e2e8f0'
+            }}>
+              <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+              <p>Loading training cost analysis...</p>
+            </div>
+          ) : trainingSummary ? (
+            trainingSummary.has_training_data ? (
+              <div>
+                {/* Training Overview */}
+                <div style={{
+                  backgroundColor: '#f0f9ff',
+                  border: '2px solid #0ea5e9',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px'
+                }}>
+                  <h3 style={{ marginTop: 0, color: '#0c4a6e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AiOutlineBarChart size={24} />
+                    Training Overview
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0369a1' }}>
+                        {trainingSummary.training_summary.actual_training_time_formatted}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>Training Time</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0369a1' }}>
+                        {trainingSummary.training_summary.peak_memory_usage_formatted}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>Peak Memory</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0369a1' }}>
+                        {trainingSummary.training_summary.total_training_cost_formatted}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>Total Cost</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cost Breakdown */}
+                <div style={{
+                  backgroundColor: '#f0fdf4',
+                  border: '2px solid #22c55e',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px'
+                }}>
+                  <h3 style={{ marginTop: 0, color: '#166534', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AiOutlineDollar size={24} />
+                    Cost Breakdown
+                  </h3>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <AiOutlineDesktop size={16} />
+                        Compute:
+                      </span>
+                      <span style={{ fontWeight: 'bold', color: '#166534' }}>
+                        {trainingSummary.training_summary.cost_breakdown.compute_formatted}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <AiOutlineCloud size={16} />
+                        Memory:
+                      </span>
+                      <span style={{ fontWeight: 'bold', color: '#166534' }}>
+                        {trainingSummary.training_summary.cost_breakdown.memory_formatted}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <AiOutlineHdd size={16} />
+                        Storage:
+                      </span>
+                      <span style={{ fontWeight: 'bold', color: '#166534' }}>
+                        {trainingSummary.training_summary.cost_breakdown.storage_formatted}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <AiOutlineWifi size={16} />
+                        Data Transfer:
+                      </span>
+                      <span style={{ fontWeight: 'bold', color: '#166534' }}>
+                        {trainingSummary.training_summary.cost_breakdown.data_transfer_formatted}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <AiOutlineVideoCamera size={16} />
+                        GPU:
+                      </span>
+                      <span style={{ fontWeight: 'bold', color: '#166534' }}>
+                        {trainingSummary.training_summary.cost_breakdown.gpu_formatted}
+                      </span>
+                    </div>
+                    <hr style={{ border: 'none', borderTop: '1px solid #bbf7d0', margin: '8px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <AiOutlineDollar size={16} />
+                        Total Cost:
+                      </span>
+                      <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#166534' }}>
+                        {trainingSummary.training_summary.total_training_cost_formatted}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Metrics */}
+                <div style={{
+                  backgroundColor: '#fef3c7',
+                  border: '2px solid #f59e0b',
+                  borderRadius: '12px',
+                  padding: '20px'
+                }}>
+                  <h3 style={{ marginTop: 0, color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AiOutlineBarChart size={24} />
+                    Additional Metrics
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                    <div>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#92400e' }}>
+                        {trainingSummary.training_summary.cost_per_epoch_formatted}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#a16207' }}>Cost per Epoch</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#92400e' }}>
+                        {new Date(trainingSummary.training_summary.timestamp * 1000).toLocaleString()}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#a16207' }}>Training Completed</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Refresh Button */}
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                  <button
+                    onClick={fetchTrainingSummary}
+                    disabled={summaryLoading}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: summaryLoading ? '#cbd5e1' : '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: summaryLoading ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      margin: '0 auto'
+                    }}
+                  >
+                    <AiOutlineReload size={16} className={summaryLoading ? 'animate-spin' : ''} />
+                    {summaryLoading ? 'Refreshing...' : 'Refresh Data'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                padding: '40px',
+                backgroundColor: '#f8fafc',
+                borderRadius: '12px',
+                border: '2px solid #e2e8f0'
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
+                  <AiOutlineBarChart size={48} />
+                </div>
+                <h3 style={{ color: '#64748b', marginBottom: '10px' }}>No Training Data Available</h3>
+                <p style={{ color: '#94a3b8', marginBottom: '20px' }}>
+                  {trainingSummary.message}
+                </p>
+                <button
+                  onClick={fetchTrainingSummary}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    margin: '0 auto'
+                  }}
+                >
+                  <AiOutlineReload size={16} />
+                  Try Again
+                </button>
+              </div>
+            )
+          ) : null}
+        </div>
+      )}
+
       {/* Error Message */}
       {activeTab === 'classifier' && error && (
-        <div className="error">⚠️ {error}</div>
+        <div className="error" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <AiOutlineWarning size={20} />
+          {error}
+        </div>
       )}
 
       {/* Upload Area */}
@@ -277,7 +570,9 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
           onChange={handleFileSelect}
           style={{ display: 'none' }}
         />
-        <div style={{ fontSize: '40px', marginBottom: '10px' }}>📸</div>
+        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
+          <AiOutlineCamera size={48} />
+        </div>
         <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '5px' }}>
           Click to upload or drag and drop
         </p>
@@ -321,8 +616,10 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
           onClick={handleClear}
           disabled={loading || !selectedFile}
           className="button secondary"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          ✕ Clear
+          <AiOutlineClose size={18} />
+          Clear
         </button>
         <button
           onClick={handleClassify}
@@ -331,16 +628,19 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
           style={{
             opacity: loading || !selectedFile ? 0.5 : 1,
             cursor: loading || !selectedFile ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
         >
           {loading ? (
             <>
-              <span style={{ display: 'inline-block', marginRight: '5px' }}>⏳</span>
+              <AiOutlineReload size={18} className="animate-spin" />
               Classifying...
             </>
           ) : (
             <>
-              <span style={{ display: 'inline-block', marginRight: '5px' }}>🔍</span>
+              <AiOutlineSearch size={18} />
               Classify
             </>
           )}
@@ -351,7 +651,10 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
       {/* Classification Results */}
       {activeTab === 'classifier' && classification && (
         <div className="output">
-          <h3 style={{ marginBottom: '20px' }}>✓ Classification Result</h3>
+          <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AiOutlineCheckCircle size={24} style={{ color: '#22c55e' }} />
+            Classification Result
+          </h3>
 
           {/* Main Prediction */}
           <div className="generated-text" style={{
@@ -360,8 +663,10 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
             borderColor: '#c7d2fe',
             marginBottom: '20px'
           }}>
-            <div style={{ fontSize: '60px', marginBottom: '15px' }}>
-              {getVehicleEmoji(classification.predicted_class)}
+            <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ fontSize: '60px' }}>
+                {getVehicleIcon(classification.predicted_class)}
+              </div>
             </div>
             <h4 style={{
               fontSize: '32px',
@@ -395,8 +700,9 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
                 ([className, probability]: [string, any]) => (
                   <div key={className}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                      <span style={{ fontWeight: '600', color: '#2d3748', textTransform: 'capitalize' }}>
-                        {getVehicleEmoji(className)} {className}
+                      <span style={{ fontWeight: '600', color: '#2d3748', textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {getVehicleIcon(className)}
+                        {className}
                       </span>
                       <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4a5568' }}>
                         {(probability * 100).toFixed(1)}%
@@ -436,7 +742,7 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
             color: '#1e40af'
           }}>
             <p style={{ margin: '0 0 8px 0' }}>
-              <strong>Model Source:</strong> {classification.model_source === 'local' ? '📂 Local (Trained)' : '☁️ HuggingFace (Pre-trained)'}
+              <strong>Model Source:</strong> {classification.model_source === 'local' ? 'Local (Trained)' : 'HuggingFace (Pre-trained)'}
             </p>
             <p style={{ margin: 0 }}>
               <strong>Note:</strong> This model was trained on older vehicle images (cars, airplanes, and motorbikes).
@@ -448,9 +754,10 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
           <button
             onClick={handleClear}
             className="button secondary"
-            style={{ width: '100%' }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
-            🔄 Classify Another
+            <AiOutlineReload size={18} />
+            Classify Another
           </button>
         </div>
       )}

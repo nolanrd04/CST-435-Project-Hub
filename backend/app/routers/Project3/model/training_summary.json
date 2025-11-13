@@ -1,0 +1,26 @@
+{
+  "training_summary": {
+    "actual_training_time_hours": 0.0104,
+    "actual_training_time_formatted": "0.01 hours",
+    "peak_memory_usage_gb": 0.97,
+    "peak_memory_usage_formatted": "0.97 GB",
+    "total_training_cost": 0.0078,
+    "total_training_cost_formatted": "$0.0078",
+    "cost_breakdown": {
+      "compute": 0.0,
+      "compute_formatted": "$0.0000",
+      "memory": 0.0,
+      "memory_formatted": "$0.0000",
+      "storage": 0.0,
+      "storage_formatted": "$0.0000",
+      "data_transfer": 0.0,
+      "data_transfer_formatted": "$0.0000",
+      "gpu": 0.0078,
+      "gpu_formatted": "$0.0078"
+    },
+    "cost_per_epoch": 0.000157,
+    "cost_per_epoch_formatted": "$0.000157",
+    "timestamp": 1763068048.3802245,
+    "timestamp_formatted": "2025-11-13 14:07:28"
+  }
+}

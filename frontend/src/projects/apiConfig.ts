@@ -4,7 +4,7 @@
  */
 
 // Default deployed API URL (Render)
-const DEPLOYED_API_URL = "https://cst-435-project-hub.onrender.com";
+const DEPLOYED_API_URL = "https://sorenhaynes.duckdns.org:8443";
 
 // Local development API URL
 const LOCAL_API_URL = "http://localhost:8000";

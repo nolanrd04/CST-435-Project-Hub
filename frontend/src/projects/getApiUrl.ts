@@ -10,5 +10,5 @@ export function getApiUrl(): string {
   }
 
   // Default to deployed API
-  return 'https://cst-435-project-hub.onrender.com';
+  return 'https://sorenhaynes.duckdns.org:8443';
 }

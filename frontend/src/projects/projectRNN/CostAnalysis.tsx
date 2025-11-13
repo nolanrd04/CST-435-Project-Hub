@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { getApiUrl } from '../getApiUrl.ts';
 
 interface CostReport {
   pricing_config: Record<string, any>;
@@ -24,14 +25,9 @@ function CostAnalysis() {
   const [textLoading, setTextLoading] = useState(false);
   const [textError, setTextError] = useState('');
 
-  const apiMode = typeof window !== 'undefined' ? localStorage.getItem('API_MODE') : null;
-  const API_BASE_URL = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
+  const API_BASE_URL = getApiUrl();
 
-  useEffect(() => {
-    fetchCostAnalysis();
-  }, []);
-
-  const fetchCostAnalysis = async () => {
+  const fetchCostAnalysis = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -44,7 +40,11 @@ function CostAnalysis() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
+    fetchCostAnalysis();
+  }, [fetchCostAnalysis]);
 
   const handleGenerateText = async () => {
     setTextLoading(true);

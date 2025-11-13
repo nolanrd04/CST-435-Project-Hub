@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../getApiUrl.ts';
 
 interface CostSummary {
   total_training_cost: string;
@@ -95,12 +96,12 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
     setLoading(true);
     setError(null);
     try {
-      const apiMode = localStorage.getItem('API_MODE');
-      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
-      
-      const summaryResponse = await fetch(`${apiUrl}/project5/cost-analysis/summary`);
-      const reportResponse = await fetch(`${apiUrl}/project5/cost-analysis/report`);
-      const actualCostResponse = await fetch(`${apiUrl}/project5/cost-analysis/actual`);
+  // Resolve API base URL via user preference helper
+  const apiUrl = getApiUrl();
+
+  const summaryResponse = await fetch(`${apiUrl}/project5/cost-analysis/summary`);
+  const reportResponse = await fetch(`${apiUrl}/project5/cost-analysis/report`);
+  const actualCostResponse = await fetch(`${apiUrl}/project5/cost-analysis/actual`);
 
       if (!summaryResponse.ok || !reportResponse.ok) {
         throw new Error('Failed to fetch cost analysis data');
@@ -124,10 +125,10 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
   const fetchModelInfo = async () => {
     setModelInfoLoading(true);
     try {
-      const apiMode = localStorage.getItem('API_MODE');
-      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
-      
-      const response = await fetch(`${apiUrl}/project5/lyric-generator-info`);
+  // Resolve API base URL via user preference helper
+  const apiUrl = getApiUrl();
+
+  const response = await fetch(`${apiUrl}/project5/lyric-generator-info`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch model info');
@@ -152,10 +153,10 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
         return;
       }
 
-      const apiMode = localStorage.getItem('API_MODE');
-      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
-      
-      const response = await fetch(`${apiUrl}/project5/generate-lyrics`, {
+  // Resolve API base URL via user preference helper
+  const apiUrl = getApiUrl();
+
+  const response = await fetch(`${apiUrl}/project5/generate-lyrics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -792,7 +792,21 @@ def load_model(model_path: str) -> Tuple[LyricsLSTM, optim.Adam, Dict]:
         raise FileNotFoundError(f"Model file not found: {model_path}")
     
     # Load checkpoint
-    checkpoint = torch.load(model_path, map_location=device)
+    try:
+        # Newer PyTorch versions default to weights_only=True which can fail for full checkpoints.
+        checkpoint = torch.load(model_path, map_location=device)
+    except Exception as e:
+        # If loading fails with the new weights_only behavior, retry with weights_only=False
+        err_str = str(e)
+        print(f"⚠️ torch.load failed: {err_str}")
+        try:
+            print("⚙️ Retrying torch.load with weights_only=False (required for older checkpoints)")
+            checkpoint = torch.load(model_path, map_location=device, weights_only=False)
+            print("✓ torch.load succeeded with weights_only=False")
+        except Exception as e2:
+            print(f"❌ Retry with weights_only=False also failed: {e2}")
+            # Re-raise the original exception to preserve stack trace for upstream handling
+            raise
     
     # Recreate model
     model = LyricsLSTM(

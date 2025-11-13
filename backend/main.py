@@ -669,3 +669,38 @@ def get_lyric_generator_info():
     except Exception as e:
         print(f"❌ Error fetching lyric generator info: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching model info: {str(e)}")
+
+# ============================================================================
+# PROJECT3 - CNN VEHICLE CLASSIFIER TRAINING SUMMARY ENDPOINT
+# ============================================================================
+
+@app.get("/project3/training-summary")
+def get_project3_training_summary():
+    """Get the latest training summary for Project3 CNN model."""
+    import os
+    
+    # Path to the training summary JSON file
+    summary_path = os.path.join(
+        os.path.dirname(__file__),
+        "app/routers/Project3/model/training_summary.json"
+    )
+    
+    try:
+        if not os.path.exists(summary_path):
+            return {
+                "has_training_data": False,
+                "message": "No training summary available. Run CNN.py to train the model and generate a summary."
+            }
+        
+        # Read and return the JSON data
+        with open(summary_path, 'r', encoding='utf-8') as f:
+            summary_data = json.load(f)
+        
+        return {
+            "has_training_data": True,
+            "training_summary": summary_data["training_summary"]
+        }
+        
+    except Exception as e:
+        print(f"❌ Error fetching Project3 training summary: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching training summary: {str(e)}")

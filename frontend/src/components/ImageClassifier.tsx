@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { getApiUrl } from '../projects/getApiUrl.ts';
 
 function ImageClassifier() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -6,6 +7,7 @@ function ImageClassifier() {
   const [classification, setClassification] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [modelSource, setModelSource] = useState<'local' | 'huggingface'>('local');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,9 +43,8 @@ function ImageClassifier() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const apiMode = localStorage.getItem('API_MODE');
-      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
-      const response = await fetch(`${apiUrl}/classify-image`, {
+  const apiUrl = getApiUrl();
+  const response = await fetch(`${apiUrl}/classify-image?model_source=${modelSource}`, {
         method: 'POST',
         body: formData,
       });
@@ -102,6 +103,44 @@ function ImageClassifier() {
           </span>
           Vehicle Image Classifier
         </h2>
+
+        {/* Model Selection Toggle */}
+        <div className="mb-8 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+          <p className="text-sm font-bold text-blue-900 mb-3">🤖 Model Selection</p>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                value="local"
+                checked={modelSource === 'local'}
+                onChange={(e) => setModelSource(e.target.value as 'local')}
+                disabled={loading}
+                className="w-5 h-5 cursor-pointer"
+              />
+              <span className={`font-medium ${modelSource === 'local' ? 'text-blue-900 font-bold' : 'text-blue-700'}`}>
+                Local Model (Trained)
+              </span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                value="huggingface"
+                checked={modelSource === 'huggingface'}
+                onChange={(e) => setModelSource(e.target.value as 'huggingface')}
+                disabled={loading}
+                className="w-5 h-5 cursor-pointer"
+              />
+              <span className={`font-medium ${modelSource === 'huggingface' ? 'text-blue-900 font-bold' : 'text-blue-700'}`}>
+                HuggingFace (cloud) Model
+              </span>
+            </label>
+          </div>
+          <p className="text-xs text-blue-800 mt-2">
+            {modelSource === 'local' 
+              ? '✓ Using your locally trained model' 
+              : '✓ Using pre-trained model from HuggingFace'}
+          </p>
+        </div>
 
         {/* Error Message */}
         {error && (

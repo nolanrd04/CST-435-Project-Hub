@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getApiUrl } from '../getApiUrl.ts';
 
 function SentimentAnalyzer() {
   const [reviewText, setReviewText] = useState('');
@@ -16,8 +17,7 @@ function SentimentAnalyzer() {
     setLoading(true);
     setError('');
     try {
-      const apiMode = localStorage.getItem('API_MODE');
-      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
+      const apiUrl = getApiUrl();
       const response = await fetch(`${apiUrl}/analyze-sentiment`, {
         method: 'POST',
         headers: {

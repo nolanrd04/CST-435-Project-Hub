@@ -71,6 +71,7 @@ class ClassificationResponse(BaseModel):
     predicted_class: str
     confidence: float
     class_probabilities: dict
+    model_source: str = "local"  # Track which model was used
 
 class SentimentRequest(BaseModel):
     review_text: str
@@ -276,23 +277,38 @@ def health_check():
     }
 
 @app.post("/classify-image", response_model=ClassificationResponse)
-async def classify_image(file: UploadFile = File(...)):
-    """Classify an uploaded image using the trained CNN model."""
+async def classify_image(file: UploadFile = File(...), model_source: str = "local"):
+    """Classify an uploaded image using the trained CNN model.
+    
+    Args:
+        file: Image file to classify
+        model_source: Which model to use - 'local' (trained locally) or 'huggingface' (pre-trained)
+    """
     from backend.app.routers.Project3.classifier import get_classifier
 
     try:
+        # Validate model_source
+        if model_source not in ['local', 'huggingface']:
+            raise HTTPException(
+                status_code=400,
+                detail="model_source must be 'local' or 'huggingface'"
+            )
+
         # Read the uploaded file
         image_bytes = await file.read()
 
         # Get classifier and classify
         classifier = get_classifier()
-        result = classifier.classify(image_bytes)
+        result = classifier.classify(image_bytes, model_source=model_source)
 
         return ClassificationResponse(
             predicted_class=result["predicted_class"],
             confidence=result["confidence"],
-            class_probabilities=result["class_probabilities"]
+            class_probabilities=result["class_probabilities"],
+            model_source=result.get("model_source", model_source)
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error classifying image: {str(e)}")
 

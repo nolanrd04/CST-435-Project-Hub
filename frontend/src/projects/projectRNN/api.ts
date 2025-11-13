@@ -1,8 +1,8 @@
 import axios from 'axios';
+import { getApiUrl } from '../getApiUrl';
 
-// Get API URL based on user preference stored in localStorage
-const apiMode = typeof window !== 'undefined' ? localStorage.getItem('API_MODE') : null;
-const API_BASE_URL = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
+// Centralized API base URL
+const API_BASE_URL = getApiUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,

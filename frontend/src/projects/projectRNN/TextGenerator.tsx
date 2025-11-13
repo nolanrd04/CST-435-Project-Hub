@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import CostAnalysis from './CostAnalysis.tsx';
+import { getApiUrl } from '../getApiUrl.ts';
 
 function TextGenerator() {
   const [activeTab, setActiveTab] = useState<'generator' | 'cost' | 'youtube'>('generator');
@@ -19,8 +20,7 @@ function TextGenerator() {
     setLoading(true);
     setError('');
     try {
-      const apiMode = localStorage.getItem('API_MODE');
-      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
+      const apiUrl = getApiUrl();
       const response = await fetch(`${apiUrl}/generate-text`, {
         method: 'POST',
         headers: {

@@ -5,13 +5,13 @@ python-multipart
 pydantic
 
 # Machine Learning & Data Processing
-tensorflow
-keras
+torch
 numpy
 scikit-learn
 matplotlib
 seaborn
 ijson
+psutil
 
 # Image Processing
 pillow

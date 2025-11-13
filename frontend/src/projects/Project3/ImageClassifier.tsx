@@ -1,11 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, act } from 'react';
+import { getApiUrl } from '../getApiUrl.ts';
 
-function ImageClassifier() {
+function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
+  const [activeTab, setActiveTab] = useState(initialTab || 'classifier' || 'description' || 'youtube');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [classification, setClassification] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [modelSource, setModelSource] = useState<'local' | 'huggingface'>('local');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,9 +44,8 @@ function ImageClassifier() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const apiMode = localStorage.getItem('API_MODE');
-      const apiUrl = apiMode === 'local' ? 'http://localhost:8000' : 'https://cst-435-project-hub.onrender.com';
-      const response = await fetch(`${apiUrl}/classify-image`, {
+  const apiUrl = getApiUrl();
+  const response = await fetch(`${apiUrl}/classify-image?model_source=${modelSource}`, {
         method: 'POST',
         body: formData,
       });
@@ -93,9 +95,120 @@ function ImageClassifier() {
   };
 
   return (
-    <div className="form">
-      <h2 className="title" style={{ marginBottom: '20px' }}>🖼️ Vehicle Image Classifier</h2>
+    
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      {/* Tab Navigation */}
+      <div style={{
+        display: 'flex',
+        gap: '10px',
+        marginBottom: '20px',
+        borderBottom: '2px solid #e5e7eb',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          onClick={() => setActiveTab('classifier')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: activeTab === 'classifier' ? '#667eea' : 'transparent',
+            color: activeTab === 'classifier' ? 'white' : '#666',
+            border: 'none',
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'classifier' ? 'bold' : 'normal',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          Vehicle Image Classifier
+        </button>
+        <button
+          onClick={() => setActiveTab('description')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: activeTab === 'description' ? '#667eea' : 'transparent',
+            color: activeTab === 'description' ? 'white' : '#666',
+            border: 'none',
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'description' ? 'bold' : 'normal',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          Project Description
+        </button>
+        <button
+          onClick={() => setActiveTab('youtube')}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: activeTab === 'youtube' ? '#667eea' : 'transparent',
+            color: activeTab === 'youtube' ? 'white' : '#666',
+            border: 'none',
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'youtube' ? 'bold' : 'normal',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          YouTube Link
+        </button>
+      </div>
 
+      {activeTab === 'classifier' && (
+        <div>
+          <h2 className="title" style={{ marginBottom: '20px' }}>🖼️ Vehicle Image Classifier</h2>
+          <div style={{
+            backgroundColor: '#f0f9ff',
+            border: '2px solid #3b82f6',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '25px',
+            color: '#1e40af'
+          }}>
+            <p style={{ margin: '0 0 12px 0', fontWeight: 'bold', fontSize: '14px' }}>
+              Model Selection
+            </p>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1 }}>
+                <input
+                  type="radio"
+                  value="local"
+                  checked={modelSource === 'local'}
+                  onChange={(e) => setModelSource(e.target.value as 'local')}
+                  disabled={loading}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span style={{ fontWeight: modelSource === 'local' ? '600' : 'normal' }}>
+                  Small Model (can run on cloud)
+                </span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1 }}>
+                <input
+                  type="radio"
+                  value="huggingface"
+                  checked={modelSource === 'huggingface'}
+                  onChange={(e) => setModelSource(e.target.value as 'huggingface')}
+                  disabled={loading}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span style={{ fontWeight: modelSource === 'huggingface' ? '600' : 'normal' }}>
+                  HuggingFace (large) Model
+                </span>
+              </label>
+            </div>
+            <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#1e3a8a' }}>
+              {modelSource === 'local' 
+                ? 'Using small model' 
+                : 'Using large model from HuggingFace'}
+            </p>
+          </div>
+        </div>
+      )}
+
+
+
+      {/*}
       <div style={{
         backgroundColor: '#ffebebff',
         border: '2px solid #f56565',
@@ -109,20 +222,19 @@ function ImageClassifier() {
         <p style={{ margin: 0 }}>
           WARNING: Model is too large to run on the cloud. Run a local API to use this project.
         </p>
-      </div>
-      
+      </div>*/}
 
-      {/* Project Description */}
-      <div style={{
-        backgroundColor: '#fff5f0',
-        border: '2px solid #ea580c',
-        borderRadius: '12px',
-        padding: '16px',
-        marginBottom: '25px',
-        color: '#2d3748',
-        lineHeight: '1.6',
-        fontSize: '14px'
-      }}>
+      {activeTab === 'description' && (
+        <div style={{
+          backgroundColor: '#fff5f0',
+          border: '2px solid #ea580c',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '25px',
+          color: '#2d3748',
+          lineHeight: '1.6',
+          fontSize: '14px'
+        }}>
         <p style={{ margin: 0 }}>
           <strong>About this project:</strong> This CNN (Convolutional Neural Network) classifier is trained to identify three types of vehicles:
           cars, airplanes, and motorbikes. The model uses convolutional layers to extract visual features, max pooling to reduce dimensionality,
@@ -130,13 +242,15 @@ function ImageClassifier() {
           there is a lot of training data, the data is relatively old so newer styles of vehicles may give strange results.
         </p>
       </div>
+      )}
 
       {/* Error Message */}
-      {error && (
+      {activeTab === 'classifier' && error && (
         <div className="error">⚠️ {error}</div>
       )}
 
       {/* Upload Area */}
+      {activeTab === 'classifier' && (
       <div
         className="form-group"
         onClick={() => fileInputRef.current?.click()}
@@ -171,9 +285,10 @@ function ImageClassifier() {
           PNG or JPG (Max 5MB)
         </p>
       </div>
+      )}
 
       {/* Preview Section */}
-      {preview && (
+      {activeTab === 'classifier' && preview && (
         <div className="form-group">
           <label>Preview:</label>
           <div style={{
@@ -200,6 +315,7 @@ function ImageClassifier() {
       )}
 
       {/* Action Buttons */}
+      {activeTab === 'classifier' && (
       <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
         <button
           onClick={handleClear}
@@ -230,9 +346,10 @@ function ImageClassifier() {
           )}
         </button>
       </div>
+      )}
 
       {/* Classification Results */}
-      {classification && (
+      {activeTab === 'classifier' && classification && (
         <div className="output">
           <h3 style={{ marginBottom: '20px' }}>✓ Classification Result</h3>
 
@@ -308,7 +425,7 @@ function ImageClassifier() {
             </div>
           </div>
 
-          {/* Info Box */}
+          {/* Model Source Info Box */}
           <div style={{
             backgroundColor: '#dbeafe',
             borderLeft: '4px solid #3b82f6',
@@ -318,7 +435,10 @@ function ImageClassifier() {
             fontSize: '13px',
             color: '#1e40af'
           }}>
-            <p>
+            <p style={{ margin: '0 0 8px 0' }}>
+              <strong>Model Source:</strong> {classification.model_source === 'local' ? '📂 Local (Trained)' : '☁️ HuggingFace (Pre-trained)'}
+            </p>
+            <p style={{ margin: 0 }}>
               <strong>Note:</strong> This model was trained on older vehicle images (cars, airplanes, and motorbikes).
               It may perform better with images from similar time periods.
             </p>

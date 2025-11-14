@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AiOutlineAudio, AiOutlineCheckCircle, AiOutlineBook, AiOutlineDollar, AiOutlineFileText } from 'react-icons/ai';
 import { getApiUrl } from '../getApiUrl.ts';
 
 interface CostSummary {
@@ -285,7 +286,7 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
               justifyContent: 'center',
               fontSize: '24px'
             }}>
-              🎵
+              <AiOutlineAudio size={24} />
             </span>
             AI Song Lyric Generator
           </h2>
@@ -500,7 +501,8 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
               padding: '25px'
             }}>
               <h3 style={{ margin: '0 0 20px 0', color: '#48bb78', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                ✅ Generated Lyrics
+                <AiOutlineCheckCircle size={24} />
+                Generated Lyrics
               </h3>
 
               {/* Primary Generated Text */}
@@ -526,7 +528,10 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
               {/* Variations */}
               {generatedLyrics.variations && generatedLyrics.variations.length > 1 && (
                 <div style={{ marginBottom: '20px' }}>
-                  <h4 style={{ margin: '0 0 15px 0', color: '#48bb78' }}>📚 Other Variations:</h4>
+                  <h4 style={{ margin: '0 0 15px 0', color: '#48bb78', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AiOutlineBook size={20} />
+                    Other Variations:
+                  </h4>
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -592,7 +597,7 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
               justifyContent: 'center',
               fontSize: '20px'
             }}>
-              💰
+              <AiOutlineDollar size={20} />
             </span>
             Training Cost Analysis
           </h2>
@@ -824,7 +829,7 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
               justifyContent: 'center',
               fontSize: '20px'
             }}>
-              📋
+              <AiOutlineFileText size={20} />
             </span>
             Project Description
           </h2>
@@ -1017,7 +1022,7 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
               justifyContent: 'center',
               fontSize: '20px'
             }}>
-              📋
+              <AiOutlineFileText size={20} />
             </span>
             Project Requirements
           </h2>

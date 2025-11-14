@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import CostAnalysis from './CostAnalysis.tsx';
+import { AiOutlineStar, AiOutlineWarning, AiOutlineClose, AiOutlineLoading3Quarters, AiOutlineCopy, AiOutlineReload } from 'react-icons/ai';
 import { getApiUrl } from '../getApiUrl.ts';
 
 function TextGenerator() {
@@ -140,7 +141,7 @@ function TextGenerator() {
           justifyContent: 'center',
           fontSize: '20px'
         }}>
-          ✨
+          <AiOutlineStar size={20} />
         </span>
         Generate New Text
       </h2>
@@ -166,8 +167,9 @@ function TextGenerator() {
 
       {/* Error Message */}
       {error && (
-        <div className="error" style={{ marginBottom: '20px', backgroundColor: '#fed7d7', border: '1px solid #fc8181', borderLeft: '4px solid #e53e3e', borderRadius: '8px' }}>
-          ⚠️ {error}
+        <div className="error" style={{ marginBottom: '20px', backgroundColor: '#fed7d7', border: '1px solid #fc8181', borderLeft: '4px solid #e53e3e', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <AiOutlineWarning size={16} />
+          {error}
         </div>
       )}
 
@@ -295,10 +297,14 @@ function TextGenerator() {
           className="button secondary"
           style={{
             opacity: loading || !seedText ? 0.5 : 1,
-            cursor: loading || !seedText ? 'not-allowed' : 'pointer'
+            cursor: loading || !seedText ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
         >
-          ✕ Clear
+          <AiOutlineClose size={16} />
+          Clear
         </button>
         <button
           onClick={handleGenerate}
@@ -306,17 +312,20 @@ function TextGenerator() {
           className="button"
           style={{
             opacity: loading || !seedText.trim() ? 0.5 : 1,
-            cursor: loading || !seedText.trim() ? 'not-allowed' : 'pointer'
+            cursor: loading || !seedText.trim() ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
         >
           {loading ? (
             <>
-              <span style={{ display: 'inline-block', marginRight: '8px' }}>⏳</span>
+              <AiOutlineLoading3Quarters size={16} className="animate-spin" />
               Generating...
             </>
           ) : (
             <>
-              <span style={{ display: 'inline-block', marginRight: '8px' }}>✨</span>
+              <AiOutlineStar size={16} />
               Generate Text
             </>
           )}
@@ -362,10 +371,14 @@ function TextGenerator() {
                 border: 'none',
                 borderRadius: '8px',
                 fontWeight: '600',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
             >
-              📋 Copy to Clipboard
+              <AiOutlineCopy size={16} />
+              Copy to Clipboard
             </button>
             <button
               onClick={() => setGeneratedText('')}
@@ -376,10 +389,14 @@ function TextGenerator() {
                 border: 'none',
                 borderRadius: '8px',
                 fontWeight: '600',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
             >
-              🔄 Generate Again
+              <AiOutlineReload size={16} />
+              Generate Again
             </button>
           </div>
         </div>

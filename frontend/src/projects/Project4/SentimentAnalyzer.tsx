@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AiOutlineMessage, AiOutlineWarning, AiOutlineEdit, AiOutlineBulb, AiOutlineClose, AiOutlineLoading3Quarters, AiOutlineSearch, AiOutlineBarChart, AiOutlineCheckCircle, AiOutlineLike, AiOutlineDislike, AiOutlineReload } from 'react-icons/ai';
 import { getApiUrl } from '../getApiUrl.ts';
 
 function SentimentAnalyzer() {
@@ -78,7 +79,7 @@ function SentimentAnalyzer() {
           justifyContent: 'center',
           fontSize: '20px'
         }}>
-          💬
+          <AiOutlineMessage size={20} />
         </span>
         Sentiment Analyzer
       </h2>
@@ -103,15 +104,16 @@ function SentimentAnalyzer() {
 
       {/* Error Message */}
       {error && (
-        <div className="error" style={{ marginBottom: '20px', backgroundColor: '#fed7d7', border: '1px solid #fc8181', borderLeft: '4px solid #e53e3e', borderRadius: '8px' }}>
-          ⚠️ {error}
+        <div className="error" style={{ marginBottom: '20px', backgroundColor: '#fed7d7', border: '1px solid #fc8181', borderLeft: '4px solid #e53e3e', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <AiOutlineWarning size={16} />
+          {error}
         </div>
       )}
 
       {/* Review Input Section */}
       <div className="form-group">
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-          <span>✍️</span>
+          <AiOutlineEdit size={16} />
           Hotel Review <span style={{ color: '#e53e3e' }}>*</span>
         </label>
         <textarea
@@ -128,7 +130,8 @@ function SentimentAnalyzer() {
           }}
         />
         <p style={{ fontSize: '12px', color: '#718096', marginTop: '8px' }}>
-          💡 The model works best with complete sentences describing hotel experiences (rooms, staff, service, etc.)
+          <AiOutlineBulb size={12} style={{ display: 'inline', marginRight: '4px' }} />
+          The model works best with complete sentences describing hotel experiences (rooms, staff, service, etc.)
         </p>
       </div>
 
@@ -140,10 +143,14 @@ function SentimentAnalyzer() {
           className="button secondary"
           style={{
             opacity: loading || !reviewText ? 0.5 : 1,
-            cursor: loading || !reviewText ? 'not-allowed' : 'pointer'
+            cursor: loading || !reviewText ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
         >
-          ✕ Clear
+          <AiOutlineClose size={16} />
+          Clear
         </button>
         <button
           onClick={handleAnalyze}
@@ -151,17 +158,20 @@ function SentimentAnalyzer() {
           className="button"
           style={{
             opacity: loading || !reviewText.trim() ? 0.5 : 1,
-            cursor: loading || !reviewText.trim() ? 'not-allowed' : 'pointer'
+            cursor: loading || !reviewText.trim() ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
         >
           {loading ? (
             <>
-              <span style={{ display: 'inline-block', marginRight: '8px' }}>⏳</span>
+              <AiOutlineLoading3Quarters size={16} className="animate-spin" />
               Analyzing...
             </>
           ) : (
             <>
-              <span style={{ display: 'inline-block', marginRight: '8px' }}>🔍</span>
+              <AiOutlineSearch size={16} />
               Analyze Sentiment
             </>
           )}
@@ -172,7 +182,7 @@ function SentimentAnalyzer() {
       {result && (
         <div className="output">
           <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '24px' }}>📊</span>
+            <AiOutlineBarChart size={24} />
             Analysis Results
             <span style={{
               fontSize: '11px',
@@ -181,9 +191,13 @@ function SentimentAnalyzer() {
               padding: '4px 12px',
               borderRadius: '20px',
               fontWeight: 'bold',
-              marginLeft: 'auto'
+              marginLeft: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
             }}>
-              ✓ Complete
+              <AiOutlineCheckCircle size={12} />
+              Complete
             </span>
           </h3>
 
@@ -198,7 +212,17 @@ function SentimentAnalyzer() {
               fontSize: '16px',
               ...getSentimentBadgeColor(result.classification)
             }}>
-              {result.classification === 'Positive' ? '👍 Positive Review' : '👎 Negative Review'}
+              {result.classification === 'Positive' ? (
+                <>
+                  <AiOutlineLike size={16} style={{ marginRight: '8px' }} />
+                  Positive Review
+                </>
+              ) : (
+                <>
+                  <AiOutlineDislike size={16} style={{ marginRight: '8px' }} />
+                  Negative Review
+                </>
+              )}
             </div>
           </div>
 
@@ -260,7 +284,10 @@ function SentimentAnalyzer() {
             <h4 style={{ color: '#2d3748', fontWeight: 'bold', marginBottom: '12px' }}>Classification Probabilities:</h4>
             <div style={{ marginBottom: '15px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <span style={{ fontWeight: '600', color: '#2d3748' }}>👍 Positive Probability</span>
+                <span style={{ fontWeight: '600', color: '#2d3748', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AiOutlineLike size={16} />
+                  Positive Probability
+                </span>
                 <span style={{ fontWeight: 'bold', color: '#10b981' }}>
                   {(result.positive_probability * 100).toFixed(1)}%
                 </span>
@@ -286,7 +313,10 @@ function SentimentAnalyzer() {
 
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <span style={{ fontWeight: '600', color: '#2d3748' }}>👎 Negative Probability</span>
+                <span style={{ fontWeight: '600', color: '#2d3748', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AiOutlineDislike size={16} />
+                  Negative Probability
+                </span>
                 <span style={{ fontWeight: 'bold', color: '#ef4444' }}>
                   {(result.negative_probability * 100).toFixed(1)}%
                 </span>
@@ -374,10 +404,15 @@ function SentimentAnalyzer() {
               borderRadius: '8px',
               fontWeight: '600',
               cursor: 'pointer',
-              width: '100%'
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}
           >
-            🔄 Analyze Another Review
+            <AiOutlineReload size={16} />
+            Analyze Another Review
           </button>
         </div>
       )}

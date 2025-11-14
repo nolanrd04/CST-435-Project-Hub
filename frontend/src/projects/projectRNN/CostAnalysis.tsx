@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { AiOutlineDollar, AiOutlineWarning } from 'react-icons/ai';
 import { getApiUrl } from '../getApiUrl.ts';
 
 interface CostReport {
@@ -73,8 +74,9 @@ function CostAnalysis() {
 
   if (error) {
     return (
-      <div style={{ padding: '20px', color: 'red', backgroundColor: '#ffe6e6', borderRadius: '8px' }}>
-        ❌ {error}
+      <div style={{ padding: '20px', color: 'red', backgroundColor: '#ffe6e6', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <AiOutlineWarning size={16} />
+        {error}
       </div>
     );
   }
@@ -97,7 +99,7 @@ function CostAnalysis() {
           justifyContent: 'center',
           fontSize: '20px'
         }}>
-          💰
+          <AiOutlineDollar size={20} />
         </span>
         RNN Deployment Cost Analysis
       </h2>

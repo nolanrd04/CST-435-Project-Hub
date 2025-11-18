@@ -27,6 +27,7 @@ RNN_Activity_Guide.md
 RNN_Algorithm_Diagram.md
 Neural_Networks_Comparison.md
 node_modules/
+frontend/node_modules/
 backend/app/routers/project3/vehicle_classifier_model.keras
 backend/app/routers/project5/data/900k Definitive Spotify Dataset.json
 backend/app/routers/project5/data/lyrics_preprocessed_400mb.txt
@@ -38,3 +39,7 @@ backend/app/routers/project5/model/lyrics_model.pth
 backend/app/routers/project5/model/tokenizer.pkl
 VERCEL_DEPLOYMENT.md
 RAILWAY_DEPLOYMENT.md
+backend/app/routers/project6/imageData/*
+backend/app/routers/project6/rawData/*
+
+

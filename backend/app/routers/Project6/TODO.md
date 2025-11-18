@@ -1,0 +1,1 @@
+add a trimmer to reduce file size of .ndjson files

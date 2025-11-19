@@ -55,3 +55,89 @@ Certain features like strokes and countrycode are not needed. We just need the i
 
 ## 2. imageToNPZ.py
 Converts images in imageData/types/versionX to their prospective .npz array files in npzData/. For example. imageData/apple/version1 becomes npzData/apple_version1.npz. Used for the GAN.
+
+## 3. train_gan.py
+This will train the model. This will:
+1. Prompt you to select a dataset version (v1, v2, etc.)
+2. Prompt you to select a model name (user-defined, defaults to v1)
+3. Ask for training parameters (epochs, batch size, learning rate)
+4. Automatically trains separate Generator/Discriminator pairs for each fruit
+5. Trains all fruits in one session with individual time estimates per fruit
+6. Saves fruit-specific checkpoints and models
+It uses helper python files:
+1. ```data_loader.py```
+2. ```gan_model.py```
+3. ```gan_trainer.py``` (includes `MultiFruitGANTrainer` class)
+
+## 4. saved models from train_gan.py
+The model structure now supports multi-fruit training. Each model folder contains separate generators/discriminators for each fruit:
+Project6/
+```
+├── train_gan.py                 (main script)
+├── gan_model.py                 (models)
+├── gan_trainer.py               (training logic + MultiFruitGANTrainer)
+├── data_loader.py               (data loading)
+├── generate_images.py           (inference)
+├── npzData/                     (existing dataset)
+│   ├── apple_v1.npz
+│   ├── banana_v1.npz
+│   └── ...
+└── models/                      (auto-created)
+    └── model_v1/                (user-named model, e.g., v1, attempt_2, etc.)
+        ├── generator_apple.pt           (fruit-specific generators)
+        ├── discriminator_apple.pt       (fruit-specific discriminators)
+        ├── generator_banana.pt
+        ├── discriminator_banana.pt
+        ├── generator_orange.pt
+        ├── discriminator_orange.pt
+        ├── ... (remaining 4 fruits)
+        ├── generated_epoch_images_apple/    (5 epoch images during training)
+        │   ├── epoch_0001.png
+        │   ├── epoch_0010.png
+        │   ├── epoch_0020.png
+        │   ├── epoch_0030.png
+        │   └── epoch_0040.png
+        ├── generated_epoch_images_banana/   (separate for each fruit)
+        │   ├── epoch_0001.png
+        │   └── ...
+        ├── ... (more fruit folders)
+        └── info/                        (training metadata)
+            ├── training_config_v1.json      (overall config, all fruits)
+            ├── training_summary_v1.json     (summary of trained fruits)
+            ├── training_history_apple.json  (per-fruit training history)
+            ├── training_history_banana.json
+            └── ... (more fruit histories)
+```
+
+**Key Features:**
+- One training session creates 7 separate models (one per fruit)
+- Each fruit trains independently but in one script execution
+- Time estimates shown for each fruit individually
+- All fruits' epochs printed to console
+- Models can generate fruit-specific images
+
+## 5. generate_images.py
+Uses the trained models to generate fruit-specific images.
+
+**Usage:**
+```bash
+# List available models and fruits
+python generate_images.py
+
+# Generate apple images from v1 model
+python generate_images.py v1 apple --num-images 16
+
+# Generate banana images with interpolation
+python generate_images.py v1 banana --num-images 10 --interpolate
+
+# Save to specific file
+python generate_images.py v1 orange --save output.png
+```
+
+**Parameters:**
+- `model_name`: Name of the model folder (e.g., v1)
+- `fruit`: Which fruit to generate (e.g., apple, banana, orange)
+- `--num-images`: Number of images to generate (default: 16)
+- `--interpolate`: Generate smooth transition between images
+- `--save`: Save output to file instead of displaying
+- `--seed`: Random seed for reproducibility

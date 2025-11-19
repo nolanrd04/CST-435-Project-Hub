@@ -71,34 +71,36 @@ def strokes_to_image(drawing: List[List[List[int]]], size: int = 28) -> np.ndarr
     return img_array
 
 
-def process_category(category: str, version_name: str, max_images: int = 2000) -> int:
+def process_category(category: str, version_name: str, max_images: int = 2000, image_size: int = 28) -> int:
     """
     Process a single category from ndjson to images.
-    
+
     Args:
         category: Category name (e.g., 'apple')
         version_name: Version name for organizing data (e.g., 'v1')
         max_images: Maximum number of images per category
-    
+        image_size: Resolution of output images (default: 28)
+
     Returns:
         Number of images processed
     """
     input_file = os.path.join(RAW_DATA_DIR, f'full_simplified_{category}.ndjson')
     output_dir = os.path.join(IMAGE_DATA_DIR, category, version_name)
-    
+
     # Check if input file exists
     if not os.path.exists(input_file):
         print(f"❌ {input_file} not found!")
         return 0
-    
+
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
-    
+
     image_count = 0
-    
+
     print(f"\n📊 Processing '{category}'...")
     print(f"   Input: {input_file}")
     print(f"   Output: {output_dir}")
+    print(f"   Resolution: {image_size}×{image_size}")
     print(f"   Max images: {max_images}")
     
     # Read and process ndjson file
@@ -128,8 +130,8 @@ def process_category(category: str, version_name: str, max_images: int = 2000) -
                     drawing_data = drawing.get('drawing', [])
                     if not drawing_data:
                         continue
-                    
-                    image_array = strokes_to_image(drawing_data, size=IMAGE_SIZE)
+
+                    image_array = strokes_to_image(drawing_data, size=image_size)
                     
                     # Convert to PIL Image for saving (convert float to uint8)
                     image_uint8 = (image_array * 255).astype(np.uint8)
@@ -168,17 +170,17 @@ def process_category(category: str, version_name: str, max_images: int = 2000) -
     return image_count
 
 
-def get_user_inputs() -> Tuple[int, str]:
+def get_user_inputs() -> Tuple[int, str, int]:
     """
     Get user customization inputs for data processing.
-    
+
     Returns:
-        Tuple of (max_images, version_name)
+        Tuple of (max_images, version_name, image_size)
     """
     print("\n" + "="*60)
     print("🎨 QuickDraw ndjson to Image Converter")
     print("="*60)
-    
+
     # Get max images
     while True:
         try:
@@ -189,36 +191,53 @@ def get_user_inputs() -> Tuple[int, str]:
             break
         except ValueError:
             print("   ❌ Please enter a valid number!")
-    
+
     # Get version name
     version_name = input("\n📂 Version name (e.g., 'v1', 'v2', 'test') [default: 'default']: ").strip() or "default"
-    
+
     # Remove spaces and special characters from version name
     version_name = version_name.replace(' ', '_')
-    
-    return max_images, version_name
+
+    # Get image resolution
+    print("\n📐 Image Resolution:")
+    print("   Common options: 28, 32, 64, 128")
+    print("   Larger = more detail but slower training")
+    while True:
+        try:
+            image_size = int(input("   Enter resolution [default: 32]: ") or "32")
+            if image_size <= 0:
+                print("   ❌ Resolution must be positive!")
+                continue
+            if image_size > 256:
+                print("   ⚠️  Warning: Very large resolution may be slow!")
+            break
+        except ValueError:
+            print("   ❌ Please enter a valid number!")
+
+    return max_images, version_name, image_size
 
 
 def main():
     """Main entry point for the converter."""
-    
+
     # Get user inputs
-    max_images, version_name = get_user_inputs()
-    
+    max_images, version_name, image_size = get_user_inputs()
+
     print(f"\n{'='*60}")
     print(f"🔄 Starting conversion with:")
     print(f"   Max images: {max_images} per category")
     print(f"   Version: '{version_name}'")
+    print(f"   Resolution: {image_size}×{image_size}")
     print(f"   Categories: {len(CATEGORIES)}")
     print(f"{'='*60}")
-    
+
     # Create imageData directory if it doesn't exist
     os.makedirs(IMAGE_DATA_DIR, exist_ok=True)
-    
+
     # Process each category
     total_images = 0
     for category in CATEGORIES:
-        images_processed = process_category(category, version_name, max_images)
+        images_processed = process_category(category, version_name, max_images, image_size)
         total_images += images_processed
     
     # Final summary
@@ -226,6 +245,7 @@ def main():
     print(f"✅ Conversion Complete!")
     print(f"   Total images: {total_images}")
     print(f"   Categories: {len(CATEGORIES)}")
+    print(f"   Resolution: {image_size}×{image_size}")
     print(f"   Output directory: {IMAGE_DATA_DIR}")
     print(f"{'='*60}\n")
 

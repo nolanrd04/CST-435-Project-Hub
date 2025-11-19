@@ -6,6 +6,7 @@ pydantic
 
 # Machine Learning & Data Processing
 torch
+torchvision
 numpy
 scikit-learn
 matplotlib

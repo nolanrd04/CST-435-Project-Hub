@@ -1,0 +1,10 @@
+1. Started with initial GAN that generated 28x28 images. Generated images were extremely noisy after 50 epochs
+and there were no distinguishable features.
+2. Upped epoch count to 400. After this, apples, pears, and bananas started to take shape, but were still extremely noisy.
+3. Upped resolution to 128x128. Now the apples, pears, and strawberries are entirely identifiable, and somehow are able
+to generate shadows to show 3d images. Blackberries, bananas, and grapes are entirely unrecognizeable though.
+4. Switch from 3 fully-connected, dense layers to a dynamic number of convolutional layers (6 for 128x128, 5 for 64x64).
+Training now has a 0% fool rate and takes about 4x as long.
+5. Reverted to 28x28 for faster training, discriminator cant detect fake images at 80 epochs.
+Fool rate steadily declines after 80 epochs. Fool rate below 80% at 160 epochs. Fool rate around 60% at 240 epochs.
+Fool rate too low around 280 epochs. Can no longer learn.

@@ -1,487 +1,348 @@
 """
-Multi-Fruit GAN Training Script
-Trains separate Generator/Discriminator pairs for each fruit in one session
+Main Training Script for Multi-Fruit GAN
+Handles user interaction and orchestrates training
 """
 
-import torch
-import os
 import sys
 from pathlib import Path
-import argparse
-from datetime import datetime
-import json
+import numpy as np
 
-# Script-relative directory management
-SCRIPT_DIR = Path(__file__).parent
-NPZ_DATA_DIR = SCRIPT_DIR / 'npzData'
-
-# Add parent directory to path for imports
-sys.path.insert(0, str(SCRIPT_DIR))
-
-from gan_model import create_gan_models, create_optimizers
+from data_loader import get_available_versions, get_fruit_types_for_version, NPZ_DATA_DIR
 from gan_trainer import MultiFruitGANTrainer
-from data_loader import (
-    get_available_versions, 
-    get_fruit_types_for_version,
-    load_dataset_for_version,
-    create_data_loader
-)
 
 
-def display_menu(options, title=""):
+def get_user_input(prompt, default=None, input_type=str):
     """
-    Display a menu and get user selection
-    
+    Get user input with optional default value
+
     Args:
-        options (list): List of option strings
-        title (str): Menu title
-        
+        prompt (str): Prompt to display
+        default: Default value if user presses enter
+        input_type (type): Type to convert input to
+
     Returns:
-        int: Index of selected option
+        User input or default value
     """
-    print(f"\n{'='*50}")
-    if title:
-        print(f"{title}")
-        print('='*50)
-    
-    for idx, option in enumerate(options, 1):
-        print(f"  {idx}. {option}")
-    
-    while True:
-        try:
-            choice = int(input("\nSelect option: "))
-            if 1 <= choice <= len(options):
-                return choice - 1
-            else:
-                print(f"Please enter a number between 1 and {len(options)}")
-        except ValueError:
-            print("Please enter a valid number")
+    if default is not None:
+        prompt = f"{prompt} (default: {default}): "
+    else:
+        prompt = f"{prompt}: "
+
+    user_input = input(prompt).strip()
+
+    if not user_input and default is not None:
+        return default
+
+    try:
+        return input_type(user_input)
+    except ValueError:
+        print(f"Invalid input. Please enter a valid {input_type.__name__}.")
+        return get_user_input(prompt, default, input_type)
 
 
-def select_version(npz_dir=None):
+def detect_image_resolution(data_version):
     """
-    Allow user to select dataset version
-    
+    Auto-detect image resolution from NPZ data files
+
     Args:
-        npz_dir (str or Path): Path to npzData directory. If None, uses script-relative path.
-        
+        data_version (str): Dataset version
+
+    Returns:
+        int: Image resolution (width/height, assumes square images)
+    """
+    # Get first available fruit for this version
+    fruits = get_fruit_types_for_version(version=data_version)
+
+    if not fruits:
+        print(f"Warning: No fruits found for version '{data_version}'")
+        return 28  # Default fallback
+
+    # Load first NPZ file to check dimensions
+    npz_file = Path(NPZ_DATA_DIR) / f'{fruits[0]}_{data_version}.npz'
+
+    try:
+        npz_data = np.load(npz_file)
+        array_name = list(npz_data.keys())[0]
+        images = npz_data[array_name]
+
+        # Get image shape
+        if len(images.shape) == 3:  # (N, H, W)
+            img_size = images.shape[1]  # Height
+        elif len(images.shape) == 4:  # (N, C, H, W) or (N, H, W, C)
+            # Assume it's (N, H, W, C) if last dim is small (1 or 3)
+            if images.shape[-1] in [1, 3]:
+                img_size = images.shape[1]  # Height
+            else:
+                img_size = images.shape[2]  # Height in (N, C, H, W)
+        else:
+            img_size = 28  # Fallback
+
+        print(f"Auto-detected image resolution: {img_size}x{img_size}")
+        return img_size
+
+    except Exception as e:
+        print(f"Warning: Could not auto-detect resolution ({e}). Using default: 28x28")
+        return 28
+
+
+def select_data_version():
+    """
+    Prompt user to select a dataset version
+
     Returns:
         str: Selected version name
     """
-    if npz_dir is None:
-        npz_dir = NPZ_DATA_DIR
-    else:
-        npz_dir = Path(npz_dir)
-    
-    versions = list(get_available_versions(npz_dir))
-    
-    if not versions:
-        print("ERROR: No dataset versions found in npzData directory")
-        print(f"Checked directory: {npz_dir}")
+    print("\n" + "="*60)
+    print("STEP 1: Select Dataset Version")
+    print("="*60)
+
+    available_versions = get_available_versions()
+
+    if not available_versions:
+        print("Error: No dataset versions found in npzData directory!")
+        print("Please run imageToNPZ.py first to create dataset files.")
         sys.exit(1)
-    
-    # Check if v1 exists as default
-    default_version = 'v1' if 'v1' in versions else versions[0]
-    
-    print(f"\nFound {len(versions)} dataset version(s): {', '.join(versions)}")
-    print(f"Default: {default_version}")
-    
-    choice_input = input(f"Select version (press Enter for {default_version}): ").strip()
-    
-    if not choice_input:
-        selected = default_version
-    else:
+
+    print("\nAvailable dataset versions:")
+    for i, version in enumerate(available_versions, 1):
+        print(f"  {i}. {version}")
+
+    # Check if v1 exists for default
+    default_version = 'v1' if 'v1' in available_versions else available_versions[0]
+
+    # Get selection
+    while True:
         try:
-            choice = int(choice_input)
-            if 1 <= choice <= len(versions):
-                selected = versions[choice - 1]
+            choice = input(f"\nSelect version (1-{len(available_versions)}) or enter version name [default: {default_version}]: ").strip()
+
+            # Default to v1 if empty
+            if not choice:
+                return default_version
+
+            # Check if it's a number
+            if choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(available_versions):
+                    return available_versions[idx]
+                else:
+                    print(f"Invalid choice. Please enter 1-{len(available_versions)}.")
+            # Check if it's a valid version name
+            elif choice in available_versions:
+                return choice
             else:
-                print(f"Invalid choice. Using default: {default_version}")
-                selected = default_version
-        except ValueError:
-            print(f"Invalid input. Using default: {default_version}")
-            selected = default_version
-    
-    print(f"✓ Selected version: {selected}")
-    return selected
+                print(f"Invalid version. Available: {', '.join(available_versions)}")
+        except (ValueError, IndexError):
+            print("Invalid input. Please try again.")
 
 
 def select_model_name():
     """
-    Allow user to select or create a model name
-    Default is 'v1', existing models get overridden
-    
+    Prompt user to enter a model name
+
     Returns:
         str: Model name
     """
-    print(f"\n{'='*50}")
-    print("MODEL NAME")
-    print('='*50)
-    print("Enter a name for this model set (e.g., 'v1', 'apple_focus', 'attempt_2')")
-    print("Default: v1")
-    print("Note: If model already exists, it will be overridden.")
-    
-    model_name = input("\nModel name (press Enter for 'v1'): ").strip()
-    
-    if not model_name:
-        model_name = 'v1'
-    
-    # Check if model exists
-    models_dir = SCRIPT_DIR / 'models'
-    existing_model = models_dir / f'model_{model_name}'
-    
-    if existing_model.exists():
-        print(f"\n⚠️  Model 'model_{model_name}' already exists!")
-        confirm = input("Override? (yes/no, default: no): ").strip().lower()
-        if confirm != 'yes':
-            print("Using default name instead: v1")
-            return 'v1'
-    
-    print(f"✓ Using model name: {model_name}")
+    print("\n" + "="*60)
+    print("STEP 2: Select Model Name")
+    print("="*60)
+
+    print("\nThis will be used to create a model folder: models/model_{name}/")
+    print("Examples: v1, v2, attempt_2, baseline, etc.")
+
+    model_name = get_user_input("Enter model name", default="v1")
+
+    # Check if model already exists
+    model_dir = Path(__file__).parent / 'models' / f'model_{model_name}'
+    if model_dir.exists():
+        print(f"\nWarning: Model '{model_name}' already exists!")
+        overwrite = input("Do you want to overwrite it? (yes/no): ").strip().lower()
+        if overwrite not in ['yes', 'y']:
+            print("Please choose a different model name.")
+            return select_model_name()
+
     return model_name
 
 
-def select_version(npz_dir=None):
+def select_fruits(data_version):
     """
-    Allow user to select dataset version
-    
+    Prompt user to select which fruits to train
+
     Args:
-        npz_dir (str or Path): Path to npzData directory. If None, uses script-relative path.
-        
+        data_version (str): Dataset version
+
     Returns:
-        str: Selected version name
+        list: List of selected fruit names
     """
-    if npz_dir is None:
-        npz_dir = NPZ_DATA_DIR
-    else:
-        npz_dir = Path(npz_dir)
-    
-    versions = list(get_available_versions(npz_dir))
-    
-    if not versions:
-        print("ERROR: No dataset versions found in npzData directory")
-        print(f"Checked directory: {npz_dir}")
+    print("\n" + "="*60)
+    print("STEP 3: Select Fruits to Train")
+    print("="*60)
+
+    available_fruits = get_fruit_types_for_version(version=data_version)
+
+    if not available_fruits:
+        print(f"Error: No fruits found for version '{data_version}'!")
         sys.exit(1)
-    
-    # Check if v1 exists as default
-    default_version = 'v1' if 'v1' in versions else versions[0]
-    
-    print(f"\nFound {len(versions)} dataset version(s): {', '.join(versions)}")
-    print(f"Default: {default_version}")
-    
-    choice_input = input(f"Select version (press Enter for {default_version}): ").strip()
-    
-    if not choice_input:
-        selected = default_version
-    else:
+
+    print(f"\nAvailable fruits in version '{data_version}':")
+    for i, fruit in enumerate(available_fruits, 1):
+        print(f"  {i}. {fruit}")
+
+    print("\nOptions:")
+    print("  - Press Enter to train all fruits (default)")
+    print("  - Enter 'all' to train all fruits")
+    print("  - Enter numbers separated by commas (e.g., 1,3,5)")
+    print("  - Enter fruit names separated by commas (e.g., apple,banana)")
+
+    selection = input("\nSelect fruits [default: all]: ").strip().lower()
+
+    # Default to all fruits if empty
+    if not selection or selection == 'all':
+        return available_fruits
+
+    # Parse selection
+    selected_fruits = []
+
+    # Try parsing as numbers
+    if ',' in selection or selection.isdigit():
         try:
-            choice = int(choice_input)
-            if 1 <= choice <= len(versions):
-                selected = versions[choice - 1]
-            else:
-                print(f"Invalid choice. Using default: {default_version}")
-                selected = default_version
-        except ValueError:
-            print(f"Invalid input. Using default: {default_version}")
-            selected = default_version
-    
-    print(f"✓ Selected version: {selected}")
-    return selected
+            indices = [int(x.strip()) - 1 for x in selection.split(',')]
+            selected_fruits = [available_fruits[i] for i in indices
+                             if 0 <= i < len(available_fruits)]
+        except (ValueError, IndexError):
+            pass
+
+    # Try parsing as fruit names
+    if not selected_fruits:
+        fruit_names = [x.strip() for x in selection.split(',')]
+        selected_fruits = [f for f in fruit_names if f in available_fruits]
+
+    if not selected_fruits:
+        print("Invalid selection. Please try again.")
+        return select_fruits(data_version)
+
+    return selected_fruits
 
 
-def select_fruits(npz_dir=None, version='v1'):
+def configure_training():
     """
-    DEPRECATED - No longer used in multi-fruit training
-    All fruits are trained automatically
-    """
-    pass
+    Prompt user for training parameters
 
-
-def get_training_params():
-    """
-    Get training parameters from user with sensible defaults
-    
     Returns:
-        dict: Training parameters
+        dict: Training configuration
     """
-    print(f"\n{'='*50}")
-    print("TRAINING PARAMETERS")
-    print('='*50)
-    
-    params = {}
-    
-    # Number of epochs
-    while True:
-        try:
-            epochs_input = input("Number of epochs (default 400, min 50): ").strip()
-            if not epochs_input:
-                params['epochs'] = 400
-                print("Using default: 400 epochs")
-                break
-            else:
-                epochs = int(epochs_input)
-                if epochs >= 50:
-                    params['epochs'] = epochs
-                    break
-                else:
-                    print("Please enter at least 50 epochs")
-        except ValueError:
-            print("Please enter a valid number")
-    
-    # Batch size
-    while True:
-        try:
-            batch_input = input("Batch size (default 32, common: 16, 32, 64): ").strip()
-            if not batch_input:
-                params['batch_size'] = 32
-                print("Using default: 32")
-                break
-            else:
-                batch_size = int(batch_input)
-                if batch_size > 0:
-                    params['batch_size'] = batch_size
-                    break
-                else:
-                    print("Please enter a positive number")
-        except ValueError:
-            print("Please enter a valid number")
-    
-    # Learning rate
-    while True:
-        try:
-            lr_input = input("Learning rate (default 0.0002): ").strip()
-            if not lr_input:
-                params['learning_rate'] = 0.0002
-                print("Using default: 0.0002")
-                break
-            else:
-                lr = float(lr_input)
-                if 0 < lr < 1:
-                    params['learning_rate'] = lr
-                    break
-                else:
-                    print("Please enter a value between 0 and 1")
-        except ValueError:
-            print("Please enter a valid number")
-    
-    # Latent dimension
-    while True:
-        try:
-            latent_input = input("Latent dimension (default 100): ").strip()
-            if not latent_input:
-                params['latent_dim'] = 100
-                print("Using default: 100")
-                break
-            else:
-                latent_dim = int(latent_input)
-                if latent_dim > 0:
-                    params['latent_dim'] = latent_dim
-                    break
-                else:
-                    print("Please enter a positive number")
-        except ValueError:
-            print("Please enter a valid number")
-    
-    print("\n✓ Training parameters set")
-    return params
+    print("\n" + "="*60)
+    print("STEP 4: Configure Training Parameters")
+    print("="*60)
+
+    print("\nNote: Recommended values are shown as defaults.")
+
+    config = {
+        'epochs': get_user_input("Number of epochs", default=400, input_type=int),
+        'batch_size': get_user_input("Batch size", default=32, input_type=int),
+        'learning_rate': get_user_input("Learning rate", default=0.0002, input_type=float),
+        'beta1': get_user_input("Beta1 for Adam optimizer", default=0.5, input_type=float),
+        'latent_dim': get_user_input("Latent dimension (noise vector size)", default=100, input_type=int)
+    }
+
+    return config
 
 
-def display_summary(version, fruits, params, total_images):
+def display_training_summary(data_version, model_name, fruits, config):
     """
-    Display training configuration summary
-    
+    Display training summary before starting
+
     Args:
-        version (str): Selected version
-        fruits (list): Fruits to train
-        params (dict): Training parameters
-        total_images (dict): Total images per fruit
+        data_version (str): Dataset version
+        model_name (str): Model name
+        fruits (list): List of fruits to train
+        config (dict): Training configuration
     """
-    print(f"\n{'='*70}")
-    print("TRAINING CONFIGURATION SUMMARY")
-    print('='*70)
-    print(f"Dataset Version: {version}")
-    print(f"\nFruits to Train: {len(fruits)}")
-    for fruit in sorted(fruits):
-        print(f"  - {fruit}: {total_images.get(fruit, 'N/A')} images")
-    print(f"\nTraining Parameters:")
-    print(f"  - Epochs (per fruit): {params['epochs']}")
-    print(f"  - Batch Size: {params['batch_size']}")
-    print(f"  - Learning Rate: {params['learning_rate']}")
-    print(f"  - Latent Dimension: {params['latent_dim']}")
-    print(f"  - Device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}")
-    print(f"\n✓ Total training time estimate: ~{len(fruits)} × (epoch_time per fruit)")
-    print('='*70)
+    print("\n" + "="*60)
+    print("TRAINING SUMMARY")
+    print("="*60)
+
+    print(f"\nDataset Version: {data_version}")
+    print(f"Model Name: {model_name}")
+    print(f"Fruits to train: {', '.join(fruits)} ({len(fruits)} total)")
+
+    print(f"\nTraining Configuration:")
+    for key, value in config.items():
+        print(f"  {key}: {value}")
+
+    print(f"\nOutput directory: models/model_{model_name}/")
+    print(f"\nEstimated training time per fruit: ~{config['epochs'] * 0.1:.1f} minutes")
+    print(f"Total estimated time: ~{config['epochs'] * 0.1 * len(fruits):.1f} minutes")
+
+    print("\n" + "="*60)
 
 
 def main():
     """
-    Main multi-fruit GAN training script
+    Main training function
     """
-    parser = argparse.ArgumentParser(description='Train GAN for multiple fruits')
-    parser.add_argument('--version', type=str, help='Dataset version (e.g., v1)')
-    parser.add_argument('--model-name', type=str, help='Model name (default: v1)')
-    parser.add_argument('--epochs', type=int, default=400, help='Number of epochs per fruit')
-    parser.add_argument('--batch-size', type=int, default=32, help='Batch size')
-    parser.add_argument('--learning-rate', type=float, default=0.0002, help='Learning rate')
-    parser.add_argument('--latent-dim', type=int, default=100, help='Latent dimension')
-    parser.add_argument('--npz-dir', type=str, help='Path to npzData directory (default: script-relative)')
-    parser.add_argument('--save-dir', type=str, help='Directory to save checkpoints')
-    
-    args = parser.parse_args()
-    
-    # Resolve npz directory
-    if args.npz_dir:
-        npz_dir = Path(args.npz_dir).resolve()
-    else:
-        npz_dir = NPZ_DATA_DIR.resolve()
-    
-    if not npz_dir.exists():
-        print(f"ERROR: npzData directory not found: {npz_dir}")
-        sys.exit(1)
-    
-    print("\n" + "="*70)
-    print("MULTI-FRUIT GAN TRAINING")
-    print("="*70)
-    print("Trains separate Generator/Discriminator pairs for each fruit")
-    print("="*70)
-    
-    # Select version
-    if args.version:
-        version = args.version
-        print(f"\nUsing version: {version}")
-    else:
-        version = select_version(npz_dir)
-    
-    # Select model name
-    if args.model_name:
-        model_name = args.model_name
-        print(f"\nUsing model name: {model_name}")
-    else:
-        model_name = select_model_name()
-    
-    # Get training parameters
-    if args.epochs != 400 or args.batch_size != 32 or args.learning_rate != 0.0002 or args.latent_dim != 100:
-        # Use command line parameters
-        params = {
-            'epochs': args.epochs,
-            'batch_size': args.batch_size,
-            'learning_rate': args.learning_rate,
-            'latent_dim': args.latent_dim
-        }
-    else:
-        # Interactive mode
-        params = get_training_params()
-    
-    # Get all fruit types for this version
-    print(f"\nLoading fruit types for version '{version}'...")
-    fruits = get_fruit_types_for_version(npz_dir, version)
-    print(f"Found {len(fruits)} fruit types: {', '.join(fruits)}")
-    
-    # Load dataloaders for each fruit
-    print(f"\nLoading datasets for each fruit...")
-    dataloaders = {}
-    total_images = {}
-    channels = None
-    
-    for fruit in fruits:
-        print(f"  Loading {fruit}...", end=" ")
-        try:
-            dataset, loaded_fruits, detected_channels = load_dataset_for_version(
-                version, npz_dir, [fruit]
-            )
-            
-            if channels is None:
-                channels = detected_channels
-            
-            dataloader = create_data_loader(dataset, batch_size=params['batch_size'], shuffle=True)
-            dataloaders[fruit] = dataloader
-            total_images[fruit] = len(dataset)
-            print(f"✓ ({len(dataset)} images)")
-        except Exception as e:
-            print(f"✗ Error: {e}")
-    
-    if not dataloaders:
-        print("ERROR: No datasets loaded")
-        sys.exit(1)
-    
-    print(f"\nDetected image channels: {channels}")
-    
+    print("="*60)
+    print("Multi-Fruit GAN Training Script")
+    print("="*60)
+
+    # Step 1: Select dataset version
+    data_version = select_data_version()
+
+    # Auto-detect image resolution
+    img_size = detect_image_resolution(data_version)
+
+    # Step 2: Select model name
+    model_name = select_model_name()
+
+    # Step 3: Select fruits to train
+    fruits = select_fruits(data_version)
+
+    # Step 4: Configure training parameters
+    config = configure_training()
+
+    # Add image size to config
+    config['img_size'] = img_size
+
     # Display summary
-    display_summary(version, fruits, params, total_images)
-    
-    # Confirm before training
-    confirm = input("\nStart training all fruits? (type yes/no to confirm): ").strip().lower()
-    if confirm != 'yes':
-        print("Training cancelled")
+    display_training_summary(data_version, model_name, fruits, config)
+
+    # Confirm before starting
+    confirm = input("\nStart training? (yes/no): ").strip().lower()
+    if confirm not in ['yes', 'y']:
+        print("Training cancelled.")
         sys.exit(0)
-    
-    # Set device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"\nUsing device: {device}")
-    
-    # Create multi-fruit trainer
-    multi_trainer = MultiFruitGANTrainer(device=device, latent_dim=params['latent_dim'])
-    
-    # Create and add trainer for each fruit
-    print("\nCreating GAN models for each fruit...")
-    for fruit in fruits:
-        print(f"  {fruit}...", end=" ")
-        
-        generator, discriminator = create_gan_models(
-            latent_dim=params['latent_dim'],
-            channels=channels,
-            device=device
-        )
-        
-        gen_optimizer, disc_optimizer = create_optimizers(
-            generator,
-            discriminator,
-            learning_rate=params['learning_rate']
-        )
-        
-        multi_trainer.add_fruit_trainer(fruit, generator, discriminator, gen_optimizer, disc_optimizer)
-        print("✓")
-    
-    # Models directory (script-relative)
-    models_dir = SCRIPT_DIR / 'models'
-    models_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Save training configuration
-    training_config = {
-        'model_name': model_name,
-        'version': version,
-        'fruits': fruits,
-        'epochs': params['epochs'],
-        'batch_size': params['batch_size'],
-        'learning_rate': params['learning_rate'],
-        'latent_dim': params['latent_dim'],
-        'image_channels': channels,
-        'device': str(device),
-        'timestamp': datetime.now().isoformat(),
-        'dataset_sizes': total_images
-    }
-    
-    config_path = models_dir / f'model_{model_name}' / 'info' / f'training_config_{model_name}.json'
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(config_path, 'w') as f:
-        json.dump(training_config, f, indent=2)
-    
-    print(f"\nTraining configuration saved to: {config_path}")
-    
-    # Start multi-fruit training
-    multi_trainer.train_all_fruits(
-        dataloaders=dataloaders,
-        num_epochs=params['epochs'],
-        save_dir=str(models_dir),
+
+    # Initialize trainer
+    print("\nInitializing trainer...")
+    trainer = MultiFruitGANTrainer(
         model_name=model_name,
-        save_interval_count=5
+        data_version=data_version,
+        config=config
     )
-    
-    print("\n" + "="*70)
-    print("ALL TRAINING COMPLETE!")
-    print(f"Model location: {models_dir / f'model_{model_name}'}")
-    print("="*70)
+
+    # Start training
+    print("\nStarting training...")
+    histories = trainer.train_all_fruits(fruits)
+
+    # Final summary
+    print("\n" + "="*60)
+    print("TRAINING COMPLETED SUCCESSFULLY!")
+    print("="*60)
+
+    print(f"\nModels saved in: models/model_{model_name}/")
+    print(f"Training histories saved in: models/model_{model_name}/info/")
+
+    print("\nYou can now use generate_images.py to create images:")
+    print(f"  python generate_images.py {model_name} {fruits[0]} --num-images 16")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\nTraining interrupted by user.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n\nError: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

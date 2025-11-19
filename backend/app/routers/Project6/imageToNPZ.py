@@ -20,15 +20,16 @@ CATEGORIES = [
 IMAGE_SIZE = 28
 
 
-def load_images_from_directory(image_dir: str) -> np.ndarray:
+def load_images_from_directory(image_dir: str, target_size: int = 28) -> np.ndarray:
     """
     Load all PNG images from a directory into a numpy array.
     
     Args:
         image_dir: Directory containing PNG images
+        target_size: Target image size for resizing (default 28)
     
     Returns:
-        numpy array of shape (N, IMAGE_SIZE, IMAGE_SIZE) with values in [0, 1]
+        numpy array of shape (N, target_size, target_size) with values in [0, 1]
     """
     images = []
     
@@ -51,8 +52,8 @@ def load_images_from_directory(image_dir: str) -> np.ndarray:
             img = Image.open(img_path).convert('L')
             
             # Check size
-            if img.size != (IMAGE_SIZE, IMAGE_SIZE):
-                img = img.resize((IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.LANCZOS)
+            if img.size != (target_size, target_size):
+                img = img.resize((target_size, target_size), Image.Resampling.LANCZOS)
             
             # Convert to numpy array and normalize to [0, 1]
             img_array = np.array(img, dtype=np.float32) / 255.0
@@ -75,13 +76,14 @@ def load_images_from_directory(image_dir: str) -> np.ndarray:
         return np.array([])
 
 
-def images_to_npz(category: str, version_name: str) -> bool:
+def images_to_npz(category: str, version_name: str, image_size: int = 28) -> bool:
     """
     Convert images for a category+version to .npz format.
     
     Args:
         category: Category name (e.g., 'apple')
         version_name: Version name (e.g., 'v1')
+        image_size: Target image size (default 28)
     
     Returns:
         True if successful, False otherwise
@@ -98,9 +100,10 @@ def images_to_npz(category: str, version_name: str) -> bool:
     print(f"\n📊 Processing: {category}/{version_name}")
     print(f"   Input: {image_dir}")
     print(f"   Output: {npz_output_file}")
+    print(f"   Resolution: {image_size}×{image_size}")
     
     # Load images
-    images = load_images_from_directory(image_dir)
+    images = load_images_from_directory(image_dir, target_size=image_size)
     
     if images.size == 0:
         print(f"❌ No images loaded for {category}/{version_name}")
@@ -117,7 +120,7 @@ def images_to_npz(category: str, version_name: str) -> bool:
             category=category,
             version=version_name,
             image_count=len(images),
-            image_size=IMAGE_SIZE
+            image_size=image_size
         )
         
         # Get file size
@@ -175,6 +178,33 @@ def display_available_versions(versions: Dict[str, List[str]]):
             print(f"      - {version} ({img_count} images)")
 
 
+def get_image_resolution() -> int:
+    """
+    Get target image resolution from user.
+    
+    Returns:
+        int: Image resolution (28, 64, or 128)
+    """
+    print(f"\n{'='*60}")
+    print("📐 Image Resolution")
+    print(f"{'='*60}")
+    print("Select target resolution for NPZ conversion:")
+    print("  28  - Small (matches original rawDataToImage if created at 28)")
+    print("  64  - Medium (recommended for faster training)")
+    print("  128 - Large (more detail, slower training)")
+    
+    while True:
+        try:
+            resolution = input("\nSelect resolution [default: 28]: ").strip() or "28"
+            resolution = int(resolution)
+            if resolution in [28, 64, 128]:
+                return resolution
+            else:
+                print("   ❌ Resolution must be 28, 64, or 128!")
+        except ValueError:
+            print("   ❌ Please enter a valid number!")
+
+
 def main():
     """Main entry point for converting images to NPZ."""
     
@@ -186,8 +216,13 @@ def main():
         print("\n❌ No image data found. Please run rawDataToImage.py first!")
         return
     
+    # Get image resolution
+    image_resolution = get_image_resolution()
+    
     print(f"\n{'='*60}")
     print("🔄 Starting Image to NPZ Conversion")
+    print(f"{'='*60}")
+    print(f"Target Resolution: {image_resolution}×{image_resolution}")
     print(f"{'='*60}")
     
     # Process each category/version combination
@@ -196,7 +231,7 @@ def main():
     
     for category in sorted(available_versions.keys()):
         for version in sorted(available_versions[category]):
-            if images_to_npz(category, version):
+            if images_to_npz(category, version, image_size=image_resolution):
                 successful += 1
             else:
                 failed += 1
@@ -206,6 +241,7 @@ def main():
     print(f"✅ Conversion Complete!")
     print(f"   Successful: {successful}")
     print(f"   Failed: {failed}")
+    print(f"   Resolution: {image_resolution}×{image_resolution}")
     print(f"   Output directory: {NPZ_DATA_DIR}")
     print(f"{'='*60}\n")
 

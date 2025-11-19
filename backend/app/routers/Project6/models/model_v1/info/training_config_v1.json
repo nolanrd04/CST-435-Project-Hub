@@ -1,29 +1,14 @@
 {
   "model_name": "v1",
-  "version": "v1",
-  "fruits": [
-    "apple",
-    "banana",
-    "blackberry",
-    "grapes",
-    "pear",
-    "strawberry",
-    "watermelon"
-  ],
-  "epochs": 400,
-  "batch_size": 32,
-  "learning_rate": 0.0002,
-  "latent_dim": 100,
-  "image_channels": 1,
+  "data_version": "v1",
+  "timestamp": "2025-11-19T16:07:40.929151",
   "device": "cuda",
-  "timestamp": "2025-11-18T20:23:36.721948",
-  "dataset_sizes": {
-    "apple": 2000,
-    "banana": 2000,
-    "blackberry": 2000,
-    "grapes": 2000,
-    "pear": 2000,
-    "strawberry": 2000,
-    "watermelon": 2000
+  "config": {
+    "epochs": 400,
+    "batch_size": 32,
+    "learning_rate": 0.0002,
+    "beta1": 0.5,
+    "latent_dim": 100,
+    "img_size": 64
   }
 }

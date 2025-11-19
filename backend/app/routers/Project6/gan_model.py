@@ -1,253 +1,223 @@
 """
 GAN Model Architecture
-Generator and Discriminator networks for fruit image generation
+Defines Generator and Discriminator networks for image generation
 """
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 
 
 class Generator(nn.Module):
     """
-    Generator Network
-    Transforms noise into images that resemble real fruit images.
-    
-    Architecture:
-    - Input: Latent vector (noise) from normal distribution
-    - Layer 1: Fully connected + LeakyReLU + BatchNorm
-    - Layer 2: Fully connected + LeakyReLU + BatchNorm
-    - Layer 3: Fully connected + LeakyReLU + BatchNorm
-    - Output: Image tensor reshaped to 28x28x3
+    Generator network for GAN
+    Takes random noise as input and generates images
     """
-    
-    def __init__(self, latent_dim=100, img_size=28, channels=3):
+
+    def __init__(self, latent_dim=100, channels=1, img_size=28):
         """
-        Initialize Generator
-        
+        Initialize the Generator
+
         Args:
-            latent_dim (int): Dimension of noise input (default 100)
-            img_size (int): Size of output image (default 28)
-            channels (int): Number of image channels (default 3 for RGB)
+            latent_dim (int): Dimension of the random noise input
+            channels (int): Number of image channels (1 for grayscale, 3 for RGB)
+            img_size (int): Size of the output image (28, 32, 64, etc.)
         """
         super(Generator, self).__init__()
-        
+
         self.latent_dim = latent_dim
-        self.img_size = img_size
         self.channels = channels
-        self.output_size = img_size * img_size * channels
-        
-        # Hidden layer dimensions
-        hidden1 = 256
-        hidden2 = 512
-        hidden3 = 1024
-        
-        # Build the network
-        self.fc1 = nn.Linear(latent_dim, hidden1)
-        self.bn1 = nn.BatchNorm1d(hidden1)
-        self.leaky_relu1 = nn.LeakyReLU(0.2, inplace=True)
-        
-        self.fc2 = nn.Linear(hidden1, hidden2)
-        self.bn2 = nn.BatchNorm1d(hidden2)
-        self.leaky_relu2 = nn.LeakyReLU(0.2, inplace=True)
-        
-        self.fc3 = nn.Linear(hidden2, hidden3)
-        self.bn3 = nn.BatchNorm1d(hidden3)
-        self.leaky_relu3 = nn.LeakyReLU(0.2, inplace=True)
-        
-        # Output layer - use tanh to scale output to [-1, 1]
-        self.fc_out = nn.Linear(hidden3, self.output_size)
-        self.tanh = nn.Tanh()
-    
-    def forward(self, noise):
+        self.img_size = img_size
+        self.img_shape = (channels, img_size, img_size)
+
+        # Calculate the output dimension for the first layer
+        # We'll reshape to (128, init_size, init_size) before upsampling
+        self.init_size = img_size // 4  # e.g., 28 // 4 = 7, 64 // 4 = 16
+
+        # Linear layer to expand latent vector
+        self.fc = nn.Sequential(
+            nn.Linear(latent_dim, 128 * self.init_size * self.init_size)
+        )
+
+        # Main generator network
+        self.model = nn.Sequential(
+            # Input: (128, init_size, init_size)
+
+            # First layer - Upsample by 2x
+            nn.BatchNorm2d(128),
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(128, 128, 3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # Second layer - Keep same size
+            nn.Conv2d(128, 64, 3, stride=1, padding=1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # Third layer - Upsample by 2x
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(64, 64, 3, stride=1, padding=1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # Output layer - Generate final image (channels, img_size, img_size)
+            nn.Conv2d(64, channels, 3, stride=1, padding=1),
+            nn.Tanh()  # Output range [-1, 1]
+        )
+
+    def forward(self, z):
         """
-        Forward pass through generator
-        
+        Forward pass of the generator
+
         Args:
-            noise (torch.Tensor): Batch of noise vectors shape (batch_size, latent_dim)
-            
+            z (torch.Tensor): Random noise tensor of shape (batch_size, latent_dim)
+
         Returns:
-            torch.Tensor: Generated images shape (batch_size, channels, img_size, img_size)
+            torch.Tensor: Generated images of shape (batch_size, channels, img_size, img_size)
         """
-        # Layer 1
-        x = self.fc1(noise)
-        x = self.bn1(x)
-        x = self.leaky_relu1(x)
-        
-        # Layer 2
-        x = self.fc2(x)
-        x = self.bn2(x)
-        x = self.leaky_relu2(x)
-        
-        # Layer 3
-        x = self.fc3(x)
-        x = self.bn3(x)
-        x = self.leaky_relu3(x)
-        
-        # Output layer
-        x = self.fc_out(x)
-        x = self.tanh(x)
-        
-        # Reshape to image format
-        x = x.view(x.size(0), self.channels, self.img_size, self.img_size)
-        
-        return x
+        # Expand latent vector
+        out = self.fc(z)
+
+        # Reshape to (batch_size, 128, init_size, init_size)
+        out = out.view(out.shape[0], 128, self.init_size, self.init_size)
+
+        # Generate image
+        img = self.model(out)
+
+        return img
 
 
 class Discriminator(nn.Module):
     """
-    Discriminator Network
-    Classifies images as real or fake.
-    
-    Architecture:
-    - Input: Image tensor (28x28x3)
-    - Layer 1: Fully connected + LeakyReLU + BatchNorm
-    - Layer 2: Fully connected + LeakyReLU + BatchNorm
-    - Layer 3: Fully connected + LeakyReLU + BatchNorm
-    - Output: Single value (real=1, fake=0)
+    Discriminator network for GAN
+    Takes an image and predicts if it's real or fake
     """
-    
-    def __init__(self, img_size=28, channels=3):
+
+    def __init__(self, channels=1, img_size=28):
         """
-        Initialize Discriminator
-        
+        Initialize the Discriminator
+
         Args:
-            img_size (int): Size of input image (default 28)
-            channels (int): Number of image channels (default 3 for RGB)
+            channels (int): Number of image channels (1 for grayscale, 3 for RGB)
+            img_size (int): Size of the input image (28, 32, 64, etc.)
         """
         super(Discriminator, self).__init__()
-        
-        self.img_size = img_size
+
         self.channels = channels
-        self.input_size = img_size * img_size * channels
-        
-        # Hidden layer dimensions
-        hidden1 = 1024
-        hidden2 = 512
-        hidden3 = 256
-        
-        # Build the network
-        self.fc1 = nn.Linear(self.input_size, hidden1)
-        self.leaky_relu1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn1 = nn.BatchNorm1d(hidden1)
-        
-        self.fc2 = nn.Linear(hidden1, hidden2)
-        self.leaky_relu2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn2 = nn.BatchNorm1d(hidden2)
-        
-        self.fc3 = nn.Linear(hidden2, hidden3)
-        self.leaky_relu3 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn3 = nn.BatchNorm1d(hidden3)
-        
-        # Output layer - single output for binary classification
-        self.fc_out = nn.Linear(hidden3, 1)
-        self.sigmoid = nn.Sigmoid()
-    
+        self.img_size = img_size
+        self.img_shape = (channels, img_size, img_size)
+
+        # Main discriminator network
+        self.model = nn.Sequential(
+            # Input layer - (channels, img_size, img_size) -> downsample by 2
+            nn.Conv2d(channels, 32, 3, stride=2, padding=1),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Dropout2d(0.25),
+
+            # Second layer - downsample by 2
+            nn.Conv2d(32, 64, 3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Dropout2d(0.25),
+
+            # Third layer - downsample by 2
+            nn.Conv2d(64, 128, 3, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Dropout2d(0.25),
+        )
+
+        # Calculate the flattened dimension dynamically
+        # Create a dummy input to get the actual output size
+        with torch.no_grad():
+            dummy_input = torch.zeros(1, channels, img_size, img_size)
+            dummy_output = self.model(dummy_input)
+            self.adv_layer_dim = dummy_output.view(1, -1).size(1)
+
+        # Output layer - Binary classification (real/fake)
+        self.adv_layer = nn.Sequential(
+            nn.Linear(self.adv_layer_dim, 1),
+            nn.Sigmoid()  # Output range [0, 1]
+        )
+
     def forward(self, img):
         """
-        Forward pass through discriminator
-        
+        Forward pass of the discriminator
+
         Args:
-            img (torch.Tensor): Batch of images shape (batch_size, channels, img_size, img_size)
-            
+            img (torch.Tensor): Input images of shape (batch_size, channels, img_size, img_size)
+
         Returns:
-            torch.Tensor: Classification scores shape (batch_size, 1)
+            torch.Tensor: Validity predictions of shape (batch_size, 1)
         """
-        # Flatten image
-        x = img.view(img.size(0), -1)
-        
-        # Layer 1
-        x = self.fc1(x)
-        x = self.leaky_relu1(x)
-        x = self.bn1(x)
-        
-        # Layer 2
-        x = self.fc2(x)
-        x = self.leaky_relu2(x)
-        x = self.bn2(x)
-        
-        # Layer 3
-        x = self.fc3(x)
-        x = self.leaky_relu3(x)
-        x = self.bn3(x)
-        
-        # Output layer
-        x = self.fc_out(x)
-        x = self.sigmoid(x)
-        
-        return x
+        # Extract features
+        out = self.model(img)
+
+        # Flatten
+        out = out.view(out.shape[0], -1)
+
+        # Predict validity (real/fake)
+        validity = self.adv_layer(out)
+
+        return validity
 
 
-def create_gan_models(latent_dim=100, img_size=28, channels=1, device='cpu'):
+def initialize_weights(model):
     """
-    Create Generator and Discriminator models
-    
+    Initialize model weights using normal distribution
+
     Args:
-        latent_dim (int): Dimension of noise input
-        img_size (int): Size of output image
-        channels (int): Number of image channels (auto-detected from data)
-        device (str): Device to place models on ('cpu' or 'cuda')
-        
-    Returns:
-        tuple: (generator, discriminator)
+        model (nn.Module): The model to initialize
     """
-    generator = Generator(latent_dim=latent_dim, img_size=img_size, channels=channels)
-    discriminator = Discriminator(img_size=img_size, channels=channels)
-    
-    generator = generator.to(device)
-    discriminator = discriminator.to(device)
-    
-    return generator, discriminator
+    for m in model.modules():
+        if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d, nn.Linear)):
+            nn.init.normal_(m.weight.data, 0.0, 0.02)
+            if m.bias is not None:
+                nn.init.constant_(m.bias.data, 0)
+        elif isinstance(m, nn.BatchNorm2d):
+            nn.init.normal_(m.weight.data, 1.0, 0.02)
+            nn.init.constant_(m.bias.data, 0)
 
 
-def create_optimizers(generator, discriminator, learning_rate=0.0002, beta1=0.5, beta2=0.999):
+def test_models():
     """
-    Create optimizers for both networks
-    
-    Args:
-        generator (nn.Module): Generator network
-        discriminator (nn.Module): Discriminator network
-        learning_rate (float): Learning rate for Adam optimizer
-        beta1 (float): Beta1 parameter for Adam
-        beta2 (float): Beta2 parameter for Adam
-        
-    Returns:
-        tuple: (generator_optimizer, discriminator_optimizer)
+    Test the Generator and Discriminator models
     """
-    gen_optimizer = optim.Adam(generator.parameters(), lr=learning_rate, betas=(beta1, beta2))
-    disc_optimizer = optim.Adam(discriminator.parameters(), lr=learning_rate, betas=(beta1, beta2))
-    
-    return gen_optimizer, disc_optimizer
+    print("Testing GAN Models...")
+
+    # Test parameters
+    batch_size = 4
+    latent_dim = 100
+    channels = 1
+    img_size = 64  # Test with 64x64
+
+    # Create models
+    generator = Generator(latent_dim=latent_dim, channels=channels, img_size=img_size)
+    discriminator = Discriminator(channels=channels, img_size=img_size)
+
+    # Initialize weights
+    initialize_weights(generator)
+    initialize_weights(discriminator)
+
+    print(f"\nGenerator:")
+    print(f"  Parameters: {sum(p.numel() for p in generator.parameters()):,}")
+
+    print(f"\nDiscriminator:")
+    print(f"  Parameters: {sum(p.numel() for p in discriminator.parameters()):,}")
+
+    # Test generator
+    z = torch.randn(batch_size, latent_dim)
+    fake_imgs = generator(z)
+    print(f"\nGenerator output shape: {fake_imgs.shape}")
+    print(f"Generator output range: [{fake_imgs.min():.3f}, {fake_imgs.max():.3f}]")
+
+    # Test discriminator
+    validity = discriminator(fake_imgs)
+    print(f"\nDiscriminator output shape: {validity.shape}")
+    print(f"Discriminator output range: [{validity.min():.3f}, {validity.max():.3f}]")
+
+    print("\nTests passed!")
 
 
 if __name__ == "__main__":
-    # Test the models
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Using device: {device}")
-    
-    # Create models
-    generator, discriminator = create_gan_models(device=device)
-    
-    print("Generator Model:")
-    print(generator)
-    print(f"\nTotal Generator Parameters: {sum(p.numel() for p in generator.parameters()):,}")
-    
-    print("\n" + "="*50)
-    print("Discriminator Model:")
-    print(discriminator)
-    print(f"\nTotal Discriminator Parameters: {sum(p.numel() for p in discriminator.parameters()):,}")
-    
-    # Test forward pass
-    print("\n" + "="*50)
-    print("Testing forward passes...")
-    
-    batch_size = 8
-    latent_dim = 100
-    
-    noise = torch.randn(batch_size, latent_dim, device=device)
-    generated_images = generator(noise)
-    print(f"Generated images shape: {generated_images.shape}")
-    
-    discriminator_output = discriminator(generated_images)
-    print(f"Discriminator output shape: {discriminator_output.shape}")
-    print("Forward pass test successful!")
+    test_models()

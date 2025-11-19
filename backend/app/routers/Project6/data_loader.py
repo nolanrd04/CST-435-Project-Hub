@@ -36,7 +36,16 @@ class FruitDataset(Dataset):
         
         # Normalize to [-1, 1] if requested (required for tanh output)
         if self.normalize:
-            self.data = (self.data / 127.5) - 1.0
+            # Auto-detect input range and normalize to [-1, 1]
+            data_min = self.data.min()
+            data_max = self.data.max()
+            
+            if data_max <= 1.0:
+                # Data is in [0, 1], convert to [-1, 1]
+                self.data = (self.data * 2.0) - 1.0
+            else:
+                # Data is in [0, 255], convert to [-1, 1]
+                self.data = (self.data / 127.5) - 1.0
         
         # Auto-detect number of channels
         if len(self.data.shape) == 3:  # (N, H, W) - grayscale

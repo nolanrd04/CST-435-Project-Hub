@@ -55,23 +55,23 @@ https://console.cloud.google.com/storage/browser/quickdraw_dataset/full/simplifi
 Find the fruit files apple, banana, blackberry, grapes, pear, strawberry, and watermelon.
 Create a new folder in
 ```
-backend/app/Project6/
+backend/app/routers/Project6/
 ```
 and call it rawData, so the new filepath should be
 ```
-backend/app/Project6/rawData.
+backend/app/routers/Project6/rawData
 ```
 Move the downloaded ndjson files into this folder.
 
-## 1. rawDataToImage.py
+## 2. rawDataToImage.py
 Converts all ndjson files in rawData to custome resolution images and saves those images as their subfolder types in imageData. For example, apple.ndjson becomes imageData/apple/versionX/[images]. Prompts the user to pick a quality size, where quality is primarily determined by the number of strokes.
 1. Output file size: will stop running when the converter has generated a specific number of files for each fruit that the user picks.
 2. Versions: the user might want to create multiple models, in which case we need to maintain data versions. This can be solved by asking the user for a version name and creating a new subfolder version[Name] where [Name] is given by the user.
 
-## 2. imageToNPZ.py
+## 3. imageToNPZ.py
 Converts images in imageData/types/versionX to their prospective .npz array files in npzData/. For example. imageData/apple/version1 becomes npzData/apple_version1.npz. Used for the GAN.
 
-## 3. train_gan.py
+## 4. train_gan.py
 This will train the model. This will:
 1. Prompt you to select a dataset version (v1, v2, etc.)
 2. Prompt you to select a model name (user-defined, defaults to v1)
@@ -85,7 +85,7 @@ It uses helper python files:
 3. ```gan_trainer.py``` (includes `MultiFruitGANTrainer` class)
 4. ```cost_analysis_training.py``` (tracks training costs and performance)
 
-## 4. saved models from train_gan.py
+## 5. saved models from train_gan.py
 The model structure now supports multi-fruit training. Each model folder contains separate generators/discriminators for each fruit:
 Project6/
 ```
@@ -136,7 +136,7 @@ Project6/
 - **Cost Analysis:** Tracks training time, memory usage, and estimated costs
 - **Training Statistics:** Auto-generated reports with performance metrics
 
-## 5. generate_images.py
+## 6. generate_images.py
 Uses the trained models to generate fruit-specific images.
 
 **Usage:**
@@ -162,7 +162,7 @@ python generate_images.py v1 orange --save output.png
 - `--save`: Save output to file instead of displaying
 - `--seed`: Random seed for reproducibility
 
-## 6. Cost Analysis & Training Statistics
+## 7. Cost Analysis & Training Statistics
 
 Project6 now includes comprehensive cost tracking and performance metrics, similar to Project5. During training, the system automatically:
 

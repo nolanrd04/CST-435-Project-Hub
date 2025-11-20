@@ -11,3 +11,4 @@ Fool rate too low around 280 epochs. Can no longer learn.
 6. Started from scratch. Now working as intended.
 7. model_v1 is baseline 64x64 2d image generator.
 8. Added an option to filter training images by stoke complexity to better the dataset.
+9. Extracted 2500 images for a medium model to train which uses more stroke complexity.

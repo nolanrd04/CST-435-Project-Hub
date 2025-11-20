@@ -86,7 +86,7 @@ def get_available_versions(npz_dir=None):
         npz_dir (str or Path): Path to npzData directory. If None, uses script-relative path.
         
     Returns:
-        set: Set of unique version names (e.g., {'v1', 'v2', 'v3'})
+        list: Sorted list of unique version names (e.g., ['v1', 'medium_v2', 'large_v3'])
     """
     if npz_dir is None:
         npz_dir = NPZ_DATA_DIR
@@ -97,11 +97,14 @@ def get_available_versions(npz_dir=None):
     versions = set()
     
     for file in npz_files:
-        # Parse filename: fruit_type_version.npz
+        # Parse filename: fruit_category_version.npz
+        # e.g., apple_medium_v2.npz -> medium_v2
         # e.g., apple_v1.npz -> v1
         parts = file.stem.split('_')
         if len(parts) >= 2:
-            version = parts[-1]  # Get last part as version
+            # Everything after the first part (fruit name) is the version
+            # The first part is always the fruit category
+            version = '_'.join(parts[1:])
             versions.add(version)
     
     return sorted(versions)
@@ -113,7 +116,7 @@ def get_fruit_types_for_version(npz_dir=None, version='v1'):
     
     Args:
         npz_dir (str or Path): Path to npzData directory. If None, uses script-relative path.
-        version (str): Version name (e.g., 'v1')
+        version (str): Version name (e.g., 'v1' or 'medium_v2')
         
     Returns:
         list: List of fruit type names
@@ -129,10 +132,15 @@ def get_fruit_types_for_version(npz_dir=None, version='v1'):
     fruit_types = []
     for file in npz_files:
         # Parse filename: fruit_type_version.npz
+        # e.g., apple_medium_v2.npz -> apple (everything before the last _version part)
         parts = file.stem.split('_')
-        # Everything except the last part (which is version) is the fruit type
-        fruit_type = '_'.join(parts[:-1])
-        fruit_types.append(fruit_type)
+        # Find where the version starts - it's everything after the first underscore
+        # but we need to work backwards since version can have underscores
+        # Better approach: remove the version suffix from the filename
+        stem = file.stem
+        if stem.endswith(f'_{version}'):
+            fruit_type = stem[:-len(f'_{version}')]  # Remove _version suffix
+            fruit_types.append(fruit_type)
     
     return sorted(fruit_types)
 

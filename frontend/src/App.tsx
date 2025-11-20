@@ -18,6 +18,9 @@ const RNN = React.lazy(() =>
 const GeneticAlgorithmPage = React.lazy(() =>
   import('./projects/projectGA/GeneticAlgorithm.tsx').then(module => ({ default: module.default }))
 );
+const Project6 = React.lazy(() =>
+  import('./projects/Project6/Project6.tsx').then(module => ({ default: module.default }))
+);
 
 // Loading component shown while chunks are downloading
 function LoadingSpinner() {
@@ -115,6 +118,11 @@ function App() {
                   Project5: RNN
                 </Link>
               </li>
+              <li>
+                <Link to="/project6" className="button-link-to-projects">
+                  Project6: GAN
+                </Link>
+              </li>
             </ul>
           </nav>
         </header>
@@ -127,6 +135,7 @@ function App() {
               <Route path="/sentiment-analyzer" element={<SentimentAnalyzer />} />
               <Route path="/Project5" element={<RNN activeTab="song-generator" />} />
               <Route path="/genetic-algorithm" element={<GeneticAlgorithmPage />} />
+              <Route path="/project6" element={<Project6 />} />
             </Routes>
           </Suspense>
         </main>

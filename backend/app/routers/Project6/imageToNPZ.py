@@ -205,6 +205,67 @@ def get_image_resolution() -> int:
             print("   ❌ Please enter a valid number!")
 
 
+def get_version_selection(available_versions: Dict[str, List[str]]) -> List[Tuple[str, str]]:
+    """
+    Let user select by version name pattern (e.g., "medium_v2" finds all *_medium_v2 versions).
+    
+    Args:
+        available_versions: Dictionary mapping category -> list of versions
+    
+    Returns:
+        List of (category, version) tuples to convert
+    """
+    print(f"\n{'='*60}")
+    print("📦 Select Data Version to Convert")
+    print(f"{'='*60}")
+    
+    # Show available versions across all categories
+    all_versions_set = set()
+    for versions_list in available_versions.values():
+        all_versions_set.update(versions_list)
+    
+    all_versions = sorted(all_versions_set)
+    print("Available versions:")
+    for version in all_versions:
+        count = sum(1 for v_list in available_versions.values() if version in v_list)
+        print(f"  - {version} ({count} categories)")
+    
+    print(f"\n{'='*60}")
+    print("Enter version name (e.g., 'medium_v2', 'v1', 'large_v3')")
+    print(f"Default: v1")
+    print("Enter 'q' to quit")
+    print(f"{'='*60}")
+    
+    user_input = input("\nVersion name [default: v1]: ").strip()
+    
+    if user_input.lower() == 'q':
+        print("❌ Cancelled")
+        return []
+    
+    # Default to v1 if empty
+    version_pattern = user_input if user_input else 'v1'
+    
+    # Find all matching (category, version) combinations
+    selected = []
+    for category in sorted(available_versions.keys()):
+        for version in sorted(available_versions[category]):
+            if version_pattern in version or version == version_pattern:
+                version_path = os.path.join(IMAGE_DATA_DIR, category, version)
+                img_count = len([f for f in os.listdir(version_path) if f.endswith('.png')])
+                selected.append((category, version))
+    
+    if selected:
+        print(f"\n✓ Found {len(selected)} dataset(s) matching '{version_pattern}':")
+        for cat, ver in selected:
+            version_path = os.path.join(IMAGE_DATA_DIR, cat, ver)
+            img_count = len([f for f in os.listdir(version_path) if f.endswith('.png')])
+            print(f"   - {cat:12s} / {ver:15s} ({img_count:4d} images)")
+        return selected
+    else:
+        print(f"❌ No versions found matching '{version_pattern}'")
+        return []
+
+
 def main():
     """Main entry point for converting images to NPZ."""
     
@@ -216,6 +277,12 @@ def main():
         print("\n❌ No image data found. Please run rawDataToImage.py first!")
         return
     
+    # Get user selection
+    selected_versions = get_version_selection(available_versions)
+    
+    if not selected_versions:
+        return
+    
     # Get image resolution
     image_resolution = get_image_resolution()
     
@@ -223,18 +290,18 @@ def main():
     print("🔄 Starting Image to NPZ Conversion")
     print(f"{'='*60}")
     print(f"Target Resolution: {image_resolution}×{image_resolution}")
+    print(f"Converting {len(selected_versions)} dataset(s)")
     print(f"{'='*60}")
     
-    # Process each category/version combination
+    # Process selected category/version combinations
     successful = 0
     failed = 0
     
-    for category in sorted(available_versions.keys()):
-        for version in sorted(available_versions[category]):
-            if images_to_npz(category, version, image_size=image_resolution):
-                successful += 1
-            else:
-                failed += 1
+    for category, version in selected_versions:
+        if images_to_npz(category, version, image_size=image_resolution):
+            successful += 1
+        else:
+            failed += 1
     
     # Final summary
     print(f"\n{'='*60}")

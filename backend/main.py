@@ -16,6 +16,10 @@ app = FastAPI()
 from backend.app.routers.projectGA.routes import router as projectga_router
 app.include_router(projectga_router)
 
+# Include Project6 router
+from backend.app.routers.Project6.api_router import router as project6_router
+app.include_router(project6_router)
+
 # Download NLTK data on startup (required for Project4 sentiment analysis)
 # Do this after app creation to avoid blocking startup
 try:

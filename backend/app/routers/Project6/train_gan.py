@@ -247,6 +247,34 @@ def configure_training():
     return config
 
 
+def get_model_description(data_version):
+    """
+    Prompt user for model description
+
+    Args:
+        data_version (str): Dataset version being used
+
+    Returns:
+        str: User-provided model description
+    """
+    print("\n" + "="*60)
+    print("STEP 5: Model Description")
+    print("="*60)
+
+    print("\nProvide a brief description of this model (1-3 sentences).")
+    print("This will be saved in models/model_{name}/info/description.txt")
+    print("\nExample: 'A more advanced model trained on a larger dataset with higher resolution images.'")
+    print("Example: 'Baseline model for initial testing and comparison.'")
+
+    description = input("\nModel description: ").strip()
+
+    while not description:
+        print("Description cannot be empty. Please provide a description.")
+        description = input("\nModel description: ").strip()
+
+    return description
+
+
 def display_training_summary(data_version, model_name, fruits, config):
     """
     Display training summary before starting
@@ -302,6 +330,9 @@ def main():
     # Add image size to config
     config['img_size'] = img_size
 
+    # Step 5: Get model description
+    model_description = get_model_description(data_version)
+
     # Display summary
     display_training_summary(data_version, model_name, fruits, config)
 
@@ -321,7 +352,7 @@ def main():
 
     # Start training
     print("\nStarting training...")
-    histories = trainer.train_all_fruits(fruits)
+    histories = trainer.train_all_fruits(fruits, model_description=model_description)
 
     # Final summary
     print("\n" + "="*60)

@@ -48,9 +48,8 @@ Complete the following steps. Then, write a comprehensive technical report as a 
 # **Project Pipeline**
 
 ## 1. rawDataToImage.py
-Converts all ndjson files in rawData to 28x28 images and saves those images as their subfolder types in imageData. For example, apple.ndjson becomes imageData/apple/versionX/[images].
-Certain features like strokes and countrycode are not needed. We just need the images. It should only extract images if they were succesfully guessed. This file will prompt the user for customization:
-1. Output file size: will stop running when the converter has generated this storage amount for each category. For example, when 20mb of apple images have been generated, it stops and moves on to the next category.
+Converts all ndjson files in rawData to custome resolution images and saves those images as their subfolder types in imageData. For example, apple.ndjson becomes imageData/apple/versionX/[images]. Prompts the user to pick a quality size, where quality is primarily determined by the number of strokes.
+1. Output file size: will stop running when the converter has generated a specific number of files for each fruit that the user picks.
 2. Versions: the user might want to create multiple models, in which case we need to maintain data versions. This can be solved by asking the user for a version name and creating a new subfolder version[Name] where [Name] is given by the user.
 
 ## 2. imageToNPZ.py
@@ -68,6 +67,7 @@ It uses helper python files:
 1. ```data_loader.py```
 2. ```gan_model.py```
 3. ```gan_trainer.py``` (includes `MultiFruitGANTrainer` class)
+4. ```cost_analysis_training.py``` (tracks training costs and performance)
 
 ## 4. saved models from train_gan.py
 The model structure now supports multi-fruit training. Each model folder contains separate generators/discriminators for each fruit:
@@ -104,8 +104,10 @@ Project6/
         └── info/                        (training metadata)
             ├── training_config_v1.json      (overall config, all fruits)
             ├── training_summary_v1.json     (summary of trained fruits)
-            ├── training_history_apple.json  (per-fruit training history)
+            ├── training_history_apple.json  (per-fruit training history with cost data)
             ├── training_history_banana.json
+            ├── cost_analysis_report.json    (detailed cost breakdown)
+            ├── description.txt              (user description + auto-generated stats)
             └── ... (more fruit histories)
 ```
 
@@ -115,6 +117,8 @@ Project6/
 - Time estimates shown for each fruit individually
 - All fruits' epochs printed to console
 - Models can generate fruit-specific images
+- **Cost Analysis:** Tracks training time, memory usage, and estimated costs
+- **Training Statistics:** Auto-generated reports with performance metrics
 
 ## 5. generate_images.py
 Uses the trained models to generate fruit-specific images.
@@ -141,6 +145,74 @@ python generate_images.py v1 orange --save output.png
 - `--interpolate`: Generate smooth transition between images
 - `--save`: Save output to file instead of displaying
 - `--seed`: Random seed for reproducibility
+
+## 6. Cost Analysis & Training Statistics
+
+Project6 now includes comprehensive cost tracking and performance metrics, similar to Project5. During training, the system automatically:
+
+### Tracked Metrics
+- **Training Time:** Per-fruit and total training duration
+- **Memory Usage:** Peak memory consumption during training
+- **Training Cost:** Estimated compute costs based on Render pricing
+- **Cost Per Epoch:** Average cost breakdown per training epoch
+- **Performance Metrics:** Generator and discriminator losses per epoch
+
+### Output Files
+
+#### `description.txt`
+Auto-generated file containing:
+- User-provided model description
+- Dataset information (resolution, fruit types, image counts)
+- Training configuration (epochs, batch size, learning rate, etc.)
+- **Training Statistics:**
+  - Total training time (hours and minutes)
+  - Average time per fruit
+  - Peak memory usage (GB)
+  - Total training cost
+  - Average cost per fruit
+  - Average cost per epoch
+
+#### `cost_analysis_report.json`
+Detailed JSON report with:
+- Complete training cost breakdown (compute, memory, storage)
+- Cost per epoch calculations
+- Peak memory usage
+- Training hours
+- Model configuration snapshot
+
+#### `training_history_[fruit].json`
+Per-fruit training history including:
+- Generator and discriminator losses per epoch
+- Training time (seconds and hours)
+- Peak memory usage
+- Cost summary (total, per epoch, per hour)
+
+### Pricing Configuration
+
+Cost calculations are based on `render_pricing_config.json`:
+```json
+{
+  "fixed_monthly_cost": 19.0,
+  "cost_per_cpu_per_month": 0.296875,
+  "cost_per_gb_ram_per_month": 0.037109375,
+  "additional_storage_cost_per_gb": 0.10
+}
+```
+
+You can customize these values to match your deployment platform's pricing.
+
+### Example Cost Summary Output
+```
+==========================================================
+TRAINING COST SUMMARY FOR APPLE
+==========================================================
+Training time: 2.34 hours (140.5 minutes)
+Peak memory: 3.84 GB
+Total cost: $0.003256
+Cost per epoch: $0.000008
+Cost per hour: $0.001391
+==========================================================
+```
 
 # GAN Architecture
 

@@ -1,0 +1,17 @@
+A more advanced model trained on a more advanced dataset.
+Dataset: Total fruits trained: 7
+Total training time: 1.99 hours (119.5 minutes)
+Average time per fruit: 17.1 minutes
+- Images: 2500 per fruit
+- Image resolution: 64x64
+- Stoke importance: medium
+- Fruit type count: 7
+
+"config": {
+    "epochs": 400,
+    "batch_size": 32,
+    "learning_rate": 0.0002,
+    "beta1": 0.5,
+    "latent_dim": 100,
+    "img_size": 64
+  }

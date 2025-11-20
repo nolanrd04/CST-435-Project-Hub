@@ -1,0 +1,15 @@
+The baseline model for this GAN project.
+Dataset:
+- Images: 1000 per fruit
+- Image resolution: 64x64
+- Stoke importance: none
+- Fruit type count: 7
+
+"config": {
+    "epochs": 400,
+    "batch_size": 32,
+    "learning_rate": 0.0002,
+    "beta1": 0.5,
+    "latent_dim": 100,
+    "img_size": 64
+  }

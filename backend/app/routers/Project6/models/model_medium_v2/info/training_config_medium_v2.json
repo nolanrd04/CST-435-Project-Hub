@@ -1,0 +1,14 @@
+{
+  "model_name": "medium_v2",
+  "data_version": "medium_v2",
+  "timestamp": "2025-11-19T19:29:15.633368",
+  "device": "cuda",
+  "config": {
+    "epochs": 400,
+    "batch_size": 32,
+    "learning_rate": 0.0002,
+    "beta1": 0.5,
+    "latent_dim": 100,
+    "img_size": 64
+  }
+}

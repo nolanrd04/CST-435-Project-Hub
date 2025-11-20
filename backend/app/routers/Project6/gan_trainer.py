@@ -13,9 +13,12 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
+import psutil
+import threading
 
 from gan_model import Generator, Discriminator, initialize_weights
 from data_loader import load_dataset_for_version, create_data_loader
+from cost_analysis_training import GANTrainingCostModel, RenderPricingConfig
 
 
 class MultiFruitGANTrainer:
@@ -52,8 +55,24 @@ class MultiFruitGANTrainer:
         # Training history for all fruits
         self.all_histories = {}
 
+        # Cost tracking
+        self.peak_memory_usage = 0.0
+        self.training_active = False
+        self.cost_model = GANTrainingCostModel(RenderPricingConfig())
+
         # Save configuration
         self.save_config()
+
+    def monitor_memory(self):
+        """Background thread function to track peak memory usage during training"""
+        process = psutil.Process()
+        while self.training_active:
+            try:
+                current_memory = process.memory_info().rss / (1024 * 1024 * 1024)  # Convert to GB
+                self.peak_memory_usage = max(self.peak_memory_usage, current_memory)
+            except Exception as e:
+                print(f"Warning: Could not read memory: {e}")
+            time.sleep(0.5)  # Check every 500ms
 
     def save_config(self):
         """Save training configuration to JSON"""
@@ -84,6 +103,14 @@ class MultiFruitGANTrainer:
         print(f"\n{'='*60}")
         print(f"Training GAN for: {fruit_name.upper()}")
         print(f"{'='*60}")
+
+        # Reset cost tracking for this fruit
+        self.peak_memory_usage = 0.0
+        self.training_active = True
+
+        # Start memory monitoring in background thread
+        monitor_thread = threading.Thread(target=self.monitor_memory, daemon=True)
+        monitor_thread.start()
 
         start_time = time.time()
 
@@ -271,10 +298,45 @@ class MultiFruitGANTrainer:
         # Save final models
         self.save_models(generator, discriminator, fruit_name)
 
-        # Save training history
+        # Stop memory monitoring
+        self.training_active = False
+        monitor_thread.join(timeout=1)
+
+        # Calculate training time and cost
+        total_time = time.time() - start_time
+        total_hours = total_time / 3600
+
+        # Add cost metrics to history
+        history['training_time_seconds'] = total_time
+        history['training_time_hours'] = total_hours
+        history['peak_memory_gb'] = self.peak_memory_usage
+
+        # Calculate cost
+        try:
+            cost_summary = self.cost_model.get_cost_summary(
+                training_hours=total_hours,
+                peak_memory_gb=self.peak_memory_usage,
+                total_epochs=epochs,
+                cpus_used=2.0
+            )
+            history['cost_summary'] = cost_summary
+
+            print(f"\n{'='*60}")
+            print(f"TRAINING COST SUMMARY FOR {fruit_name.upper()}")
+            print(f"{'='*60}")
+            print(f"Training time: {total_hours:.2f} hours ({total_time/60:.2f} minutes)")
+            print(f"Peak memory: {self.peak_memory_usage:.2f} GB")
+            print(f"Total cost: {cost_summary['total_training_cost']}")
+            print(f"Cost per epoch: {cost_summary['cost_per_epoch']}")
+            print(f"Cost per hour: {cost_summary['cost_per_hour']}")
+            print(f"{'='*60}")
+        except Exception as e:
+            print(f"Warning: Could not calculate cost: {e}")
+            history['cost_summary'] = None
+
+        # Save training history with cost data
         self.save_history(history, fruit_name)
 
-        total_time = time.time() - start_time
         print(f"\nTraining completed for {fruit_name} in {total_time/60:.2f} minutes")
 
         return history
@@ -380,12 +442,71 @@ class MultiFruitGANTrainer:
 
         print(f"\nTraining summary saved: {summary_path}")
 
-    def train_all_fruits(self, fruits):
+    def save_model_description(self, fruits_trained, user_description, images_per_fruit, training_stats=None):
+        """
+        Save model description.txt file with auto-extracted metadata and training stats
+
+        Args:
+            fruits_trained (list): List of fruits trained
+            user_description (str): User-provided description
+            images_per_fruit (int): Number of images per fruit type
+            training_stats (dict, optional): Training statistics including time and cost
+        """
+        description_path = self.info_dir / 'description.txt'
+
+        # Build description content
+        description_content = f"""{user_description}
+
+Dataset:
+- Images: {images_per_fruit} per fruit
+- Image resolution: {self.config['img_size']}x{self.config['img_size']}
+- Fruit type count: {len(fruits_trained)}
+- Fruits: {', '.join(fruits_trained)}
+
+Training Configuration:
+- Epochs: {self.config['epochs']}
+- Batch size: {self.config['batch_size']}
+- Learning rate: {self.config['learning_rate']}
+- Beta1: {self.config['beta1']}
+- Latent dimension: {self.config['latent_dim']}
+- Image size: {self.config['img_size']}x{self.config['img_size']}
+"""
+
+        # Add training statistics if available
+        if training_stats:
+            description_content += f"""
+Training Statistics:
+- Total training time: {training_stats['total_hours']:.2f} hours ({training_stats['total_minutes']:.1f} minutes)
+- Average time per fruit: {training_stats['avg_time_per_fruit']:.1f} minutes
+- Peak memory usage: {training_stats['peak_memory_gb']:.2f} GB
+"""
+
+            # Add cost information if available
+            if 'total_cost' in training_stats and training_stats['total_cost']:
+                description_content += f"""- Total training cost: {training_stats['total_cost']}
+- Average cost per fruit: {training_stats['avg_cost_per_fruit']}
+- Cost per epoch (avg): {training_stats['avg_cost_per_epoch']}
+"""
+
+        description_content += f"""
+Model Information:
+- Model name: {self.model_name}
+- Data version: {self.data_version}
+- Created: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+"""
+
+        with open(description_path, 'w') as f:
+            f.write(description_content)
+
+        print(f"Model description saved: {description_path}")
+
+    def train_all_fruits(self, fruits, model_description=None):
         """
         Train GANs for all specified fruits
 
         Args:
             fruits (list): List of fruit names to train
+            model_description (str, optional): User-provided model description
 
         Returns:
             dict: All training histories
@@ -399,6 +520,9 @@ class MultiFruitGANTrainer:
 
         total_start = time.time()
         fruit_times = []
+        images_per_fruit = 0
+        total_costs = []
+        peak_memory_per_fruit = []
 
         for idx, fruit in enumerate(fruits, 1):
             print(f"\n{'='*60}")
@@ -422,14 +546,76 @@ class MultiFruitGANTrainer:
             print(f"{'='*60}")
 
             fruit_start = time.time()
-            self.train_single_fruit(fruit)
+
+            # Get dataset to count images (only for first fruit to save time)
+            if idx == 1:
+                from data_loader import load_dataset_for_version
+                dataset, _, _ = load_dataset_for_version(
+                    self.data_version,
+                    selected_fruits=[fruit]
+                )
+                images_per_fruit = len(dataset)
+
+            history = self.train_single_fruit(fruit)
             fruit_time = time.time() - fruit_start
             fruit_times.append(fruit_time)
 
+            # Collect cost and memory data
+            if 'cost_summary' in history and history['cost_summary']:
+                # Extract numeric cost from string like "$0.001234"
+                cost_str = history['cost_summary'].get('total_training_cost', '$0.0')
+                try:
+                    cost_value = float(cost_str.replace('$', ''))
+                    total_costs.append(cost_value)
+                except:
+                    pass
+
+            if 'peak_memory_gb' in history:
+                peak_memory_per_fruit.append(history['peak_memory_gb'])
+
         total_time = time.time() - total_start
+
+        # Compile training statistics
+        training_stats = {
+            'total_hours': total_time / 3600,
+            'total_minutes': total_time / 60,
+            'avg_time_per_fruit': np.mean(fruit_times) / 60 if fruit_times else 0,
+            'peak_memory_gb': max(peak_memory_per_fruit) if peak_memory_per_fruit else 0,
+        }
+
+        # Add cost information if available
+        if total_costs:
+            total_cost = sum(total_costs)
+            avg_cost_per_fruit = np.mean(total_costs)
+            avg_cost_per_epoch = avg_cost_per_fruit / self.config['epochs']
+
+            training_stats['total_cost'] = f"${total_cost:.6f}"
+            training_stats['avg_cost_per_fruit'] = f"${avg_cost_per_fruit:.6f}"
+            training_stats['avg_cost_per_epoch'] = f"${avg_cost_per_epoch:.6f}"
 
         # Save summary
         self.save_summary(fruits)
+
+        # Save model description if provided
+        if model_description:
+            self.save_model_description(fruits, model_description, images_per_fruit, training_stats)
+
+        # Save detailed cost report
+        if total_costs:
+            try:
+                cost_report = self.cost_model.generate_training_cost_report(
+                    training_hours=total_time / 3600,
+                    peak_memory_gb=max(peak_memory_per_fruit) if peak_memory_per_fruit else 0,
+                    total_epochs=self.config['epochs'] * len(fruits),  # Total epochs across all fruits
+                    model_config=self.config,
+                    cpus_used=2.0
+                )
+                cost_report_path = self.info_dir / 'cost_analysis_report.json'
+                with open(cost_report_path, 'w') as f:
+                    json.dump(cost_report, f, indent=2)
+                print(f"\nCost analysis report saved: {cost_report_path}")
+            except Exception as e:
+                print(f"Warning: Could not save cost report: {e}")
 
         print(f"\n{'='*60}")
         print(f"ALL TRAINING COMPLETED!")
@@ -437,6 +623,15 @@ class MultiFruitGANTrainer:
         print(f"Total fruits trained: {len(fruits)}")
         print(f"Total training time: {total_time/3600:.2f} hours ({total_time/60:.1f} minutes)")
         print(f"Average time per fruit: {np.mean(fruit_times)/60:.1f} minutes")
+
+        # Display cost summary if available
+        if total_costs:
+            print(f"\n💰 OVERALL COST SUMMARY:")
+            print(f"   Total training cost: {training_stats.get('total_cost', 'N/A')}")
+            print(f"   Average cost per fruit: {training_stats.get('avg_cost_per_fruit', 'N/A')}")
+            print(f"   Average cost per epoch: {training_stats.get('avg_cost_per_epoch', 'N/A')}")
+            print(f"   Peak memory usage: {training_stats['peak_memory_gb']:.2f} GB")
+
         print(f"{'='*60}")
 
         return self.all_histories

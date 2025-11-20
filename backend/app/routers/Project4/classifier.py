@@ -83,11 +83,16 @@ class SentimentClassifier:
                 # Get sentiment score
                 sentiment_result = sentiment_scorer.score_text(processed_text)
 
+                # Determine classification and confidence
+                classification = 'Positive' if prediction == 1 else 'Negative'
+                # Confidence should be the probability of the PREDICTED class
+                confidence = float(probability[1]) if prediction == 1 else float(probability[0])
+
                 return {
                     "original_text": review_text,
                     "processed_text": processed_text,
-                    "classification": 'Positive' if prediction == 1 else 'Negative',
-                    "confidence": float(probability[1]),  # Confidence in positive class
+                    "classification": classification,
+                    "confidence": confidence,  # Confidence in the PREDICTED class
                     "positive_probability": float(probability[1]),
                     "negative_probability": float(probability[0]),
                     "sentiment_score": float(sentiment_result['overall_score']),  # TF-IDF based score (1-5)
@@ -98,12 +103,16 @@ class SentimentClassifier:
                 # Model is a HotelReviewNLPModel object
                 result = self.model.predict_sentiment(review_text)
 
+                # Determine confidence based on actual prediction
+                classification = result['prediction_label']
+                confidence = float(result['positive_probability']) if classification == 'Positive' else float(result['negative_probability'])
+
                 # Format result for API response
                 return {
                     "original_text": result['original_text'],
                     "processed_text": result['processed_text'],
-                    "classification": result['prediction_label'],  # 'Positive' or 'Negative'
-                    "confidence": float(result['positive_probability']),  # Confidence in positive class
+                    "classification": classification,
+                    "confidence": confidence,  # Confidence in the PREDICTED class
                     "positive_probability": float(result['positive_probability']),
                     "negative_probability": float(result['negative_probability']),
                     "sentiment_score": float(result['sentiment_score']),  # TF-IDF based score (1-5)

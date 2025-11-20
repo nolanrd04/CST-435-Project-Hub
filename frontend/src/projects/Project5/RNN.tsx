@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { AiOutlineAudio, AiOutlineCheckCircle, AiOutlineBook, AiOutlineDollar, AiOutlineFileText } from 'react-icons/ai';
+import {
+  AiOutlineAudio,
+  AiOutlineDollar,
+  AiOutlineFileText,
+  AiOutlineYoutube,
+  AiOutlineCheckCircle,
+  AiOutlineBook
+} from 'react-icons/ai';
 import { getApiUrl } from '../getApiUrl.ts';
 
 interface CostSummary {
@@ -191,81 +198,123 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
   };
 
   return (
-  <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '30px', textAlign: 'center' }}>
+        <h1
+          style={{
+            fontSize: '36px',
+            fontWeight: 'bold',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '10px',
+          }}
+        >
+          Project 5: RNN Song Lyric Generator
+        </h1>
+        <p style={{ color: '#666', fontSize: '16px' }}>
+          LSTM-based text generation trained on song lyrics
+        </p>
+      </div>
+
       {/* Tab Navigation */}
       <div style={{
         display: 'flex',
         gap: '10px',
-        marginBottom: '20px',
+        marginBottom: '30px',
         borderBottom: '2px solid #e5e7eb',
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
+        overflowX: 'auto',
       }}>
         <button
           onClick={() => setActiveTab('song-generator')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'song-generator' ? '#667eea' : 'transparent',
             color: activeTab === 'song-generator' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'song-generator' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
+          <AiOutlineAudio size={20} />
           Song Generator
         </button>
         <button
           onClick={() => setActiveTab('training-cost')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'training-cost' ? '#667eea' : 'transparent',
             color: activeTab === 'training-cost' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'training-cost' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
+          <AiOutlineDollar size={20} />
           Training Cost Analysis
         </button>
         <button
           onClick={() => setActiveTab('requirements')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'requirements' ? '#667eea' : 'transparent',
             color: activeTab === 'requirements' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'requirements' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
+          <AiOutlineFileText size={20} />
           Description and Requirements
         </button>
         <button
           onClick={() => setActiveTab('youtube')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'youtube' ? '#667eea' : 'transparent',
             color: activeTab === 'youtube' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'youtube' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
+          <AiOutlineYoutube size={20} />
           YouTube Showcase
         </button>
       </div>
 
+      {/* Tab Content */}
+      <div style={{ minHeight: '500px' }}>
       {activeTab === 'generator' && (
         <div>
           <h2>Text Generator</h2>
@@ -1123,6 +1172,7 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
           Open YouTube Video
         </a>
       )}
+      </div>
     </div>
   );
 }

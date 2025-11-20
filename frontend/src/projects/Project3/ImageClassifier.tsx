@@ -1,5 +1,21 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { AiOutlineCamera, AiOutlineSearch, AiOutlineReload, AiOutlineClose, AiOutlineWarning, AiOutlineCheckCircle, AiOutlineDollar, AiOutlineBarChart, AiOutlineDesktop, AiOutlineCloud, AiOutlineHdd, AiOutlineWifi, AiOutlineVideoCamera } from 'react-icons/ai';
+import {
+  AiOutlineCamera,
+  AiOutlineFileText,
+  AiOutlineDollar,
+  AiOutlineYoutube,
+  AiOutlineSearch,
+  AiOutlineReload,
+  AiOutlineClose,
+  AiOutlineWarning,
+  AiOutlineCheckCircle,
+  AiOutlineBarChart,
+  AiOutlineDesktop,
+  AiOutlineCloud,
+  AiOutlineHdd,
+  AiOutlineWifi,
+  AiOutlineThunderbolt
+} from 'react-icons/ai';
 import { MdDirectionsCar, MdAirplaneTicket, MdTwoWheeler } from 'react-icons/md';
 import { getApiUrl } from '../getApiUrl.ts';
 
@@ -128,87 +144,124 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
   };
 
   return (
-    
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '30px', textAlign: 'center' }}>
+        <h1
+          style={{
+            fontSize: '36px',
+            fontWeight: 'bold',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '10px',
+          }}
+        >
+          Project 3: Vehicle Image Classifier
+        </h1>
+        <p style={{ color: '#666', fontSize: '16px' }}>
+          CNN-based classifier for cars, airplanes, and motorbikes
+        </p>
+      </div>
+
       {/* Tab Navigation */}
       <div style={{
         display: 'flex',
         gap: '10px',
-        marginBottom: '20px',
+        marginBottom: '30px',
         borderBottom: '2px solid #e5e7eb',
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
+        overflowX: 'auto',
       }}>
         <button
           onClick={() => setActiveTab('classifier')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'classifier' ? '#667eea' : 'transparent',
             color: activeTab === 'classifier' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'classifier' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
-          Vehicle Image Classifier
+          <AiOutlineCamera size={20} />
+          Vehicle Classifier
         </button>
         <button
           onClick={() => setActiveTab('description')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'description' ? '#667eea' : 'transparent',
             color: activeTab === 'description' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'description' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
+          <AiOutlineFileText size={20} />
           Project Description
         </button>
         <button
           onClick={() => setActiveTab('cost-analysis')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'cost-analysis' ? '#667eea' : 'transparent',
             color: activeTab === 'cost-analysis' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'cost-analysis' ? 'bold' : 'normal',
-            fontSize: '16px',
+            fontSize: '15px',
             transition: 'all 0.3s ease',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
-          <AiOutlineDollar size={18} />
+          <AiOutlineDollar size={20} />
           Cost Analysis
         </button>
         <button
           onClick={() => setActiveTab('youtube')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'youtube' ? '#667eea' : 'transparent',
             color: activeTab === 'youtube' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'youtube' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
+          <AiOutlineYoutube size={20} />
           YouTube Link
         </button>
       </div>
 
-      {activeTab === 'classifier' && (
+      {/* Tab Content */}
+      <div style={{ minHeight: '500px' }}>
+        {activeTab === 'classifier' && (
         <div>
           <h2 className="title" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AiOutlineCamera size={28} />
@@ -423,7 +476,7 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <AiOutlineVideoCamera size={16} />
+                        <AiOutlineThunderbolt size={16} />
                         GPU:
                       </span>
                       <span style={{ fontWeight: 'bold', color: '#166534' }}>
@@ -761,6 +814,7 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

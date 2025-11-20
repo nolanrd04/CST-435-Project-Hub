@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import CostAnalysis from './CostAnalysis.tsx';
-import { AiOutlineStar, AiOutlineWarning, AiOutlineClose, AiOutlineLoading3Quarters, AiOutlineCopy, AiOutlineReload } from 'react-icons/ai';
+import {
+  AiOutlineStar,
+  AiOutlineDollar,
+  AiOutlineYoutube,
+  AiOutlineWarning,
+  AiOutlineClose,
+  AiOutlineLoading3Quarters,
+  AiOutlineCopy,
+  AiOutlineReload
+} from 'react-icons/ai';
 import { getApiUrl } from '../getApiUrl.ts';
 
 function TextGenerator() {
@@ -68,64 +77,102 @@ function TextGenerator() {
   };
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '30px', textAlign: 'center' }}>
+        <h1
+          style={{
+            fontSize: '36px',
+            fontWeight: 'bold',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '10px',
+          }}
+        >
+          RNN Text Generator (Nolan's Personal)
+        </h1>
+        <p style={{ color: '#666', fontSize: '16px' }}>
+          LSTM-based text generation trained on Alice in Wonderland
+        </p>
+      </div>
+
       {/* Tab Navigation */}
       <div style={{
         display: 'flex',
         gap: '10px',
-        marginBottom: '20px',
-        borderBottom: '2px solid #e5e7eb'
+        marginBottom: '30px',
+        borderBottom: '2px solid #e5e7eb',
+        flexWrap: 'wrap',
+        overflowX: 'auto',
       }}>
         <button
           onClick={() => setActiveTab('generator')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'generator' ? '#667eea' : 'transparent',
             color: activeTab === 'generator' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'generator' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
+          <AiOutlineStar size={20} />
           Text Generator
         </button>
         <button
           onClick={() => setActiveTab('cost')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'cost' ? '#667eea' : 'transparent',
             color: activeTab === 'cost' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'cost' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
+          <AiOutlineDollar size={20} />
           Cost Analysis
         </button>
         <button
           onClick={() => setActiveTab('youtube')}
           style={{
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: activeTab === 'youtube' ? '#667eea' : 'transparent',
             color: activeTab === 'youtube' ? 'white' : '#666',
             border: 'none',
             borderRadius: '8px 8px 0 0',
             cursor: 'pointer',
             fontWeight: activeTab === 'youtube' ? 'bold' : 'normal',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
+            fontSize: '15px',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
           }}
         >
+          <AiOutlineYoutube size={20} />
           YouTube Showcase
         </button>
       </div>
 
+      {/* Tab Content */}
+      <div style={{ minHeight: '500px' }}>
       {/* Generator Tab */}
       {activeTab === 'generator' && (
     <div className="form" style={{ maxWidth: '700px', margin: '0 auto' }}>
@@ -412,6 +459,7 @@ function TextGenerator() {
           Open YouTube Video
         </a>
       )}
+      </div>
     </div>
   );
 }

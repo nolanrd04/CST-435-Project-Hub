@@ -47,6 +47,22 @@ Complete the following steps. Then, write a comprehensive technical report as a 
 
 # **Project Pipeline**
 
+## 1. Locally download the data.
+The initial data files are large; over 100mb, so those you need to download yourself. You can find them at
+```
+https://console.cloud.google.com/storage/browser/quickdraw_dataset/full/simplified?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%5B%5D%22))
+```
+Find the fruit files apple, banana, blackberry, grapes, pear, strawberry, and watermelon.
+Create a new folder in
+```
+backend/app/Project6/
+```
+and call it rawData, so the new filepath should be
+```
+backend/app/Project6/rawData.
+```
+Move the downloaded ndjson files into this folder.
+
 ## 1. rawDataToImage.py
 Converts all ndjson files in rawData to custome resolution images and saves those images as their subfolder types in imageData. For example, apple.ndjson becomes imageData/apple/versionX/[images]. Prompts the user to pick a quality size, where quality is primarily determined by the number of strokes.
 1. Output file size: will stop running when the converter has generated a specific number of files for each fruit that the user picks.

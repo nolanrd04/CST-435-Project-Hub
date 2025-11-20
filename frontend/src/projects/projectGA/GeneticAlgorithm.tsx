@@ -237,12 +237,28 @@ const GeneticAlgorithmPage: React.FC = () => {
   };
 
   return (
-    <div className="ga-page">
-      <div className="ga-header">
-        <h1>Genetic Algorithm</h1>
-        <p>Evolve random text into Shakespeare quotes</p>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '30px', textAlign: 'center' }}>
+        <h1
+          style={{
+            fontSize: '36px',
+            fontWeight: 'bold',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '10px',
+          }}
+        >
+          Genetic Algorithm (Nolan's Personal)
+        </h1>
+        <p style={{ color: '#666', fontSize: '16px' }}>
+          Evolve random text into Shakespeare quotes
+        </p>
       </div>
 
+      {/* Content */}
+      <div style={{ minHeight: '500px' }}>
       {state.error && (
         <div className="error-message">
           <strong>Error:</strong> {state.error}
@@ -272,6 +288,7 @@ const GeneticAlgorithmPage: React.FC = () => {
 
           <FitnessChart data={state.historyData} />
         </div>
+      </div>
       </div>
     </div>
   );

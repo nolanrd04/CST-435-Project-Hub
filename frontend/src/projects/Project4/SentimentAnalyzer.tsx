@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { AiOutlineMessage, AiOutlineWarning, AiOutlineEdit, AiOutlineBulb, AiOutlineClose, AiOutlineLoading3Quarters, AiOutlineSearch, AiOutlineBarChart, AiOutlineCheckCircle, AiOutlineLike, AiOutlineDislike, AiOutlineReload } from 'react-icons/ai';
+import {
+  AiOutlineWarning,
+  AiOutlineEdit,
+  AiOutlineBulb,
+  AiOutlineClose,
+  AiOutlineLoading3Quarters,
+  AiOutlineSearch,
+  AiOutlineBarChart,
+  AiOutlineCheckCircle,
+  AiOutlineLike,
+  AiOutlineDislike,
+  AiOutlineReload
+} from 'react-icons/ai';
 import { getApiUrl } from '../getApiUrl.ts';
 
 function SentimentAnalyzer() {
@@ -66,23 +78,28 @@ function SentimentAnalyzer() {
   };
 
   return (
-    <div className="form" style={{ maxWidth: '700px', margin: '0 auto' }}>
-      <h2 className="title" style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <span style={{
-          background: 'linear-gradient(135deg, #667eea, #764ba2)',
-          color: 'white',
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '20px'
-        }}>
-          <AiOutlineMessage size={20} />
-        </span>
-        Sentiment Analyzer
-      </h2>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '30px', textAlign: 'center' }}>
+        <h1
+          style={{
+            fontSize: '36px',
+            fontWeight: 'bold',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '10px',
+          }}
+        >
+          Project 4: Sentiment Analyzer
+        </h1>
+        <p style={{ color: '#666', fontSize: '16px' }}>
+          NLP-based sentiment analysis for hotel reviews
+        </p>
+      </div>
+
+      {/* Content */}
+      <div style={{ minHeight: '500px', maxWidth: '700px', margin: '0 auto' }}>
 
       {/* Project Description */}
       <div style={{
@@ -416,6 +433,7 @@ function SentimentAnalyzer() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

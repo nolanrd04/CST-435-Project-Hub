@@ -143,6 +143,51 @@ python generate_images.py v1 orange --save output.png
 - `--seed`: Random seed for reproducibility
 
 # GAN Architecture
+
+## Overview: What is a GAN?
+
+A **Generative Adversarial Network (GAN)** consists of two neural networks competing against each other:
+- **Generator**: Creates fake images from random noise
+- **Discriminator**: Tries to distinguish real images from fake ones
+
+Think of it like a counterfeiter (Generator) vs. a detective (Discriminator). The counterfeiter gets better at making fake images, while the detective gets better at spotting fakes. Eventually, the counterfeiter becomes so good that even the detective can't tell the difference!
+
+## Network Types
+
+### Generator: Hybrid Architecture (NOT a Pure CNN)
+The Generator is a **hybrid network** consisting of:
+1. **Fully Connected Layer**: Expands 100-dimensional noise into a spatial representation
+2. **Deconvolutional/Transpose Convolutional Layers**: Progressive upsampling to build images
+
+**Direction**: Expands from compact representation → Full image
+- Input: 100D vector (random noise)
+- Output: 64×64 image
+- Type: **Deconvolutional Network** (reverse of typical CNNs)
+
+### Discriminator: Pure Convolutional Neural Network (CNN)
+The Discriminator is a **traditional CNN**, similar to image classifiers (VGG, ResNet):
+1. **Convolutional Layers**: Progressively downsample and extract features
+2. **Fully Connected Layer**: Final binary classification (real vs. fake)
+
+**Direction**: Compresses from full image → Single probability
+- Input: 64×64 image
+- Output: Single value (0=fake, 1=real)
+- Type: **Standard CNN** for classification
+
+### Why This Design?
+
+| Network | Challenge | Solution |
+|---------|-----------|----------|
+| **Generator** | Must CREATE spatial structure from nothing | Uses transposed convolutions (upsampling) to build up detail |
+| **Discriminator** | Must EXTRACT features to classify | Uses standard convolutions to compress and analyze |
+
+This architecture is called a **DCGAN (Deep Convolutional GAN)**:
+- "Deep" = Multiple layers
+- "Convolutional" = Uses convolution operations (in both directions)
+- "GAN" = Generative Adversarial Network
+
+---
+
 ## 1. GENERATOR ARCHITECTURE
 
   Purpose

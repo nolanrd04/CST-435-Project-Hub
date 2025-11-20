@@ -1,0 +1,23 @@
+{
+  "model_name": "v1",
+  "data_version": "v1",
+  "fruits_trained": [
+    "apple",
+    "banana",
+    "blackberry",
+    "grapes",
+    "pear",
+    "strawberry",
+    "watermelon"
+  ],
+  "total_fruits": 7,
+  "timestamp": "2025-11-19T16:56:45.087435",
+  "config": {
+    "epochs": 400,
+    "batch_size": 32,
+    "learning_rate": 0.0002,
+    "beta1": 0.5,
+    "latent_dim": 100,
+    "img_size": 64
+  }
+}

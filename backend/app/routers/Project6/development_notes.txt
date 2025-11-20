@@ -8,3 +8,6 @@ Training now has a 0% fool rate and takes about 4x as long.
 5. Reverted to 28x28 for faster training, discriminator cant detect fake images at 80 epochs.
 Fool rate steadily declines after 80 epochs. Fool rate below 80% at 160 epochs. Fool rate around 60% at 240 epochs.
 Fool rate too low around 280 epochs. Can no longer learn.
+6. Started from scratch. Now working as intended.
+7. model_v1 is baseline 64x64 2d image generator.
+8. Added an option to filter training images by stoke complexity to better the dataset.

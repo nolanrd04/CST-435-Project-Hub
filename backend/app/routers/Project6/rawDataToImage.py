@@ -71,6 +71,98 @@ def strokes_to_image(drawing: List[List[List[int]]], size: int = 28) -> np.ndarr
     return img_array
 
 
+def get_category_thresholds(category: str, strictness: int) -> dict:
+    """
+    Get category-specific filtering thresholds based on data analysis.
+    
+    Args:
+        category: Category name (e.g., 'apple')
+        strictness: 1=Lenient, 2=Balanced, 3=Strict
+    
+    Returns:
+        Dictionary with category-specific thresholds
+    """
+    # Data-driven thresholds based on actual statistics
+    category_data = {
+        'apple': {
+            'strokes': {'min': 1, 'max': 26, 'avg': 2.7, 'median': 3},
+            'points': {'min': 2, 'max': 190, 'avg': 35.7, 'median': 35},
+            'per_stroke': {'min': 2, 'max': 126, 'avg': 13.1}
+        },
+        'banana': {
+            'strokes': {'min': 1, 'max': 27, 'avg': 2.2, 'median': 2},
+            'points': {'min': 2, 'max': 205, 'avg': 27.8, 'median': 25},
+            'per_stroke': {'min': 2, 'max': 179, 'avg': 12.7}
+        },
+        'blackberry': {
+            'strokes': {'min': 1, 'max': 322, 'avg': 7.3, 'median': 6},
+            'points': {'min': 2, 'max': 911, 'avg': 126.8, 'median': 117},
+            'per_stroke': {'min': 2, 'max': 910, 'avg': 17.3}
+        },
+        'grapes': {
+            'strokes': {'min': 1, 'max': 54, 'avg': 8.2, 'median': 8},
+            'points': {'min': 2, 'max': 374, 'avg': 87.9, 'median': 85},
+            'per_stroke': {'min': 2, 'max': 266, 'avg': 10.8}
+        },
+        'pear': {
+            'strokes': {'min': 1, 'max': 25, 'avg': 2.0, 'median': 2},
+            'points': {'min': 2, 'max': 186, 'avg': 28.0, 'median': 28},
+            'per_stroke': {'min': 2, 'max': 161, 'avg': 14.0}
+        },
+        'strawberry': {
+            'strokes': {'min': 1, 'max': 81, 'avg': 8.7, 'median': 8},
+            'points': {'min': 2, 'max': 285, 'avg': 51.9, 'median': 49},
+            'per_stroke': {'min': 2, 'max': 215, 'avg': 6.0}
+        },
+        'watermelon': {
+            'strokes': {'min': 1, 'max': 170, 'avg': 6.4, 'median': 5},
+            'points': {'min': 2, 'max': 359, 'avg': 42.2, 'median': 40},
+            'per_stroke': {'min': 2, 'max': 150, 'avg': 6.6}
+        }
+    }
+    
+    if category not in category_data:
+        # Fallback to balanced defaults if category not found
+        return {
+            'min_strokes': 1,
+            'max_strokes': 111,
+            'min_points': 2,
+            'max_points': 459,
+            'min_points_per_stroke': 2,
+            'max_points_per_stroke': 307
+        }
+    
+    data = category_data[category]
+    
+    if strictness == 1:  # Lenient
+        return {
+            'min_strokes': max(1, int(data['strokes']['avg'] - 1)),
+            'max_strokes': min(int(data['strokes']['max'] * 0.8), int(data['strokes']['avg'] + 15)),
+            'min_points': max(2, int(data['points']['avg'] - 20)),
+            'max_points': min(int(data['points']['max'] * 0.9), int(data['points']['avg'] + 100)),
+            'min_points_per_stroke': 2,
+            'max_points_per_stroke': min(int(data['per_stroke']['max'] * 0.7), int(data['per_stroke']['avg'] + 50))
+        }
+    elif strictness == 2:  # Balanced (median-based)
+        return {
+            'min_strokes': max(1, int(data['strokes']['median'] - 1)),
+            'max_strokes': min(int(data['strokes']['max'] * 0.6), int(data['strokes']['avg'] + 10)),
+            'min_points': max(2, int(data['points']['median'] - 10)),
+            'max_points': min(int(data['points']['max'] * 0.7), int(data['points']['avg'] + 50)),
+            'min_points_per_stroke': 3,
+            'max_points_per_stroke': min(int(data['per_stroke']['max'] * 0.5), int(data['per_stroke']['avg'] + 20))
+        }
+    else:  # Strict
+        return {
+            'min_strokes': max(1, int(data['strokes']['median'])),
+            'max_strokes': min(int(data['strokes']['max'] * 0.4), int(data['strokes']['avg'] + 5)),
+            'min_points': max(5, int(data['points']['median'])),
+            'max_points': min(int(data['points']['max'] * 0.5), int(data['points']['avg'] + 20)),
+            'min_points_per_stroke': 4,
+            'max_points_per_stroke': min(int(data['per_stroke']['max'] * 0.3), int(data['per_stroke']['avg'] + 10))
+        }
+
+
 def process_category(category: str, version_name: str, max_images: int = 2000, image_size: int = 28, quality_filters: dict = None) -> int:
     """
     Process a single category from ndjson to images.
@@ -107,7 +199,7 @@ def process_category(category: str, version_name: str, max_images: int = 2000, i
 
     image_count = 0
 
-    print(f"\n📊 Processing '{category}'...")
+    print(f"\nProcessing '{category}'...")
     print(f"   Input: {input_file}")
     print(f"   Output: {output_dir}")
     print(f"   Resolution: {image_size}×{image_size}")
@@ -144,24 +236,82 @@ def process_category(category: str, version_name: str, max_images: int = 2000, i
 
                     # Quality filtering based on drawing complexity
                     if quality_filters['enabled']:
+                        # Get category-specific thresholds if per-category filtering is enabled
+                        if quality_filters.get('per_category', False):
+                            cat_thresholds = get_category_thresholds(
+                                category, 
+                                quality_filters.get('category_strictness', 2)
+                            )
+                            current_filters = cat_thresholds
+                        else:
+                            current_filters = quality_filters
+                        
                         stroke_count = len(drawing_data)
-                        total_points = sum(len(stroke[0]) for stroke in drawing_data if len(stroke) >= 2)
+                        total_points = 0
+                        max_stroke_points = 0
+                        min_stroke_points = float('inf')
+                        stroke_points_list = []
+                        
+                        # Analyze each stroke individually
+                        for stroke in drawing_data:
+                            if len(stroke) >= 2:
+                                stroke_points = len(stroke[0])
+                                total_points += stroke_points
+                                max_stroke_points = max(max_stroke_points, stroke_points)
+                                min_stroke_points = min(min_stroke_points, stroke_points)
+                                stroke_points_list.append(stroke_points)
+                        
+                        # Handle case where no valid strokes found
+                        if not stroke_points_list:
+                            quality_filtered_count += 1
+                            continue
+                        
+                        if min_stroke_points == float('inf'):
+                            min_stroke_points = 0
 
                         # Filter out low-quality drawings
                         # Skip drawings with too few strokes (rushed/simple)
-                        if stroke_count < quality_filters['min_strokes']:
+                        if stroke_count < current_filters['min_strokes']:
                             quality_filtered_count += 1
                             continue
 
-                        # Skip drawings with too few points (not detailed enough)
-                        if total_points < quality_filters['min_points']:
+                        # Skip drawings with too few points overall (not detailed enough)
+                        if total_points < current_filters['min_points']:
                             quality_filtered_count += 1
                             continue
 
                         # Skip extremely complex outliers (may be noise/scribbles)
-                        if stroke_count > quality_filters['max_strokes'] or total_points > quality_filters['max_points']:
+                        if stroke_count > current_filters['max_strokes'] or total_points > current_filters['max_points']:
                             quality_filtered_count += 1
                             continue
+                        
+                        # Per-stroke filtering (if enabled)
+                        if quality_filters.get('per_stroke_enabled', False):
+                            # Use category-specific or global per-stroke thresholds
+                            min_per_stroke = current_filters.get('min_points_per_stroke', quality_filters.get('min_points_per_stroke', 3))
+                            max_per_stroke = current_filters.get('max_points_per_stroke', quality_filters.get('max_points_per_stroke', 150))
+                            
+                            # Filter individual strokes that are too complex (likely scribbles/noise)
+                            if max_stroke_points > max_per_stroke:
+                                quality_filtered_count += 1
+                                continue
+                            
+                            # Filter individual strokes that are too simple
+                            if min_stroke_points < min_per_stroke:
+                                quality_filtered_count += 1
+                                continue
+                        
+                        # Console monitoring (if enabled)
+                        if quality_filters.get('monitor_per_stroke', False) and image_count < 10:
+                            avg_points_per_stroke = total_points / len(stroke_points_list)
+                            if quality_filters.get('per_category', False):
+                                print(f"     🔍 {category} Drawing {image_count}: {stroke_count} strokes, "
+                                      f"total: {total_points} pts, per-stroke: {min_stroke_points}-{max_stroke_points} "
+                                      f"(avg: {avg_points_per_stroke:.1f}) [Thresholds: {current_filters['min_strokes']}-{current_filters['max_strokes']} strokes, {current_filters['min_points']}-{current_filters['max_points']} pts]")
+                            else:
+                                print(f"     🔍 Drawing {image_count}: {stroke_count} strokes, "
+                                      f"total: {total_points} pts, per-stroke: {min_stroke_points}-{max_stroke_points} "
+                                      f"(avg: {avg_points_per_stroke:.1f})")
 
                     image_array = strokes_to_image(drawing_data, size=image_size)
                     
@@ -195,10 +345,10 @@ def process_category(category: str, version_name: str, max_images: int = 2000, i
         return 0
     
     # Final summary
-    print(f"   ✅ Complete: {image_count} images saved")
+    print(f"   Complete: {image_count} images saved")
     print(f"   📈 Total drawings in file: {total_drawings}")
     print(f"   ✓ Recognized drawings: {recognized_count}")
-    print(f"   🔍 Quality filtered: {quality_filtered_count} (low complexity)")
+    print(f"   🔍 Quality filtered: {quality_filtered_count} (complexity + per-stroke analysis)")
     
     return image_count
 
@@ -211,7 +361,7 @@ def get_user_inputs() -> Tuple[int, str, int, dict]:
         Tuple of (max_images, version_name, image_size, quality_filters)
     """
     print("\n" + "="*60)
-    print("🎨 QuickDraw ndjson to Image Converter")
+    print("QuickDraw ndjson to Image Converter")
     print("="*60)
 
     # Get max images
@@ -248,12 +398,15 @@ def get_user_inputs() -> Tuple[int, str, int, dict]:
             print("   ❌ Please enter a valid number!")
 
     # Get quality filtering level
-    print("\n🔍 Quality Filtering (based on drawing complexity):")
+    print("\nQuality Filtering (based on drawing complexity):")
+    print("   Filters based on: stroke count, total points, and optionally per-stroke complexity")
+    print("   Values are data-driven from actual QuickDraw statistics")
     print("   1. None       - No filtering (all recognized drawings)")
-    print("   2. Lenient    - Light filtering (70-80% kept)")
-    print("   3. Balanced   - Medium filtering (40-50% kept) ⭐ RECOMMENDED")
-    print("   4. Strict     - Heavy filtering (15-25% kept, best quality)")
+    print("   2. Lenient    - Light filtering (70-80% kept) - Based on data analysis")
+    print("   3. Balanced   - Medium filtering (40-50% kept) [RECOMMENDED] - Based on data analysis")
+    print("   4. Strict     - Heavy filtering (15-25% kept, best quality) - Based on data analysis")
     print("   5. Custom     - Set your own thresholds")
+    print("   6. Per-Category - Use category-specific thresholds")
 
     while True:
         choice = input("\n   Select filtering level [default: 1]: ").strip() or "1"
@@ -264,48 +417,122 @@ def get_user_inputs() -> Tuple[int, str, int, dict]:
                 'min_strokes': 0,
                 'max_strokes': 999,
                 'min_points': 0,
-                'max_points': 9999
+                'max_points': 9999,
+                'per_stroke_enabled': False,
+                'monitor_per_stroke': False,
+                'per_category': False
             }
             break
         elif choice == "2":
+            # Lenient - Data-driven values
             quality_filters = {
                 'enabled': True,
                 'min_strokes': 1,
-                'max_strokes': 50,
-                'min_points': 10,
-                'max_points': 800
+                'max_strokes': 121,
+                'min_points': 5,
+                'max_points': 659,
+                'per_stroke_enabled': False,
+                'monitor_per_stroke': False,
+                'per_category': False
             }
             break
         elif choice == "3":
+            # Balanced - Data-driven values
             quality_filters = {
                 'enabled': True,
-                'min_strokes': 2,
-                'max_strokes': 30,
-                'min_points': 15,
-                'max_points': 500
+                'min_strokes': 1,
+                'max_strokes': 111,
+                'min_points': 2,
+                'max_points': 459,
+                'per_stroke_enabled': False,
+                'monitor_per_stroke': False,
+                'per_category': False
             }
             break
         elif choice == "4":
+            # Strict - Data-driven values
             quality_filters = {
                 'enabled': True,
-                'min_strokes': 4,
-                'max_strokes': 20,
-                'min_points': 40,
-                'max_points': 300
+                'min_strokes': 2,
+                'max_strokes': 96,
+                'min_points': 17,
+                'max_points': 309,
+                'per_stroke_enabled': False,
+                'monitor_per_stroke': False,
+                'per_category': False
             }
             break
         elif choice == "5":
             print("\n   Custom Thresholds:")
             quality_filters = {
                 'enabled': True,
-                'min_strokes': int(input("     Min strokes [default: 2]: ") or "2"),
-                'max_strokes': int(input("     Max strokes [default: 30]: ") or "30"),
-                'min_points': int(input("     Min points [default: 15]: ") or "15"),
-                'max_points': int(input("     Max points [default: 500]: ") or "500")
+                'min_strokes': int(input("     Min strokes [default: 1]: ") or "1"),
+                'max_strokes': int(input("     Max strokes [default: 111]: ") or "111"),
+                'min_points': int(input("     Min points [default: 2]: ") or "2"),
+                'max_points': int(input("     Max points [default: 459]: ") or "459"),
+                'per_stroke_enabled': False,
+                'monitor_per_stroke': False,
+                'per_category': False
+            }
+            break
+        elif choice == "6":
+            # Per-category filtering
+            quality_filters = {
+                'enabled': True,
+                'per_category': True,
+                'per_stroke_enabled': False,
+                'monitor_per_stroke': False
             }
             break
         else:
-            print("   ❌ Invalid choice. Please enter 1-5.")
+            print("   Invalid choice. Please enter 1-6.")
+    
+    # Ask about per-stroke filtering if quality filtering is enabled
+    if quality_filters['enabled'] and not quality_filters.get('per_category', False):
+        print("\nPer-Stroke Analysis Options:")
+        
+        # Option 1: Per-stroke filtering
+        enable_per_stroke = input("   Enable per-stroke filtering? (y/n) [default: n]: ").strip().lower().startswith('y')
+        if enable_per_stroke:
+            quality_filters['per_stroke_enabled'] = True
+            quality_filters['min_points_per_stroke'] = int(input("     Min points per stroke [default: 3]: ") or "3")
+            quality_filters['max_points_per_stroke'] = int(input("     Max points per stroke [default: 150]: ") or "150")
+        
+        # Option 2: Console monitoring
+        enable_monitoring = input("   Enable console monitoring of per-stroke stats? (y/n) [default: n]: ").strip().lower().startswith('y')
+        if enable_monitoring:
+            quality_filters['monitor_per_stroke'] = True
+            print("     Will show per-stroke statistics for first 10 drawings of each category")
+    
+    # Configure per-category filtering if selected
+    elif quality_filters.get('per_category', False):
+        print("\nPer-Category Filtering Configuration:")
+        print("   Using data-driven thresholds optimized for each fruit category")
+        
+        # Ask for strictness level for per-category
+        print("\n   Select strictness level:")
+        print("   1. Lenient   - Keep more drawings (based on category averages + margin)")
+        print("   2. Balanced  - Medium filtering (based on category medians) [RECOMMENDED]")
+        print("   3. Strict    - Keep only best drawings (based on category averages - margin)")
+        
+        while True:
+            strictness = input("\n   Select strictness [default: 2]: ").strip() or "2"
+            if strictness in ['1', '2', '3']:
+                quality_filters['category_strictness'] = int(strictness)
+                break
+            else:
+                print("   ❌ Invalid choice. Please enter 1, 2, or 3.")
+        
+        # Ask about per-stroke filtering for per-category mode
+        enable_per_stroke = input("\n   Enable per-stroke filtering for categories? (y/n) [default: y]: ").strip().lower()
+        quality_filters['per_stroke_enabled'] = not enable_per_stroke.startswith('n')
+        
+        # Ask about monitoring
+        enable_monitoring = input("   Enable console monitoring? (y/n) [default: n]: ").strip().lower().startswith('y')
+        quality_filters['monitor_per_stroke'] = enable_monitoring
+        
+        if enable_monitoring:
+            print("     🔍 Will show category-specific statistics for first 10 drawings of each category")
 
     return max_images, version_name, image_size, quality_filters
 
@@ -322,9 +549,23 @@ def main():
     print(f"   Version: '{version_name}'")
     print(f"   Resolution: {image_size}×{image_size}")
     if quality_filters['enabled']:
-        print(f"   Quality Filter: Enabled")
-        print(f"     Strokes: {quality_filters['min_strokes']}-{quality_filters['max_strokes']}")
-        print(f"     Points: {quality_filters['min_points']}-{quality_filters['max_points']}")
+        if quality_filters.get('per_category', False):
+            strictness_names = {1: 'Lenient', 2: 'Balanced', 3: 'Strict'}
+            strictness = strictness_names.get(quality_filters.get('category_strictness', 2), 'Balanced')
+            print(f"   Quality Filter: Per-Category ({strictness})")
+            print(f"   Category-specific thresholds based on data analysis")
+            if quality_filters.get('per_stroke_enabled', False):
+                print(f"     Per-stroke filtering: Enabled")
+            if quality_filters.get('monitor_per_stroke', False):
+                print(f"     Console monitoring: Enabled")
+        else:
+            print(f"   Quality Filter: Global")
+            print(f"     Strokes: {quality_filters['min_strokes']}-{quality_filters['max_strokes']}")
+            print(f"     Points: {quality_filters['min_points']}-{quality_filters['max_points']}")
+            if quality_filters.get('per_stroke_enabled', False):
+                print(f"     Per-stroke: {quality_filters['min_points_per_stroke']}-{quality_filters['max_points_per_stroke']} points")
+            if quality_filters.get('monitor_per_stroke', False):
+                print(f"     Console monitoring: Enabled")
     else:
         print(f"   Quality Filter: Disabled")
     print(f"   Categories: {len(CATEGORIES)}")

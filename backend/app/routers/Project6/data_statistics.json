@@ -1,0 +1,376 @@
+{
+  "analysis_info": {
+    "script_version": "1.0",
+    "categories_analyzed": [
+      "apple",
+      "banana",
+      "blackberry",
+      "grapes",
+      "pear",
+      "strawberry",
+      "watermelon"
+    ],
+    "total_categories": 7,
+    "analysis_date": "2025-11-20T19:14:46.578211"
+  },
+  "per_category_stats": [
+    {
+      "category": "apple",
+      "total_drawings": 144722,
+      "recognized_drawings": 139902,
+      "valid_drawings": 139902,
+      "recognition_rate": 0.9666947665178757,
+      "validity_rate": 1.0,
+      "strokes_per_image": {
+        "min": 1,
+        "max": 26,
+        "avg": 2.721433574931023,
+        "std": 1.2368902227235408,
+        "median": 3.0
+      },
+      "points_per_image": {
+        "min": 2,
+        "max": 190,
+        "avg": 35.662663864705294,
+        "std": 7.460102337897396,
+        "median": 35.0
+      },
+      "avg_points_per_stroke_per_image": {
+        "min": 2.0,
+        "max": 84.0,
+        "avg": 15.546170970923463,
+        "std": 7.6370908430356375,
+        "median": 13.333333333333334
+      },
+      "points_per_stroke_overall": {
+        "min": 2,
+        "max": 126,
+        "avg": 13.104366828284315,
+        "std": 10.481476724708793,
+        "median": 9.0,
+        "total_strokes": 380734
+      }
+    },
+    {
+      "category": "banana",
+      "total_drawings": 307936,
+      "recognized_drawings": 286030,
+      "valid_drawings": 286030,
+      "recognition_rate": 0.9288618414215941,
+      "validity_rate": 1.0,
+      "strokes_per_image": {
+        "min": 1,
+        "max": 27,
+        "avg": 2.190910044400937,
+        "std": 1.4831067113688832,
+        "median": 2.0
+      },
+      "points_per_image": {
+        "min": 2,
+        "max": 205,
+        "avg": 27.774967660734887,
+        "std": 11.311701493006751,
+        "median": 25.0
+      },
+      "avg_points_per_stroke_per_image": {
+        "min": 2.0,
+        "max": 139.0,
+        "avg": 15.69618782620148,
+        "std": 7.347323526858168,
+        "median": 14.0
+      },
+      "points_per_stroke_overall": {
+        "min": 2,
+        "max": 179,
+        "avg": 12.677365614218738,
+        "std": 8.817621289000638,
+        "median": 10.0,
+        "total_strokes": 626666
+      }
+    },
+    {
+      "category": "blackberry",
+      "total_drawings": 128153,
+      "recognized_drawings": 113736,
+      "valid_drawings": 113736,
+      "recognition_rate": 0.8875016581742137,
+      "validity_rate": 1.0,
+      "strokes_per_image": {
+        "min": 1,
+        "max": 322,
+        "avg": 7.345712878947738,
+        "std": 6.752276539138146,
+        "median": 6.0
+      },
+      "points_per_image": {
+        "min": 2,
+        "max": 911,
+        "avg": 126.84588872476613,
+        "std": 63.36441428065056,
+        "median": 117.0
+      },
+      "avg_points_per_stroke_per_image": {
+        "min": 2.0,
+        "max": 910.0,
+        "avg": 39.8139146744083,
+        "std": 50.30463057740302,
+        "median": 16.857142857142858
+      },
+      "points_per_stroke_overall": {
+        "min": 2,
+        "max": 910,
+        "avg": 17.26801616331846,
+        "std": 32.05875140786204,
+        "median": 10.0,
+        "total_strokes": 835472
+      }
+    },
+    {
+      "category": "grapes",
+      "total_drawings": 155305,
+      "recognized_drawings": 143320,
+      "valid_drawings": 143320,
+      "recognition_rate": 0.9228292714336306,
+      "validity_rate": 1.0,
+      "strokes_per_image": {
+        "min": 1,
+        "max": 54,
+        "avg": 8.156768071448507,
+        "std": 3.1204556519734172,
+        "median": 8.0
+      },
+      "points_per_image": {
+        "min": 2,
+        "max": 374,
+        "avg": 87.94223416131733,
+        "std": 28.080723560846515,
+        "median": 85.0
+      },
+      "avg_points_per_stroke_per_image": {
+        "min": 2.0,
+        "max": 237.0,
+        "avg": 11.951376412202992,
+        "std": 8.75997373655906,
+        "median": 10.88888888888889
+      },
+      "points_per_stroke_overall": {
+        "min": 2,
+        "max": 266,
+        "avg": 10.78150480570183,
+        "std": 6.606600460022641,
+        "median": 11.0,
+        "total_strokes": 1169028
+      }
+    },
+    {
+      "category": "pear",
+      "total_drawings": 116904,
+      "recognized_drawings": 114474,
+      "valid_drawings": 114474,
+      "recognition_rate": 0.9792137138164648,
+      "validity_rate": 1.0,
+      "strokes_per_image": {
+        "min": 1,
+        "max": 25,
+        "avg": 1.9992050596642033,
+        "std": 1.0616384784342703,
+        "median": 2.0
+      },
+      "points_per_image": {
+        "min": 2,
+        "max": 186,
+        "avg": 28.00767859950731,
+        "std": 5.698848921823021,
+        "median": 28.0
+      },
+      "avg_points_per_stroke_per_image": {
+        "min": 2.0,
+        "max": 78.0,
+        "avg": 16.75048826646378,
+        "std": 7.170573493149053,
+        "median": 14.5
+      },
+      "points_per_stroke_overall": {
+        "min": 2,
+        "max": 161,
+        "avg": 14.009407621353072,
+        "std": 10.402882998487511,
+        "median": 13.0,
+        "total_strokes": 228857
+      }
+    },
+    {
+      "category": "strawberry",
+      "total_drawings": 122301,
+      "recognized_drawings": 118562,
+      "valid_drawings": 118562,
+      "recognition_rate": 0.969427886934694,
+      "validity_rate": 1.0,
+      "strokes_per_image": {
+        "min": 1,
+        "max": 81,
+        "avg": 8.658372834466356,
+        "std": 6.24470000701031,
+        "median": 8.0
+      },
+      "points_per_image": {
+        "min": 2,
+        "max": 285,
+        "avg": 51.87490089573388,
+        "std": 16.357953821052913,
+        "median": 49.0
+      },
+      "avg_points_per_stroke_per_image": {
+        "min": 2.0,
+        "max": 151.0,
+        "avg": 9.720787621246693,
+        "std": 8.240591086616371,
+        "median": 6.5
+      },
+      "points_per_stroke_overall": {
+        "min": 2,
+        "max": 215,
+        "avg": 5.991299045154955,
+        "std": 7.876705777166583,
+        "median": 2.0,
+        "total_strokes": 1026554
+      }
+    },
+    {
+      "category": "watermelon",
+      "total_drawings": 132939,
+      "recognized_drawings": 124482,
+      "valid_drawings": 124482,
+      "recognition_rate": 0.9363843567350439,
+      "validity_rate": 1.0,
+      "strokes_per_image": {
+        "min": 1,
+        "max": 170,
+        "avg": 6.379516717276394,
+        "std": 5.388148582145766,
+        "median": 5.0
+      },
+      "points_per_image": {
+        "min": 2,
+        "max": 359,
+        "avg": 42.22141353770023,
+        "std": 19.294548917694954,
+        "median": 40.0
+      },
+      "avg_points_per_stroke_per_image": {
+        "min": 2.0,
+        "max": 143.0,
+        "avg": 9.562469159403696,
+        "std": 5.8737382351709995,
+        "median": 8.333333333333334
+      },
+      "points_per_stroke_overall": {
+        "min": 2,
+        "max": 150,
+        "avg": 6.6182777487454905,
+        "std": 7.090001110483969,
+        "median": 3.0,
+        "total_strokes": 794135
+      }
+    }
+  ],
+  "cross_category_stats": {
+    "summary": {
+      "categories_analyzed": 7,
+      "total_drawings": 1108260,
+      "total_recognized": 1040506,
+      "total_valid": 1040506,
+      "total_strokes_analyzed": 5061446,
+      "overall_recognition_rate": 0.9388645263746774,
+      "overall_validity_rate": 1.0
+    },
+    "averages_across_categories": {
+      "strokes_per_image": {
+        "avg_min": 1,
+        "avg_max": 101,
+        "avg_avg": 5.350274168733593,
+        "avg_std": 3.612459456113476,
+        "global_min": 1,
+        "global_max": 322
+      },
+      "points_per_image": {
+        "avg_min": 2,
+        "avg_max": 359,
+        "avg_avg": 57.18996392063787,
+        "avg_std": 21.652613333281728,
+        "global_min": 2,
+        "global_max": 911
+      },
+      "avg_points_per_stroke_per_image": {
+        "avg_min": 2.0,
+        "avg_max": 248.85714285714286,
+        "avg_avg": 17.005913561550056,
+        "avg_std": 13.619131642684616,
+        "global_min": 2.0,
+        "global_max": 910.0
+      },
+      "points_per_stroke_overall": {
+        "avg_min": 2,
+        "avg_max": 287,
+        "avg_avg": 11.492891118110979,
+        "avg_std": 11.904862823961738,
+        "global_min": 2,
+        "global_max": 910
+      }
+    }
+  },
+  "recommendations": {
+    "quality_filter_presets": {
+      "lenient": {
+        "min_strokes": 1,
+        "max_strokes": 121,
+        "min_points": 5,
+        "max_points": 659,
+        "min_points_per_stroke": 2,
+        "max_points_per_stroke": 337,
+        "description": "Light filtering, keeps 70-80% of drawings"
+      },
+      "balanced": {
+        "min_strokes": 1,
+        "max_strokes": 111,
+        "min_points": 2,
+        "max_points": 459,
+        "min_points_per_stroke": 2,
+        "max_points_per_stroke": 307,
+        "description": "Balanced filtering based on data averages"
+      },
+      "strict": {
+        "min_strokes": 2,
+        "max_strokes": 96,
+        "min_points": 17,
+        "max_points": 309,
+        "min_points_per_stroke": 3,
+        "max_points_per_stroke": 267,
+        "description": "Strict filtering, keeps highest quality drawings"
+      }
+    },
+    "statistical_insights": {
+      "strokes_per_image": {
+        "range": "1 to 322",
+        "average": "5.4",
+        "std_dev": "3.6"
+      },
+      "points_per_image": {
+        "range": "2 to 911",
+        "average": "57.2",
+        "std_dev": "21.7"
+      },
+      "points_per_stroke": {
+        "range": "2 to 910",
+        "average": "11.5",
+        "std_dev": "11.9"
+      }
+    },
+    "notes": [
+      "Total strokes analyzed: 5,061,446",
+      "Recognition rate: 93.9%",
+      "Validity rate: 100.0%",
+      "Standard deviations indicate data variability - higher values suggest more diverse drawing styles"
+    ]
+  }
+}

@@ -31,6 +31,13 @@ def get_user_input(prompt, default=None, input_type=str):
     user_input = input(prompt).strip()
 
     if not user_input and default is not None:
+        # Convert default to the correct type if it's a string
+        if isinstance(default, str) and input_type != str:
+            try:
+                return input_type(default)
+            except ValueError:
+                print(f"Invalid default value. Please enter a valid {input_type.__name__}.")
+                return get_user_input(prompt, default, input_type)
         return default
 
     try:
@@ -236,13 +243,59 @@ def configure_training():
 
     print("\nNote: Recommended values are shown as defaults.")
 
+    # Get early stopping preference first
+    enable_early_stopping = get_user_input("Enable early stopping? (y/n)", default="y").lower().startswith('y')
+    
+    early_stopping_mode = 'standard'
+    if enable_early_stopping:
+        print("\nEarly Stopping Mode:")
+        print("  1. Standard - Stop training when no improvement")
+        print("  2. Checkpoint Reversion - Revert to best checkpoint and continue (max 3 reversions)")
+        mode_choice = get_user_input("Select early stopping mode [1-2]", default="1", input_type=int)
+        early_stopping_mode = 'checkpoint_reversion' if mode_choice == 2 else 'standard'
+    
     config = {
         'epochs': get_user_input("Number of epochs", default=400, input_type=int),
         'batch_size': get_user_input("Batch size", default=32, input_type=int),
         'learning_rate': get_user_input("Learning rate", default=0.0002, input_type=float),
         'beta1': get_user_input("Beta1 for Adam optimizer", default=0.5, input_type=float),
-        'latent_dim': get_user_input("Latent dimension (noise vector size)", default=100, input_type=int)
+        'latent_dim': get_user_input("Latent dimension (noise vector size)", default=100, input_type=int),
+        'early_stopping': enable_early_stopping,
+        'early_stopping_mode': early_stopping_mode,
+        'patience': get_user_input("Early stopping patience (epochs to wait)", default=35, input_type=int) if enable_early_stopping else 35
     }
+
+    # Advanced training strategy options
+    print("\nTraining Strategy (Advanced Options):")
+    print("  1. Standard - Balanced training (1:1 ratio)")
+    print("  2. Generator-focused - Train generator more often (2:1 ratio)")
+    print("  3. Adaptive - Automatically balance based on discriminator performance [RECOMMENDED]")
+    
+    strategy = get_user_input("Select training strategy [1-3]", default="3", input_type=int)
+    
+    if strategy == 1:
+        config.update({
+            'training_strategy': 'standard',
+            'g_train_ratio': 1,
+            'label_smoothing': False
+        })
+    elif strategy == 2:
+        config.update({
+            'training_strategy': 'generator_focused',
+            'g_train_ratio': 2,
+            'label_smoothing': True
+        })
+        ratio = get_user_input("Generator training ratio (times per discriminator update)", default="2", input_type=int)
+        config['g_train_ratio'] = ratio
+    else:  # strategy == 3
+        config.update({
+            'training_strategy': 'adaptive',
+            'g_train_ratio': 2,
+            'target_d_accuracy': 0.72,
+            'label_smoothing': True
+        })
+        target_acc = get_user_input("Target discriminator accuracy (0.6-0.9)", default="0.72", input_type=float)
+        config['target_d_accuracy'] = max(0.6, min(0.9, target_acc))
 
     return config
 
@@ -295,7 +348,10 @@ def display_training_summary(data_version, model_name, fruits, config):
 
     print(f"\nTraining Configuration:")
     for key, value in config.items():
-        print(f"  {key}: {value}")
+        if key == 'early_stopping' and value:
+            print(f"  {key}: {value} (patience: {config['patience']} epochs)")
+        elif key != 'patience':
+            print(f"  {key}: {value}")
 
     print(f"\nOutput directory: models/model_{model_name}/")
     print(f"\nEstimated training time per fruit: ~{config['epochs'] * 0.1:.1f} minutes")

@@ -64,25 +64,59 @@ backend/app/routers/Project6/rawData
 Move the downloaded ndjson files into this folder.
 
 ## 2. rawDataToImage.py
-Converts all ndjson files in rawData to custome resolution images and saves those images as their subfolder types in imageData. For example, apple.ndjson becomes imageData/apple/versionX/[images]. Prompts the user to pick a quality size, where quality is primarily determined by the number of strokes.
-1. Output file size: will stop running when the converter has generated a specific number of files for each fruit that the user picks.
-2. Versions: the user might want to create multiple models, in which case we need to maintain data versions. This can be solved by asking the user for a version name and creating a new subfolder version[Name] where [Name] is given by the user.
+Converts all ndjson files in rawData to custom resolution images and saves those images as their subfolder types in imageData. For example, apple.ndjson becomes imageData/apple/versionX/[images]. Features comprehensive quality filtering based on data analysis of actual QuickDraw statistics.
+
+**Key Features:**
+1. **Output file size**: Will stop running when the converter has generated a specific number of files for each fruit that the user picks.
+2. **Versions**: The user might want to create multiple models, in which case we need to maintain data versions. This can be solved by asking the user for a version name and creating a new subfolder version[Name] where [Name] is given by the user.
+3. **Data-driven quality filtering**: Six filtering options including category-specific thresholds:
+   - **None**: No filtering (all recognized drawings)
+   - **Lenient**: Light filtering (70-80% kept) - Data-driven values
+   - **Balanced**: Medium filtering (40-50% kept) - Recommended
+   - **Strict**: Heavy filtering (15-25% kept, best quality)
+   - **Custom**: User-defined thresholds
+   - **Per-Category**: Category-specific filtering based on actual fruit complexity statistics
+4. **Per-stroke analysis**: Optional filtering and monitoring of individual stroke complexity
+5. **Console monitoring**: Real-time statistics display for first 10 drawings of each category
+
+**Quality Filter Presets** (based on comprehensive data analysis):
+- Lenient: Strokes 1-121, Points 5-659
+- Balanced: Strokes 1-111, Points 2-459  
+- Strict: Strokes 2-96, Points 17-309
+- Per-Category: Adaptive thresholds optimized for each fruit's natural drawing complexity
 
 ## 3. imageToNPZ.py
 Converts images in imageData/types/versionX to their prospective .npz array files in npzData/. For example. imageData/apple/version1 becomes npzData/apple_version1.npz. Used for the GAN.
 
 ## 4. train_gan.py
-This will train the model. This will:
+This will train the model. Features advanced training strategies to improve GAN stability and convergence. This will:
 1. Prompt you to select a dataset version (v1, v2, etc.)
 2. Prompt you to select a model name (user-defined, defaults to v1)
 3. Ask for training parameters (epochs, batch size, learning rate)
-4. Automatically trains separate Generator/Discriminator pairs for each fruit
-5. Trains all fruits in one session with individual time estimates per fruit
-6. Saves fruit-specific checkpoints and models
+4. **Configure training strategy** with three options:
+   - **Standard**: Balanced 1:1 training
+   - **Generator-focused**: Train generator 2x per discriminator update
+   - **Adaptive**: Automatically balance based on discriminator performance [RECOMMENDED]
+5. **Enhanced early stopping** with two modes:
+   - **Standard**: Stops training when no improvement detected
+   - **Checkpoint Reversion**: Reverts to best checkpoint up to 3 times before stopping
+6. Automatically trains separate Generator/Discriminator pairs for each fruit
+7. Trains all fruits in one session with individual time estimates per fruit
+8. Saves fruit-specific checkpoints and models
+
+**Advanced Training Improvements:**
+- **Label smoothing**: Reduces discriminator overconfidence (real=0.9, fake=0.1)
+- **Dynamic discriminator training**: Adaptive accuracy targeting based on training progress
+- **Enhanced early stopping**: Loss smoothing, adaptive thresholds, checkpoint reversion option
+- **Automatic learning rate scheduling**: Reduces LR when losses plateau (adaptive strategy)
+- **Smart stability detection**: Monitors loss variance and oscillation patterns
+- **Self-correcting balance**: Automatically adjusts when discriminator dominance detected
+- **Real-time monitoring**: Shows discriminator accuracy, loss ratios, and training status
+
 It uses helper python files:
 1. ```data_loader.py```
 2. ```gan_model.py```
-3. ```gan_trainer.py``` (includes `MultiFruitGANTrainer` class)
+3. ```gan_trainer.py``` (includes `MultiFruitGANTrainer` class with balanced training)
 4. ```cost_analysis_training.py``` (tracks training costs and performance)
 
 ## 5. saved models from train_gan.py

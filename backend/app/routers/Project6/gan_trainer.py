@@ -55,6 +55,12 @@ class MultiFruitGANTrainer:
         # Training history for all fruits
         self.all_histories = {}
 
+        # Training strategy configuration
+        self.training_strategy = config.get('training_strategy', 'adaptive')
+        self.g_train_ratio = config.get('g_train_ratio', 2)
+        self.target_d_accuracy = config.get('target_d_accuracy', 0.75)
+        self.label_smoothing = config.get('label_smoothing', True)
+
         # Cost tracking
         self.peak_memory_usage = 0.0
         self.training_active = False
@@ -151,7 +157,7 @@ class MultiFruitGANTrainer:
         # Loss function
         adversarial_loss = nn.BCELoss()
 
-        # Optimizers
+        # Optimizers with potential learning rate scheduling
         optimizer_G = optim.Adam(
             generator.parameters(),
             lr=self.config['learning_rate'],
@@ -163,6 +169,18 @@ class MultiFruitGANTrainer:
             lr=self.config['learning_rate'],
             betas=(self.config['beta1'], 0.999)
         )
+        
+        # Learning rate schedulers for adaptive strategy
+        if self.training_strategy == 'adaptive':
+            scheduler_G = optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer_G, mode='min', factor=0.8, patience=10
+            )
+            scheduler_D = optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer_D, mode='min', factor=0.9, patience=15
+            )
+        else:
+            scheduler_G = None
+            scheduler_D = None
 
         # Create directory for epoch images
         epoch_images_dir = self.model_dir / f'generated_epoch_images_{fruit_name}'
@@ -197,6 +215,22 @@ class MultiFruitGANTrainer:
 
         # Time tracking for estimates
         epoch_times = []
+        
+        # Early stopping variables
+        best_g_loss = float('inf')
+        best_d_accuracy = 0.0
+        best_epoch = None
+        best_generator_state = None
+        best_discriminator_state = None
+        best_optimizer_g_state = None
+        best_optimizer_d_state = None
+        patience_counter = 0
+        reversion_count = 0
+        max_reversions = 3
+        early_stopped = False
+        early_stop_enabled = self.config.get('early_stopping', False)
+        early_stopping_mode = self.config.get('early_stopping_mode', 'standard')
+        patience = self.config.get('patience', 50)
 
         for epoch in range(1, epochs + 1):
             epoch_start = time.time()
@@ -212,48 +246,102 @@ class MultiFruitGANTrainer:
                 batch_size = real_imgs.size(0)
                 real_imgs = real_imgs.to(self.device)
 
-                # Adversarial ground truths
-                valid = torch.ones(batch_size, 1).to(self.device)
-                fake = torch.zeros(batch_size, 1).to(self.device)
+                # Adversarial ground truths with optional label smoothing
+                if self.label_smoothing:
+                    valid = torch.ones(batch_size, 1).to(self.device) * 0.9  # Real labels smoothed
+                    fake = torch.zeros(batch_size, 1).to(self.device) + 0.1  # Fake labels smoothed
+                else:
+                    valid = torch.ones(batch_size, 1).to(self.device)
+                    fake = torch.zeros(batch_size, 1).to(self.device)
 
                 # -----------------
-                # Train Generator
+                # Train Generator (multiple times for better balance)
                 # -----------------
-                optimizer_G.zero_grad()
+                g_loss_epoch = 0
+                for g_step in range(self.g_train_ratio):
+                    optimizer_G.zero_grad()
 
-                # Sample noise
+                    # Sample noise
+                    z = torch.randn(batch_size, self.config['latent_dim']).to(self.device)
+
+                    # Generate fake images
+                    gen_imgs = generator(z)
+
+                    # Loss measures generator's ability to fool the discriminator
+                    g_loss = adversarial_loss(discriminator(gen_imgs), valid)
+
+                    g_loss.backward()
+                    optimizer_G.step()
+                    
+                    g_loss_epoch += g_loss.item()
+                
+                # Average generator loss across multiple updates
+                g_loss_avg = g_loss_epoch / self.g_train_ratio
+
+                # ---------------------
+                # Train Discriminator (conditionally based on performance)
+                # ---------------------
+                # Sample new noise and generate images for discriminator training
                 z = torch.randn(batch_size, self.config['latent_dim']).to(self.device)
-
-                # Generate fake images
                 gen_imgs = generator(z)
+                
+                # Calculate discriminator predictions
+                d_real_pred = discriminator(real_imgs)
+                d_fake_pred = discriminator(gen_imgs.detach())
+                
+                # Calculate discriminator accuracy
+                d_real_acc = (d_real_pred > 0.5).float().mean()
+                d_fake_acc = (d_fake_pred < 0.5).float().mean()
+                d_accuracy = (d_real_acc + d_fake_acc) / 2
 
-                # Loss measures generator's ability to fool the discriminator
-                g_loss = adversarial_loss(discriminator(gen_imgs), valid)
+                # Enhanced adaptive discriminator training with dynamic target
+                if self.training_strategy == 'adaptive':
+                    # Dynamic target accuracy based on training progress
+                    progress = epoch / epochs
+                    if progress < 0.25:  # Early training - be more permissive
+                        dynamic_target = min(0.8, self.target_d_accuracy + 0.05)
+                    elif progress > 0.75:  # Late training - be more strict
+                        dynamic_target = max(0.7, self.target_d_accuracy - 0.05)
+                    else:
+                        dynamic_target = self.target_d_accuracy
+                    
+                    train_discriminator = d_accuracy < dynamic_target
+                    
+                    # Additional check: if generator loss is stagnating, train discriminator less
+                    if len(history['g_losses']) >= 5:
+                        recent_g_trend = np.mean(history['g_losses'][-3:]) - np.mean(history['g_losses'][-5:-2])
+                        if recent_g_trend > 0.01:  # Generator loss increasing
+                            train_discriminator = d_accuracy < (dynamic_target - 0.1)
+                else:
+                    train_discriminator = True
 
-                g_loss.backward()
-                optimizer_G.step()
+                if train_discriminator:
+                    optimizer_D.zero_grad()
 
-                # ---------------------
-                # Train Discriminator
-                # ---------------------
-                optimizer_D.zero_grad()
+                    # Measure discriminator's ability to classify real from generated samples
+                    real_loss = adversarial_loss(d_real_pred, valid)
+                    fake_loss = adversarial_loss(d_fake_pred, fake)
+                    d_loss = (real_loss + fake_loss) / 2
 
-                # Measure discriminator's ability to classify real from generated samples
-                real_loss = adversarial_loss(discriminator(real_imgs), valid)
-                fake_loss = adversarial_loss(discriminator(gen_imgs.detach()), fake)
-                d_loss = (real_loss + fake_loss) / 2
-
-                d_loss.backward()
-                optimizer_D.step()
+                    d_loss.backward()
+                    optimizer_D.step()
+                else:
+                    # Calculate loss for logging but don't update
+                    with torch.no_grad():
+                        real_loss = adversarial_loss(d_real_pred, valid)
+                        fake_loss = adversarial_loss(d_fake_pred, fake)
+                        d_loss = (real_loss + fake_loss) / 2
 
                 # Record losses
-                g_losses.append(g_loss.item())
+                g_losses.append(g_loss_avg)
                 d_losses.append(d_loss.item())
 
-                # Update progress bar
+                # Update progress bar with training info
                 pbar.set_postfix({
                     'D_loss': f'{d_loss.item():.4f}',
-                    'G_loss': f'{g_loss.item():.4f}'
+                    'G_loss': f'{g_loss_avg:.4f}',
+                    'D_acc': f'{d_accuracy.item():.3f}',
+                    'D_train': 'Yes' if train_discriminator else 'No'
                 })
 
             # Epoch statistics
@@ -284,6 +372,133 @@ class MultiFruitGANTrainer:
                   f"G_loss: {avg_g_loss:.4f}, "
                   f"Time: {epoch_time:.2f}s, "
                   f"ETA: {time_str}")
+            
+            # Early stopping logic - improved criteria with adaptive adjustments
+            if early_stop_enabled:
+                # Calculate loss ratio to check training balance
+                loss_ratio = avg_g_loss / max(avg_d_loss, 0.01)  # Avoid division by zero
+                
+                # Use smoothed loss for more stable early stopping (average last 3 epochs)
+                if len(history['g_losses']) >= 3:
+                    smoothed_g_loss = np.mean(history['g_losses'][-3:])
+                else:
+                    smoothed_g_loss = avg_g_loss
+                
+                # Calculate current discriminator accuracy for checkpoint evaluation
+                current_d_accuracy = (d_real_acc + d_fake_acc) / 2
+                
+                # Adaptive improvement threshold based on training strategy
+                if self.training_strategy == 'adaptive':
+                    # More lenient for adaptive strategy since training is already balanced
+                    improvement_threshold = 0.995  # Require at least 0.5% improvement
+                    # Also consider relative improvement over longer period
+                    if len(history['g_losses']) >= 10:
+                        recent_avg = np.mean(history['g_losses'][-10:])
+                        if smoothed_g_loss < recent_avg * 0.99:  # 1% improvement over 10 epochs
+                            patience_counter = max(0, patience_counter - 1)  # Reset some patience
+                else:
+                    improvement_threshold = 0.98  # Standard 2% improvement
+                
+                # Enhanced checkpoint criteria: both loss improvement AND reasonable discriminator accuracy
+                checkpoint_criteria = (
+                    smoothed_g_loss < best_g_loss * improvement_threshold and
+                    0.3 <= current_d_accuracy.item() <= 0.8  # Discriminator not too weak or too strong
+                )
+                
+                # Check for improvement using enhanced criteria
+                if checkpoint_criteria:
+                    best_g_loss = smoothed_g_loss
+                    best_d_accuracy = current_d_accuracy.item()
+                    best_epoch = epoch
+                    # Save best checkpoint states
+                    best_generator_state = generator.state_dict().copy()
+                    best_discriminator_state = discriminator.state_dict().copy()
+                    best_optimizer_g_state = optimizer_G.state_dict().copy()
+                    best_optimizer_d_state = optimizer_D.state_dict().copy()
+                    patience_counter = 0
+                    print(f"  -> New best checkpoint: G_loss={best_g_loss:.4f}, D_acc={best_d_accuracy:.3f} at epoch {best_epoch}")
+                else:
+                    patience_counter += 1
+                    print(f"  -> No improvement for {patience_counter}/{patience} epochs (G_loss: {smoothed_g_loss:.4f}, D_acc: {current_d_accuracy.item():.3f})")
+                
+                # Handle early stopping based on mode
+                if patience_counter >= patience:
+                    if early_stopping_mode == 'checkpoint_reversion' and reversion_count < max_reversions and best_generator_state is not None:
+                        # Revert to best checkpoint
+                        reversion_count += 1
+                        print(f"\n  CHECKPOINT REVERSION #{reversion_count}/{max_reversions}")
+                        print(f"  Reverting to best checkpoint from epoch {best_epoch}")
+                        print(f"  Best G_loss: {best_g_loss:.4f}, Best D_acc: {best_d_accuracy:.3f}")
+                        
+                        # Load best states
+                        generator.load_state_dict(best_generator_state)
+                        discriminator.load_state_dict(best_discriminator_state)
+                        optimizer_G.load_state_dict(best_optimizer_g_state)
+                        optimizer_D.load_state_dict(best_optimizer_d_state)
+                        
+                        # Reset patience and adjust for continuing training
+                        patience_counter = 0
+                        print(f"  Continuing training from epoch {epoch + 1} with reset patience")
+                        print(f"  Reversions remaining: {max_reversions - reversion_count}")
+                        
+                        if reversion_count >= max_reversions:
+                            print(f"\n  Maximum reversions ({max_reversions}) reached. Training will stop after this reversion.")
+                    else:
+                        # Standard early stopping or max reversions reached
+                        if early_stopping_mode == 'checkpoint_reversion':
+                            if reversion_count >= max_reversions:
+                                print(f"\n  Early stopping: Maximum reversions ({max_reversions}) reached!")
+                            else:
+                                print(f"\n  Early stopping: No valid checkpoint available for reversion!")
+                        else:
+                            print(f"\n  Early stopping triggered after {epoch} epochs!")
+                        
+                        if best_generator_state is not None:
+                            print(f"     Using best checkpoint from epoch {best_epoch}")
+                            print(f"     Best G_loss: {best_g_loss:.4f}, Best D_acc: {best_d_accuracy:.3f}")
+                            # Load best checkpoint for final save
+                            generator.load_state_dict(best_generator_state)
+                            discriminator.load_state_dict(best_discriminator_state)
+                        
+                        early_stopped = True
+                        break
+                
+                # Learning rate scheduling for adaptive strategy
+                if self.training_strategy == 'adaptive' and scheduler_G is not None:
+                    scheduler_G.step(smoothed_g_loss)
+                    scheduler_D.step(avg_d_loss)
+                
+                # Enhanced stability check - detect if losses are becoming unstable
+                if len(history['g_losses']) >= 10:
+                    recent_g_losses = history['g_losses'][-10:]
+                    g_loss_std = np.std(recent_g_losses)
+                    g_loss_mean = np.mean(recent_g_losses)
+                    coefficient_of_variation = g_loss_std / max(g_loss_mean, 0.01)
+                    
+                    if coefficient_of_variation > 0.3:  # High relative variance
+                        print(f"  WARNING: High G_loss variance detected: std={g_loss_std:.3f}, CV={coefficient_of_variation:.3f}")
+                    
+                    # Check for oscillating losses (sign of instability)
+                    if len(history['g_losses']) >= 6:
+                        recent_diffs = np.diff(history['g_losses'][-6:])
+                        sign_changes = np.sum(np.diff(np.sign(recent_diffs)) != 0)
+                        if sign_changes >= 3:  # Too many direction changes
+                            print(f"  WARNING: Oscillating G_loss detected ({sign_changes} direction changes)")
+                
+                # Enhanced check for discriminator dominance with adaptive response
+                if loss_ratio > 8.0:  # Generator loss much higher than discriminator
+                    print(f"  WARNING: Possible discriminator dominance (ratio: {loss_ratio:.2f})")
+                    if self.training_strategy == 'adaptive':
+                        # Temporarily reduce discriminator training probability
+                        self.target_d_accuracy = max(0.6, self.target_d_accuracy - 0.05)
+                        print(f"  -> Adapting: Reduced target D_accuracy to {self.target_d_accuracy:.2f}")
+                
+                if patience_counter >= patience:
+                    print(f"\n  Early stopping triggered after {epoch} epochs!")
+                    print(f"     Best G_loss: {best_g_loss:.4f} at epoch {epoch - patience_counter}")
+                    print(f"     Final loss ratio (G/D): {loss_ratio:.2f}")
+                    early_stopped = True
+                    break
 
             # Save sample images at milestone epochs
             if epoch in milestone_epochs:
@@ -336,6 +551,23 @@ class MultiFruitGANTrainer:
 
         # Save training history with cost data
         self.save_history(history, fruit_name)
+
+        # Add early stopping info to history
+        if early_stop_enabled:
+            history['early_stopping'] = {
+                'enabled': True,
+                'mode': early_stopping_mode,
+                'patience': patience,
+                'best_loss': float(best_g_loss),
+                'best_d_accuracy': float(best_d_accuracy) if best_d_accuracy else None,
+                'best_epoch': int(best_epoch) if best_epoch is not None else None,
+                'reversion_count': reversion_count,
+                'max_reversions': max_reversions,
+                'stopped_early': early_stopped,
+                'final_epoch': epoch if early_stopped else epochs
+            }
+        else:
+            history['early_stopping'] = {'enabled': False}
 
         print(f"\nTraining completed for {fruit_name} in {total_time/60:.2f} minutes")
 
@@ -626,7 +858,7 @@ Model Information:
 
         # Display cost summary if available
         if total_costs:
-            print(f"\n💰 OVERALL COST SUMMARY:")
+            print(f"\nOVERALL COST SUMMARY:")
             print(f"   Total training cost: {training_stats.get('total_cost', 'N/A')}")
             print(f"   Average cost per fruit: {training_stats.get('avg_cost_per_fruit', 'N/A')}")
             print(f"   Average cost per epoch: {training_stats.get('avg_cost_per_epoch', 'N/A')}")

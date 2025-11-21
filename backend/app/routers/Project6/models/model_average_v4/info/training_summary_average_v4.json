@@ -1,0 +1,30 @@
+{
+  "model_name": "average_v4",
+  "data_version": "average_v4",
+  "fruits_trained": [
+    "apple",
+    "banana",
+    "blackberry",
+    "grapes",
+    "pear",
+    "strawberry",
+    "watermelon"
+  ],
+  "total_fruits": 7,
+  "timestamp": "2025-11-20T23:19:11.586611",
+  "config": {
+    "epochs": 400,
+    "batch_size": 32,
+    "learning_rate": 0.0002,
+    "beta1": 0.5,
+    "latent_dim": 100,
+    "early_stopping": true,
+    "early_stopping_mode": "checkpoint_reversion",
+    "patience": 60,
+    "training_strategy": "adaptive",
+    "g_train_ratio": 2,
+    "target_d_accuracy": 0.72,
+    "label_smoothing": true,
+    "img_size": 64
+  }
+}

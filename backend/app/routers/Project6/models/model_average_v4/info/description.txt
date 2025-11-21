@@ -1,0 +1,28 @@
+A model with a revised configuration, allowing for early stopping, learning rate scheduling, checkpoint reversion, data-driven filtering, and adapative trainng based on performance between generator and discriminator.
+
+Dataset:
+- Images: 2500 per fruit
+- Image resolution: 64x64
+- Fruit type count: 7
+- Fruits: apple, banana, blackberry, grapes, pear, strawberry, watermelon
+
+Training Configuration:
+- Epochs: 400
+- Batch size: 32
+- Learning rate: 0.0002
+- Beta1: 0.5
+- Latent dimension: 100
+- Image size: 64x64
+
+Training Statistics:
+- Total training time: 2.81 hours (168.7 minutes)
+- Average time per fruit: 24.1 minutes
+- Peak memory usage: 1.51 GB
+- Total training cost: $0.036702
+- Average cost per fruit: $0.005243
+- Cost per epoch (avg): $0.000013
+
+Model Information:
+- Model name: average_v4
+- Data version: average_v4
+- Created: 2025-11-20 23:19:11

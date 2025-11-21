@@ -1,0 +1,46 @@
+{
+  "report_generated": "2025-11-20T23:19:11.619074",
+  "model_config": {
+    "epochs": 400,
+    "batch_size": 32,
+    "learning_rate": 0.0002,
+    "beta1": 0.5,
+    "latent_dim": 100,
+    "early_stopping": true,
+    "early_stopping_mode": "checkpoint_reversion",
+    "patience": 60,
+    "training_strategy": "adaptive",
+    "g_train_ratio": 2,
+    "target_d_accuracy": 0.72,
+    "label_smoothing": true,
+    "img_size": 64
+  },
+  "training_cost": {
+    "compute": 0.002318,
+    "memory": 0.000218,
+    "storage": 0.004883,
+    "data_transfer": 0.0,
+    "total": 0.007419,
+    "training_hours": 2.8111,
+    "peak_memory_gb": 1.5061
+  },
+  "cost_per_epoch": {
+    "cost_per_hour": 0.002639,
+    "hours_per_epoch": 0.001,
+    "cost_per_epoch": 3e-06,
+    "total_epochs": 2800
+  },
+  "pricing_config": {
+    "fixed_monthly_cost": 19.0,
+    "available_cpus": 64.0,
+    "available_ram_gb": 512.0,
+    "included_bandwidth_gb": 500.0,
+    "build_pipeline_minutes": 500.0,
+    "database_cost_per_gb": 0.25,
+    "cost_per_cpu_per_month": 0.296875,
+    "cost_per_gb_ram_per_month": 0.037109375,
+    "overage_bandwidth_cost_per_gb": 0.1,
+    "overage_build_minutes_cost": 0.01,
+    "additional_storage_cost_per_gb": 0.1
+  }
+}

@@ -125,7 +125,6 @@ def get_model_info_data(model_name: str) -> Dict[str, Any]:
     if summary_file.exists():
         with open(summary_file, 'r') as f:
             summary_data = json.load(f)
-            # Extract stats from summary
             training_stats = {
                 "total_training_time_hours": summary_data.get("total_training_time_hours", 0),
                 "peak_memory_gb": summary_data.get("peak_memory_gb", 0),
@@ -133,6 +132,25 @@ def get_model_info_data(model_name: str) -> Dict[str, Any]:
                 "avg_cost_per_fruit": summary_data.get("avg_cost_per_fruit", 0),
                 "avg_cost_per_epoch": summary_data.get("avg_cost_per_epoch", 0),
             }
+    
+    # If no training stats from summary, try loading from cost analysis report
+    if not training_stats or all(v == 0 for v in training_stats.values()):
+        cost_file = info_dir / "cost_analysis_report.json"
+        if cost_file.exists():
+            try:
+                with open(cost_file, 'r') as f:
+                    cost_data = json.load(f)
+                    training_cost = cost_data.get("training_cost", {})
+                    cost_per_epoch_data = cost_data.get("cost_per_epoch", {})
+                    training_stats = {
+                        "total_training_time_hours": training_cost.get("training_hours", 0),
+                        "peak_memory_gb": training_cost.get("peak_memory_gb", 0),
+                        "total_training_cost": training_cost.get("total", 0),
+                        "avg_cost_per_fruit": training_cost.get("total", 0) / max(len(fruits), 1) if fruits else 0,
+                        "avg_cost_per_epoch": cost_per_epoch_data.get("cost_per_epoch", 0),
+                    }
+            except Exception as e:
+                print(f"Warning: Could not load cost analysis: {e}")
 
     # Get list of trained fruits (check for generator files)
     fruits = []
@@ -349,11 +367,23 @@ async def get_training_cost_analysis(model_name: Optional[str] = None):
             with open(cost_file, 'r') as f:
                 cost_data = json.load(f)
 
+            # Map the actual JSON structure to the expected frontend format
+            training_cost = cost_data.get("training_cost", {})
+            cost_per_epoch_data = cost_data.get("cost_per_epoch", {})
+            
             return TrainingCostAnalysis(
-                training_cost_breakdown=cost_data.get("training_cost_breakdown", {}),
-                cost_per_epoch=cost_data.get("cost_per_epoch", {}),
-                peak_memory_gb=cost_data.get("peak_memory_gb", 0),
-                training_hours=cost_data.get("training_hours", 0)
+                training_cost_breakdown={
+                    "compute_cost": training_cost.get("compute", 0),
+                    "memory_cost": training_cost.get("memory", 0),
+                    "storage_cost": training_cost.get("storage", 0),
+                    "total_cost": training_cost.get("total", 0)
+                },
+                cost_per_epoch={
+                    "avg_cost_per_epoch": cost_per_epoch_data.get("cost_per_epoch", 0),
+                    "total_epochs": cost_per_epoch_data.get("total_epochs", 0)
+                },
+                peak_memory_gb=training_cost.get("peak_memory_gb", 0),
+                training_hours=training_cost.get("training_hours", 0)
             )
         else:
             # Return default/example cost analysis

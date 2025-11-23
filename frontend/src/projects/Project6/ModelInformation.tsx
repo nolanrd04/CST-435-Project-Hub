@@ -377,31 +377,31 @@ function ModelInformation() {
                 <div>
                   <div style={{ fontSize: '13px', color: '#666' }}>Total Training Time</div>
                   <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#48bb78', marginTop: '5px' }}>
-                    {modelInfo.training_stats.total_training_time_hours.toFixed(2)} hours
+                    {(modelInfo.training_stats.total_training_time_hours ?? 0).toFixed(2)} hours
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: '13px', color: '#666' }}>Peak Memory</div>
                   <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#48bb78', marginTop: '5px' }}>
-                    {modelInfo.training_stats.peak_memory_gb.toFixed(2)} GB
+                    {(modelInfo.training_stats.peak_memory_gb ?? 0).toFixed(2)} GB
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: '13px', color: '#666' }}>Total Cost</div>
                   <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#48bb78', marginTop: '5px' }}>
-                    ${modelInfo.training_stats.total_training_cost.toFixed(4)}
+                    ${(modelInfo.training_stats.total_training_cost ?? 0).toFixed(4)}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: '13px', color: '#666' }}>Avg Cost per Fruit</div>
                   <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#48bb78', marginTop: '5px' }}>
-                    ${modelInfo.training_stats.avg_cost_per_fruit.toFixed(4)}
+                    ${(modelInfo.training_stats.avg_cost_per_fruit ?? 0).toFixed(4)}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: '13px', color: '#666' }}>Avg Cost per Epoch</div>
                   <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#48bb78', marginTop: '5px' }}>
-                    ${modelInfo.training_stats.avg_cost_per_epoch.toFixed(6)}
+                    ${(modelInfo.training_stats.avg_cost_per_epoch ?? 0).toFixed(6)}
                   </div>
                 </div>
               </div>
@@ -480,33 +480,45 @@ function ModelInformation() {
                     {selectedFruit} Training Metrics
                   </h4>
                   <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#333' }}>
-                    {trainingHistory.training_time_seconds && (
+                    {trainingHistory?.training_time_seconds !== undefined && trainingHistory?.training_time_seconds !== null && (
                       <p style={{ margin: '5px 0' }}>
                         <strong>Training Time:</strong>{' '}
-                        {(trainingHistory.training_time_seconds / 60).toFixed(2)} minutes
+                        {typeof trainingHistory.training_time_seconds === 'number' 
+                          ? (trainingHistory.training_time_seconds / 60).toFixed(2) 
+                          : 'N/A'} minutes
                       </p>
                     )}
-                    {trainingHistory.peak_memory_gb && (
+                    {trainingHistory?.peak_memory_gb !== undefined && trainingHistory?.peak_memory_gb !== null && (
                       <p style={{ margin: '5px 0' }}>
-                        <strong>Peak Memory:</strong> {trainingHistory.peak_memory_gb.toFixed(2)} GB
+                        <strong>Peak Memory:</strong> {typeof trainingHistory.peak_memory_gb === 'number' 
+                          ? (trainingHistory.peak_memory_gb).toFixed(2) 
+                          : 'N/A'} GB
                       </p>
                     )}
-                    {trainingHistory.cost_summary && (
+                    {trainingHistory?.cost_summary && (
                       <>
-                        <p style={{ margin: '5px 0' }}>
-                          <strong>Total Cost:</strong> ${trainingHistory.cost_summary.total_cost.toFixed(4)}
-                        </p>
-                        <p style={{ margin: '5px 0' }}>
-                          <strong>Cost per Epoch:</strong> $
-                          {trainingHistory.cost_summary.cost_per_epoch.toFixed(6)}
-                        </p>
+                        {trainingHistory.cost_summary?.total_cost !== undefined && (
+                          <p style={{ margin: '5px 0' }}>
+                            <strong>Total Cost:</strong> ${typeof trainingHistory.cost_summary.total_cost === 'number'
+                              ? (trainingHistory.cost_summary.total_cost).toFixed(4)
+                              : 'N/A'}
+                          </p>
+                        )}
+                        {trainingHistory.cost_summary?.cost_per_epoch !== undefined && (
+                          <p style={{ margin: '5px 0' }}>
+                            <strong>Cost per Epoch:</strong> $
+                            {typeof trainingHistory.cost_summary.cost_per_epoch === 'number'
+                              ? (trainingHistory.cost_summary.cost_per_epoch).toFixed(6)
+                              : 'N/A'}
+                          </p>
+                        )}
                       </>
                     )}
                   </div>
                 </div>
 
                 {/* Loss Graph (Simple Text Display) */}
-                {trainingHistory.losses && trainingHistory.losses.length > 0 && (
+                {trainingHistory?.losses && trainingHistory.losses.length > 0 && (
                   <div
                     style={{
                       backgroundColor: 'white',
@@ -540,9 +552,17 @@ function ModelInformation() {
                             borderBottom: '1px solid #f0f0f0',
                           }}
                         >
-                          <div>{loss.epoch}</div>
-                          <div>{loss.generator_loss.toFixed(4)}</div>
-                          <div>{loss.discriminator_loss.toFixed(4)}</div>
+                          <div>{loss?.epoch ?? 'N/A'}</div>
+                          <div>
+                            {typeof loss?.generator_loss === 'number'
+                              ? loss.generator_loss.toFixed(4)
+                              : 'N/A'}
+                          </div>
+                          <div>
+                            {typeof loss?.discriminator_loss === 'number'
+                              ? loss.discriminator_loss.toFixed(4)
+                              : 'N/A'}
+                          </div>
                         </div>
                       ))}
                     </div>

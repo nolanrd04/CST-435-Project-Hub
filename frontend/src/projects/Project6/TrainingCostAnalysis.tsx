@@ -168,10 +168,10 @@ function TrainingCostAnalysis() {
                 Total Training Cost
               </div>
               <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#667eea' }}>
-                ${costData.training_cost_breakdown.total_cost.toFixed(4)}
+                ${(costData.training_cost_breakdown?.total_cost ?? 0).toFixed(4)}
               </div>
               <div style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
-                {costData.training_hours.toFixed(2)} hours
+                {(costData.training_hours ?? 0).toFixed(2)} hours
               </div>
             </div>
 
@@ -189,10 +189,10 @@ function TrainingCostAnalysis() {
                 Cost Per Epoch
               </div>
               <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#667eea' }}>
-                ${costData.cost_per_epoch.avg_cost_per_epoch.toFixed(6)}
+                ${(costData.cost_per_epoch?.avg_cost_per_epoch ?? 0).toFixed(6)}
               </div>
               <div style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
-                For {costData.cost_per_epoch.total_epochs} epochs
+                For {costData.cost_per_epoch?.total_epochs ?? 0} epochs
               </div>
             </div>
 
@@ -210,7 +210,7 @@ function TrainingCostAnalysis() {
                 Peak Memory Usage
               </div>
               <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#667eea' }}>
-                {costData.peak_memory_gb.toFixed(2)} GB
+                {(costData.peak_memory_gb ?? 0).toFixed(2)} GB
               </div>
               <div style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
                 Maximum allocated
@@ -246,7 +246,7 @@ function TrainingCostAnalysis() {
                     marginTop: '5px',
                   }}
                 >
-                  ${costData.training_cost_breakdown.compute_cost.toFixed(4)}
+                  ${(costData.training_cost_breakdown?.compute_cost ?? 0).toFixed(4)}
                 </div>
               </div>
               <div>
@@ -259,7 +259,7 @@ function TrainingCostAnalysis() {
                     marginTop: '5px',
                   }}
                 >
-                  ${costData.training_cost_breakdown.memory_cost.toFixed(4)}
+                  ${(costData.training_cost_breakdown?.memory_cost ?? 0).toFixed(4)}
                 </div>
               </div>
               <div>
@@ -272,7 +272,7 @@ function TrainingCostAnalysis() {
                     marginTop: '5px',
                   }}
                 >
-                  ${costData.training_cost_breakdown.storage_cost.toFixed(4)}
+                  ${(costData.training_cost_breakdown?.storage_cost ?? 0).toFixed(4)}
                 </div>
               </div>
             </div>
@@ -291,16 +291,16 @@ function TrainingCostAnalysis() {
             <div style={{ lineHeight: '1.8', color: '#333' }}>
               <p style={{ margin: '8px 0' }}>
                 <strong>Total Training Time:</strong>{' '}
-                {Math.floor(costData.training_hours)} hours{' '}
-                {Math.round((costData.training_hours % 1) * 60)} minutes
+                {Math.floor(costData.training_hours ?? 0)} hours{' '}
+                {Math.round(((costData.training_hours ?? 0) % 1) * 60)} minutes
               </p>
               <p style={{ margin: '8px 0' }}>
-                <strong>Total Epochs:</strong> {costData.cost_per_epoch.total_epochs}
+                <strong>Total Epochs:</strong> {costData.cost_per_epoch?.total_epochs ?? 0}
               </p>
               <p style={{ margin: '8px 0' }}>
                 <strong>Cost per Hour:</strong> $
                 {(
-                  costData.training_cost_breakdown.total_cost / costData.training_hours
+                  (costData.training_cost_breakdown?.total_cost ?? 0) / (costData.training_hours ?? 1)
                 ).toFixed(6)}
               </p>
             </div>

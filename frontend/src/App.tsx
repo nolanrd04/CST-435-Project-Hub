@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { FaYoutube, FaGithub } from 'react-icons/fa';
 import './App.css';
 
 // Lazy load all project components for better performance
@@ -55,6 +56,7 @@ function App() {
         <header className="App-header">
           <h1>CST435 Project Hub</h1>
           <p className="subtitle">Nolan and John's one-stop shop for all CST435 projects</p>
+          <p className="subtitle">Projects increase in quality from left to right</p>
 
           {/* API Mode Toggle */}
           <div style={{ marginBottom: '20px' }}>
@@ -80,6 +82,37 @@ function App() {
                 Use localhost API instead of cloud API
               </span>
             </label>
+          </div>
+
+          {/* External Links Section */}
+          <div style={{
+            marginBottom: '30px',
+            paddingBottom: '25px',
+            borderBottom: '2px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <div style={{
+              display: 'flex',
+              gap: '15px',
+              justifyContent: 'center',
+              flexWrap: 'wrap'
+            }}>
+              <a
+                href="https://youtu.be/wy0sXLL7oKw"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="button-external-link"
+              >
+                <FaYoutube size={20} /> Video Showcase
+              </a>
+              <a
+                href="https://github.com/nolanrd04/CST-435-Project-Hub"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="button-external-link"
+              >
+                <FaGithub size={20} /> GitHub Repository
+              </a>
+            </div>
           </div>
 
           <nav>
@@ -115,12 +148,12 @@ function App() {
               </li>
               <li>
                 <Link to="/Project5" className="button-link-to-projects">
-                  Project5: RNN
+                  Project5: Song Lyric Generator
                 </Link>
               </li>
               <li>
                 <Link to="/project6" className="button-link-to-projects">
-                  Project6: GAN
+                  Project6: Image Generator
                 </Link>
               </li>
             </ul>

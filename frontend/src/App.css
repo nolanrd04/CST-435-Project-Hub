@@ -149,6 +149,47 @@ label .required {
     border-radius: 8px;
     border: none;
     cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+  }
+
+  .button-link-to-projects:hover {
+    background-color: #000000c0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .button-link-to-projects:active {
+    transform: translateY(0);
+  }
+
+  .button-external-link {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+  }
+
+  .button-external-link:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .button-external-link:active {
+    transform: translateY(0);
   }
 
 .button:hover:not(:disabled) {

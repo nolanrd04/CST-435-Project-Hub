@@ -260,10 +260,14 @@ class VehicleClassifier:
             img_array = np.array(img, dtype=np.float32)
             img_array = img_array / 255.0
 
-            # Add batch and channel dimensions: (1, 1, 128, 128)
-            # PyTorch uses (batch, channels, height, width) format
-            img_array = np.expand_dims(img_array, axis=0)  # Add channel dimension: (128, 128, 1)
-            img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension: (1, 1, 128, 128)
+            # Add channel dimension to match training format: (128, 128) -> (128, 128, 1)
+            img_array = np.expand_dims(img_array, axis=2)
+
+            # Transpose to PyTorch format (C, H, W): (128, 128, 1) -> (1, 128, 128)
+            img_array = np.transpose(img_array, (2, 0, 1))
+
+            # Add batch dimension: (1, 128, 128) -> (1, 1, 128, 128)
+            img_array = np.expand_dims(img_array, axis=0)
 
             # Convert to tensor
             img_tensor = torch.from_numpy(img_array).to(device)

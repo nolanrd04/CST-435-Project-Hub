@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(python -m uvicorn:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

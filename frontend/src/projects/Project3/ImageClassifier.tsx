@@ -30,26 +30,60 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
   const [trainingSummary, setTrainingSummary] = useState<any>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const processFile = (file: File) => {
+    // Validate file type
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      setError('Please upload a PNG or JPG image');
+      return;
+    }
+
+    setSelectedFile(file);
+    setError('');
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
-        setError('Please upload a PNG or JPG image');
-        return;
-      }
+      processFile(file);
+    }
+  };
 
-      setSelectedFile(file);
-      setError('');
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
 
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      processFile(files[0]);
     }
   };
 
@@ -267,51 +301,6 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
             <AiOutlineCamera size={28} />
             Vehicle Image Classifier
           </h2>
-          <div style={{
-            backgroundColor: '#f0f9ff',
-            border: '2px solid #3b82f6',
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '25px',
-            color: '#1e40af'
-          }}>
-            <p style={{ margin: '0 0 12px 0', fontWeight: 'bold', fontSize: '14px' }}>
-              Model Selection
-            </p>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1 }}>
-                <input
-                  type="radio"
-                  value="local"
-                  checked={modelSource === 'local'}
-                  onChange={(e) => setModelSource(e.target.value as 'local')}
-                  disabled={loading}
-                  style={{ cursor: 'pointer' }}
-                />
-                <span style={{ fontWeight: modelSource === 'local' ? '600' : 'normal' }}>
-                  Small Model (can run on cloud)
-                </span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1 }}>
-                <input
-                  type="radio"
-                  value="huggingface"
-                  checked={modelSource === 'huggingface'}
-                  onChange={(e) => setModelSource(e.target.value as 'huggingface')}
-                  disabled={loading}
-                  style={{ cursor: 'pointer' }}
-                />
-                <span style={{ fontWeight: modelSource === 'huggingface' ? '600' : 'normal' }}>
-                  HuggingFace (large) Model
-                </span>
-              </label>
-            </div>
-            <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#1e3a8a' }}>
-              {modelSource === 'local' 
-                ? 'Using small model' 
-                : 'Using large model from HuggingFace'}
-            </p>
-          </div>
         </div>
       )}
 
@@ -332,6 +321,76 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
           WARNING: Model is too large to run on the cloud. Run a local API to use this project.
         </p>
       </div>*/}
+
+      {activeTab === 'youtube' && (
+        <div style={{ padding: '20px' }}>
+          <h2
+            style={{
+              marginBottom: '30px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+          >
+            <span
+              style={{
+                background: 'linear-gradient(135deg, #FF0000, #CC0000)',
+                color: 'white',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+              }}
+            >
+              <AiOutlineYoutube size={24} />
+            </span>
+            YouTube Showcase
+          </h2>
+
+          <div
+            style={{
+              backgroundColor: '#f8f9ff',
+              border: '2px solid #667eea',
+              borderRadius: '12px',
+              padding: '40px',
+              maxWidth: '900px',
+              margin: '0 auto',
+            }}
+          >
+            {/* YouTube Embed */}
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                paddingBottom: '56.25%', // 16:9 aspect ratio
+                height: 0,
+                overflow: 'hidden',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              <iframe
+                src="https://www.youtube.com/embed/1YkOgaKalUI"
+                title="Project 3: Vehicle Image Classifier Demonstration"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  borderRadius: '8px',
+                }}
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'description' && (
         <div style={{
@@ -600,20 +659,28 @@ function ImageClassifier({ activeTab: initialTab }: { activeTab?: string }) {
       <div
         className="form-group"
         onClick={() => fileInputRef.current?.click()}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         style={{
-          border: '3px dashed #667eea',
+          border: isDragging ? '3px dashed #4c51bf' : '3px dashed #667eea',
           borderRadius: '12px',
           padding: '40px 20px',
           textAlign: 'center',
           cursor: 'pointer',
-          backgroundColor: '#f7fafc',
+          backgroundColor: isDragging ? '#e6fffa' : '#f7fafc',
           transition: 'all 0.3s ease',
         }}
         onMouseOver={(e) => {
-          (e.currentTarget as HTMLDivElement).style.backgroundColor = '#edf2f7';
+          if (!isDragging) {
+            (e.currentTarget as HTMLDivElement).style.backgroundColor = '#edf2f7';
+          }
         }}
         onMouseOut={(e) => {
-          (e.currentTarget as HTMLDivElement).style.backgroundColor = '#f7fafc';
+          if (!isDragging) {
+            (e.currentTarget as HTMLDivElement).style.backgroundColor = '#f7fafc';
+          }
         }}
       >
         <input

@@ -88,6 +88,32 @@ class SentimentClassifier:
                 # Confidence should be the probability of the PREDICTED class
                 confidence = float(probability[1]) if prediction == 1 else float(probability[0])
 
+                # Map classification to star rating based on confidence
+                # Negative (high confidence) -> 1-2 stars
+                # Negative (low confidence) -> 2-3 stars
+                # Positive (low confidence) -> 3-4 stars
+                # Positive (high confidence) -> 4-5 stars
+                if prediction == 0:  # Negative
+                    # Map confidence (0.5-1.0) to star range (1.0-2.5)
+                    # Higher confidence in negative = lower stars
+                    sentiment_score = 2.5 - (confidence - 0.5) * 3.0
+                else:  # Positive
+                    # Map confidence (0.5-1.0) to star range (2.5-5.0)
+                    # Higher confidence in positive = higher stars
+                    sentiment_score = 2.5 + (confidence - 0.5) * 5.0
+
+                # Determine sentiment label based on score
+                if sentiment_score >= 4.5:
+                    sentiment_label = 'Very Positive'
+                elif sentiment_score >= 3.5:
+                    sentiment_label = 'Positive'
+                elif sentiment_score >= 2.5:
+                    sentiment_label = 'Neutral'
+                elif sentiment_score >= 1.5:
+                    sentiment_label = 'Negative'
+                else:
+                    sentiment_label = 'Very Negative'
+
                 return {
                     "original_text": review_text,
                     "processed_text": processed_text,
@@ -95,8 +121,8 @@ class SentimentClassifier:
                     "confidence": confidence,  # Confidence in the PREDICTED class
                     "positive_probability": float(probability[1]),
                     "negative_probability": float(probability[0]),
-                    "sentiment_score": float(sentiment_result['overall_score']),  # TF-IDF based score (1-5)
-                    "sentiment_label": sentiment_result['overall_sentiment'],  # 'Very Positive', 'Neutral', etc.
+                    "sentiment_score": float(sentiment_score),  # Mapped from classification (1-5)
+                    "sentiment_label": sentiment_label,  # Mapped from score
                     "success": True
                 }
             else:
@@ -107,6 +133,32 @@ class SentimentClassifier:
                 classification = result['prediction_label']
                 confidence = float(result['positive_probability']) if classification == 'Positive' else float(result['negative_probability'])
 
+                # Map classification to star rating based on confidence
+                # Negative (high confidence) -> 1-2 stars
+                # Negative (low confidence) -> 2-3 stars
+                # Positive (low confidence) -> 3-4 stars
+                # Positive (high confidence) -> 4-5 stars
+                if classification == 'Negative':
+                    # Map confidence (0.5-1.0) to star range (1.0-2.5)
+                    # Higher confidence in negative = lower stars
+                    sentiment_score = 2.5 - (confidence - 0.5) * 3.0
+                else:  # Positive
+                    # Map confidence (0.5-1.0) to star range (2.5-5.0)
+                    # Higher confidence in positive = higher stars
+                    sentiment_score = 2.5 + (confidence - 0.5) * 5.0
+
+                # Determine sentiment label based on score
+                if sentiment_score >= 4.5:
+                    sentiment_label = 'Very Positive'
+                elif sentiment_score >= 3.5:
+                    sentiment_label = 'Positive'
+                elif sentiment_score >= 2.5:
+                    sentiment_label = 'Neutral'
+                elif sentiment_score >= 1.5:
+                    sentiment_label = 'Negative'
+                else:
+                    sentiment_label = 'Very Negative'
+
                 # Format result for API response
                 return {
                     "original_text": result['original_text'],
@@ -115,8 +167,8 @@ class SentimentClassifier:
                     "confidence": confidence,  # Confidence in the PREDICTED class
                     "positive_probability": float(result['positive_probability']),
                     "negative_probability": float(result['negative_probability']),
-                    "sentiment_score": float(result['sentiment_score']),  # TF-IDF based score (1-5)
-                    "sentiment_label": result['sentiment_label'],  # 'Very Positive', 'Neutral', etc.
+                    "sentiment_score": float(sentiment_score),  # Mapped from classification (1-5)
+                    "sentiment_label": sentiment_label,  # Mapped from score
                     "success": True
                 }
         except Exception as e:

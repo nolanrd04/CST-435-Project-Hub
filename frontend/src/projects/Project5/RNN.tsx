@@ -1168,9 +1168,73 @@ function RNN({ activeTab: initialTab }: { activeTab?: string }) {
       )}
       {/* YouTube showcase */}
       {activeTab === 'youtube' && (
-        <a href="https://youtu.be/v3rsRGiNJSA" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#4f46e5', fontWeight: 'bold', fontSize: '18px' }}>
-          Open YouTube Video
-        </a>
+        <div style={{ padding: '20px' }}>
+          <h2
+            style={{
+              marginBottom: '30px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+          >
+            <span
+              style={{
+                background: 'linear-gradient(135deg, #FF0000, #CC0000)',
+                color: 'white',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+              }}
+            >
+              <AiOutlineYoutube size={24} />
+            </span>
+            YouTube Showcase
+          </h2>
+
+          <div
+            style={{
+              backgroundColor: '#f8f9ff',
+              border: '2px solid #667eea',
+              borderRadius: '12px',
+              padding: '40px',
+              maxWidth: '900px',
+              margin: '0 auto',
+            }}
+          >
+            {/* YouTube Embed */}
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                paddingBottom: '56.25%', // 16:9 aspect ratio
+                height: 0,
+                overflow: 'hidden',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              <iframe
+                src="https://www.youtube.com/embed/v3rsRGiNJSA"
+                title="Project 5: Song Lyric Generator Demonstration"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  borderRadius: '8px',
+                }}
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              />
+            </div>
+          </div>
+        </div>
       )}
       </div>
     </div>

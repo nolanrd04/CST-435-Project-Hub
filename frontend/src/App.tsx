@@ -85,7 +85,7 @@ function NavHeader({ useLocalAPI, setUseLocalAPI }: { useLocalAPI: boolean; setU
             onChange={(e) => setUseLocalAPI(e.target.checked)}
           />
           <span className="api-toggle-label">
-            {useLocalAPI ? 'Local API' : 'Cloud API'}
+            Local API
           </span>
         </label>
       </div>

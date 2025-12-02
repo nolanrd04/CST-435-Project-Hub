@@ -109,7 +109,7 @@ export default function HomePage() {
           {/* External Links */}
           <div className="hero-links">
             <a
-              href="https://youtu.be/wy0sXLL7oKw"
+              href="https://youtu.be/6XeIqV2Fx5c"
               target="_blank"
               rel="noopener noreferrer"
               className="hero-link youtube"

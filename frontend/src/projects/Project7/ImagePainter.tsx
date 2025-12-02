@@ -498,13 +498,13 @@ function ImagePainter() {
         }}
       >
         <h4 style={{ marginTop: 0, color: '#667eea' }}>How it works:</h4>
-        <ul style={{ color: '#666', lineHeight: '1.8' }}>
-          <li>Upload any image (it will be resized to 64x64 pixels)</li>
-          <li>The image is automatically converted to grayscale</li>
-          <li>The diffusion model colorizes it using {numInferenceSteps} denoising steps</li>
-          <li>Lower steps (50-200) are faster but may produce less accurate colors</li>
-          <li>Higher steps (500-1000) are slower but generally produce better results</li>
-        </ul>
+        <div style={{ color: '#666', lineHeight: '1.8' }}>
+          <div>Upload any image (it will be resized to 64x64 pixels)</div>
+          <div>The image is automatically converted to grayscale</div>
+          <div>The diffusion model colorizes it using {numInferenceSteps} denoising steps</div>
+          <div>Lower steps (50-200) are faster but may produce less accurate colors</div>
+          <div>Higher steps (500-1000) are slower but generally produce better results</div>
+        </div>
       </div>
     </div>
   );

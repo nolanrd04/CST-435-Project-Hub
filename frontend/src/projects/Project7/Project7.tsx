@@ -3,14 +3,16 @@ import {
   AiOutlinePicture,
   AiOutlineDollar,
   AiOutlineInfoCircle,
+  AiOutlineYoutube,
 } from 'react-icons/ai';
 
 // Lazy load all tab components for performance
 const ImagePainter = lazy(() => import('./ImagePainter.tsx'));
 const TrainingCostAnalysis = lazy(() => import('./TrainingCostAnalysis.tsx'));
 const ModelInformation = lazy(() => import('./ModelInformation.tsx'));
+const YouTubeLink = lazy(() => import('./YouTubeLink.tsx'));
 
-type TabType = 'image-painter' | 'cost-analysis' | 'model-info';
+type TabType = 'image-painter' | 'cost-analysis' | 'model-info' | 'youtube';
 
 function LoadingSpinner() {
   return (
@@ -47,6 +49,11 @@ function Project7() {
       id: 'cost-analysis' as TabType,
       label: 'Training Cost Analysis',
       icon: <AiOutlineDollar size={20} />,
+    },
+    {
+      id: 'youtube' as TabType,
+      label: 'YouTube',
+      icon: <AiOutlineYoutube size={20} />,
     },
   ];
 
@@ -124,6 +131,7 @@ function Project7() {
           {activeTab === 'image-painter' && <ImagePainter />}
           {activeTab === 'cost-analysis' && <TrainingCostAnalysis />}
           {activeTab === 'model-info' && <ModelInformation />}
+          {activeTab === 'youtube' && <YouTubeLink />}
         </Suspense>
       </div>
     </div>

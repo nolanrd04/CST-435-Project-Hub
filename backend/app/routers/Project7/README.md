@@ -25,6 +25,39 @@ Input (noisy RGB + grayscale) → Encoder (downsampling with dropout)
                             Output (predicted noise)
 ```
 
+**Detailed Layer Architecture:**
+
+*Timestep Embedding:*
+- Sinusoidal position embeddings (256-dim by default)
+- Linear layer: 256 → 256
+- ReLU activation
+
+*Encoder Path (Downsampling):*
+1. Initial Conv: 4 channels → 64 features (DoubleConv: Conv→BN→ReLU→Conv→BN→ReLU)
+2. Down1: MaxPool(2) → 64 → 128 features (DoubleConv)
+3. Down2: MaxPool(2) → 128 → 256 features (DoubleConv)
+4. Down3: MaxPool(2) → 256 → 512 features (DoubleConv)
+
+*Bottleneck:*
+- DoubleConv: 512 → 1024 features
+- Time embedding injection: Add 256-dim embedding (broadcasted)
+- This is where timestep information conditions the network
+
+*Decoder Path (Upsampling with Skip Connections):*
+1. Up1: ConvTranspose2d(2x) → Concat with Down3 output → 1024 → 512 (DoubleConv)
+2. Up2: ConvTranspose2d(2x) → Concat with Down2 output → 512 → 256 (DoubleConv)
+3. Up3: ConvTranspose2d(2x) → Concat with Down1 output → 256 → 128 (DoubleConv)
+4. Up4: ConvTranspose2d(2x) → Concat with Initial output → 128 → 64 (DoubleConv)
+
+*Output Layer:*
+- 1×1 Conv: 64 → 3 channels (predicted RGB noise)
+
+**Key Design Choices:**
+- **DoubleConv blocks**: Two 3×3 convolutions with BatchNorm and ReLU for feature extraction
+- **Skip connections**: Encoder features concatenated with decoder features preserve spatial details
+- **Time conditioning**: Injected at bottleneck via addition (not concatenation)
+- **No attention mechanisms**: Pure convolutional architecture for simplicity and speed
+
 **2. DDPM Scheduler (Diffusion Algorithm)**
 - Timesteps: 1000 (configurable, 500 recommended for faster training)
 - **Beta schedule options:**

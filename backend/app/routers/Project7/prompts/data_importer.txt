@@ -1,0 +1,8 @@
+in backend/app/routers/project7, write me a python program that when run, it imports the Tiny ImageNet.
+Here are my requirements:
+1. Prompts the user in the terminal for data requirements (custom resolution, number of images imported, image categories,        
+etc.)
+2. The import requirements should have defaults: 64, 10,000 (or storage size cap, for example stop after 50mb of images have      
+been imported), all categories, etc.  
+3. Saves the images to imageData/ using script-relative directory management. The folder should be created if it doesnt exist.    
+4. The actual images should be saved, so i can see them. 

@@ -47,5 +47,10 @@ backend/app/routers/project6/markdowns/
 backend/app/routers/project6/future_project_idea.txt
 # backend/app/routers/project6/models/**/*.png
 
+backend/app/routers/Project7/imageData/
+backend/app/routers/Project7/npzData/
+backend/app/routers/Project7/models/
+backend/app/routers/Project7/temp_download/
+
 
 

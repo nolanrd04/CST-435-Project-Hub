@@ -12,15 +12,13 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 app = FastAPI()
 
-# Add CORS middleware - MUST be added BEFORE including routers
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
-    allow_credentials=False,  # Must be False when using wildcard origins
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-)
+# Include projectGA router
+from backend.app.routers.projectGA.routes import router as projectga_router
+app.include_router(projectga_router)
+
+# Include Project6 router
+from backend.app.routers.Project6.api_router import router as project6_router
+app.include_router(project6_router)
 
 # Download NLTK data on startup (required for Project4 sentiment analysis)
 # Do this after app creation to avoid blocking startup
@@ -29,18 +27,20 @@ try:
     nltk.download('stopwords', quiet=True)
     nltk.download('punkt', quiet=True)
     nltk.download('punkt_tab', quiet=True)
-    print("[SUCCESS] NLTK data downloaded successfully")
+    print("✅ NLTK data downloaded successfully")
 except Exception as e:
-    print(f"[WARNING] Could not download NLTK data: {e}")
+    print(f"⚠️ Warning: Could not download NLTK data: {e}")
     # Don't crash if NLTK download fails - it may already be cached
 
-# Include projectGA router
-from backend.app.routers.projectGA.routes import router as projectga_router
-app.include_router(projectga_router)
-
-# Include Project6 router
-from backend.app.routers.Project6.api_router import router as project6_router
-app.include_router(project6_router)
+# Add CORS middleware - MUST be first middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 
 # Mount visualizations directory if it exists
 if os.path.exists("visualizations"):
@@ -161,7 +161,7 @@ def get_text_generator():
             try:
                 text_generator.load_model(model_path, tokenizer_path)
             except Exception as e:
-                print(f"[ERROR] Error loading model: {e}")
+                print(f"❌ Error loading model: {e}")
                 return None
         else:
             # Return None if no model exists
@@ -209,7 +209,7 @@ def generate_text_endpoint(request: GenerateTextRequest):
             with open(pricing_config_path, "r", encoding="utf-8") as f:
                 pricing_config = json.load(f)
         except FileNotFoundError:
-            print(f"[WARNING] Pricing config not found at {pricing_config_path}, using defaults")
+            print(f"⚠️ Warning: Pricing config not found at {pricing_config_path}, using defaults")
             pricing_config = {
                 "cost_per_cpu_per_month": 0.0,
                 "cost_per_gb_ram_per_month": 0.0
@@ -233,7 +233,7 @@ def generate_text_endpoint(request: GenerateTextRequest):
             query_cost=query_cost  # Include cost in the response
         )
     except Exception as e:
-        print(f"[ERROR] Error in generate_text_endpoint: {str(e)}")
+        print(f"❌ Error in generate_text_endpoint: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
@@ -337,7 +337,7 @@ async def analyze_sentiment(request: SentimentRequest):
         if project4_path not in sys.path:
             sys.path.insert(0, project4_path)
 
-        print(f"[INFO] Loading sentiment classifier from: {project4_path}")
+        print(f"🔍 Loading sentiment classifier from: {project4_path}")
 
         from backend.app.routers.Project4.classifier import get_classifier
 
@@ -345,18 +345,18 @@ async def analyze_sentiment(request: SentimentRequest):
         classifier = get_classifier()
 
         if classifier.model is None:
-            print("[ERROR] Model is None - failed to load")
+            print("❌ Model is None - failed to load")
             raise HTTPException(
                 status_code=503,
                 detail="Sentiment model not loaded. Please ensure trained_nlp_model.pkl exists in backend/app/routers/Project4/"
             )
 
-        print(f"[SUCCESS] Model loaded successfully")
-        print(f"[INFO] Analyzing review: {review_text[:50]}...")
+        print(f"✅ Model loaded successfully")
+        print(f"📝 Analyzing review: {review_text[:50]}...")
 
         result = classifier.classify(review_text)
 
-        print(f"[SUCCESS] Analysis complete. Classification: {result['classification']}")
+        print(f"✅ Analysis complete. Classification: {result['classification']}")
 
         return SentimentResponse(
             original_text=result["original_text"],
@@ -372,7 +372,7 @@ async def analyze_sentiment(request: SentimentRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[ERROR] Error during sentiment analysis: {e}")
+        print(f"❌ Error during sentiment analysis: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error analyzing sentiment: {str(e)}")
@@ -389,10 +389,10 @@ def get_cost_analysis_report():
 
     try:
         report = cost_model.generate_cost_report()
-        print(f"[SUCCESS] Cost report generated successfully")
+        print(f"✅ Cost report generated successfully")
         return report
     except Exception as e:
-        print(f"[ERROR] Error generating cost analysis: {str(e)}")
+        print(f"❌ Error generating cost analysis: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating cost analysis: {str(e)}")
@@ -457,10 +457,10 @@ def get_project5_training_cost_report():
 
     try:
         report = project5_cost_model.generate_training_cost_report()
-        print(f"[SUCCESS] Project5 training cost report generated successfully")
+        print(f"✅ Project5 training cost report generated successfully")
         return report
     except Exception as e:
-        print(f"[ERROR] Error generating Project5 training cost analysis: {str(e)}")
+        print(f"❌ Error generating Project5 training cost analysis: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating cost analysis: {str(e)}")
@@ -477,10 +477,10 @@ def get_project5_cost_summary():
 
     try:
         summary = project5_cost_model.get_cost_summary()
-        print(f"[SUCCESS] Project5 cost summary generated successfully")
+        print(f"✅ Project5 cost summary generated successfully")
         return summary
     except Exception as e:
-        print(f"[ERROR] Error generating Project5 cost summary: {str(e)}")
+        print(f"❌ Error generating Project5 cost summary: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating cost summary: {str(e)}")
@@ -505,10 +505,10 @@ def estimate_project5_training_cost(
             epochs=epochs,
             training_hours=training_hours
         )
-        print(f"[SUCCESS] Project5 cost estimate generated for batch_size={batch_size}, epochs={epochs}")
+        print(f"✅ Project5 cost estimate generated for batch_size={batch_size}, epochs={epochs}")
         return cost_estimate
     except Exception as e:
-        print(f"[ERROR] Error estimating Project5 training cost: {str(e)}")
+        print(f"❌ Error estimating Project5 training cost: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error estimating cost: {str(e)}")
@@ -580,7 +580,7 @@ def get_project5_actual_training_cost():
             }
         }
     except Exception as e:
-        print(f"[ERROR] Error fetching actual training cost: {str(e)}")
+        print(f"❌ Error fetching actual training cost: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching actual training cost: {str(e)}")
 
 # PROJECT5 - SONG LYRIC GENERATION ENDPOINTS
@@ -597,7 +597,7 @@ def generate_song_lyrics(request: GenerateLyricsRequest):
         project5_lyric_generator = get_lyric_generator()
     
     try:
-        print(f"[INFO] Received lyric generation request:")
+        print(f"🎵 Received lyric generation request:")
         print(f"   Seed: '{request.seed_text}'")
         print(f"   Model: {request.model}")
         print(f"   Max length: {request.max_length}")
@@ -616,7 +616,7 @@ def generate_song_lyrics(request: GenerateLyricsRequest):
         )
         
         if result["success"]:
-            print(f"[SUCCESS] Successfully generated lyrics")
+            print(f"✅ Successfully generated lyrics")
             return GenerateLyricsResponse(
                 success=True,
                 seed_text=result["seed_text"],
@@ -626,7 +626,7 @@ def generate_song_lyrics(request: GenerateLyricsRequest):
                 model_info=result["model_info"]
             )
         else:
-            print(f"[ERROR] Generation failed: {result.get('error')}")
+            print(f"❌ Generation failed: {result.get('error')}")
             return GenerateLyricsResponse(
                 success=False,
                 error=result.get("error", "Unknown error occurred"),
@@ -634,7 +634,7 @@ def generate_song_lyrics(request: GenerateLyricsRequest):
             )
             
     except Exception as e:
-        print(f"[ERROR] Error in lyric generation endpoint: {str(e)}")
+        print(f"❌ Error in lyric generation endpoint: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating lyrics: {str(e)}")
@@ -671,7 +671,7 @@ def get_lyric_generator_info():
             )
             
     except Exception as e:
-        print(f"[ERROR] Error fetching lyric generator info: {str(e)}")
+        print(f"❌ Error fetching lyric generator info: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching model info: {str(e)}")
 
 # ============================================================================
@@ -706,5 +706,5 @@ def get_project3_training_summary():
         }
         
     except Exception as e:
-        print(f"[ERROR] Error fetching Project3 training summary: {str(e)}")
+        print(f"❌ Error fetching Project3 training summary: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching training summary: {str(e)}")

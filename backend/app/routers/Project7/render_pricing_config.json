@@ -1,0 +1,14 @@
+{
+  "fixed_monthly_cost": 19.0,
+  "available_cpus": 64.0,
+  "available_ram_gb": 512.0,
+  "included_bandwidth_gb": 500.0,
+  "build_pipeline_minutes": 500.0,
+  "database_cost_per_gb": 0.25,
+  "cost_per_cpu_per_month": 0.296875,
+  "cost_per_gb_ram_per_month": 0.037109375,
+  "overage_bandwidth_cost_per_gb": 0.10,
+  "overage_build_minutes_cost": 0.01,
+  "additional_storage_cost_per_gb": 0.10,
+  "gpu_cost_per_hour": 0.50
+}

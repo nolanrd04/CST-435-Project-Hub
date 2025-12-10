@@ -97,7 +97,7 @@ const projects: Project[] = [
     icon: <FaPalette />,
     gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
     category: 'course',
-    featured: false
+    featured: true
   }
 ];
 

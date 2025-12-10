@@ -1,3 +1,10 @@
+# Installation Instructions:
+# For CUDA support (recommended for GPU acceleration):
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+#
+# For CPU only:
+# pip install -r requirements.txt
+
 # FastAPI & Backend Dependencies
 fastapi
 uvicorn
@@ -8,6 +15,7 @@ pydantic
 keras
 kagglehub
 torch
+torchvision
 numpy
 scikit-learn
 pandas

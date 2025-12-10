@@ -1,0 +1,8 @@
+This model is a U-net model that colorizes specific images. Unlike a diffusion model, this model is specifically trained to recognize and colorize the images it was trained on: Bananas, Blackberries, Pineapples, Oranges, and Strawberries.
+The model performs phenomoneally at recognizing fruits it was trained on, and it is easily able to colorize different parts of fruits like, leaves, insides, and outsides.
+The model is also pretty good at colorizing other fruits that it was not trained on such as apples, raspberries, and watermelons.
+
+This project initially arose from the fact that the diffusion model we made was successfully able to color objects based on shape, however it was not able to know what that shape was or what to color it.
+This model is able to do that, because the scope of the problem was greatly narrowed down from coloring any image to specifically images of Bananas, Blackberries, Pineapples, Oranges, and Strawberries.
+For context, the diffusion model, is around 350mb, where this model is 740mb. Hopefully that puts into perspective why training a model to colorize ANY image would be an extremely large problem scope.
+Check out the test we did to see how the model colors different fruits

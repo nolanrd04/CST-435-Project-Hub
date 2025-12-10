@@ -87,6 +87,17 @@ const projects: Project[] = [
     gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
     category: 'personal',
     featured: true
+  },
+  {
+    id: 'project9',
+    path: '/project9',
+    title: 'Fruit Image Colorization',
+    subtitle: 'U-Net Architecture',
+    description: 'Colorize grayscale fruit images using a U-Net model trained on strawberries, oranges, bananas, and more.',
+    icon: <FaPalette />,
+    gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+    category: 'course',
+    featured: false
   }
 ];
 

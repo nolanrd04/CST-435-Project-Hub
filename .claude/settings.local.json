@@ -9,7 +9,8 @@
       "Bash(tasklist:*)",
       "Bash(python -m uvicorn:*)",
       "Bash(timeout:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

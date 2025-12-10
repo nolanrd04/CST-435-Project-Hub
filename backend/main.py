@@ -24,6 +24,10 @@ app.include_router(project6_router)
 from backend.app.routers.Project7.api_router import router as project7_router
 app.include_router(project7_router)
 
+# Include Project9 router
+from backend.app.routers.Project9.api_router import router as project9_router
+app.include_router(project9_router)
+
 # Download NLTK data on startup (required for Project4 sentiment analysis)
 # Do this after app creation to avoid blocking startup
 try:

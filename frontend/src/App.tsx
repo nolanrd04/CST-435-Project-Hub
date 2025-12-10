@@ -28,6 +28,9 @@ const Project6 = React.lazy(() =>
 const Project7 = React.lazy(() =>
   import('./projects/Project7/Project7.tsx').then(module => ({ default: module.default }))
 );
+const Project9 = React.lazy(() =>
+  import('./projects/Project9/Project9.tsx').then(module => ({ default: module.default }))
+);
 
 // Loading component shown while chunks are downloading
 function LoadingSpinner() {
@@ -120,6 +123,7 @@ function App() {
               <Route path="/genetic-algorithm" element={<GeneticAlgorithmPage />} />
               <Route path="/project6" element={<Project6 />} />
               <Route path="/project7" element={<Project7 />} />
+              <Route path="/project9" element={<Project9 />} />
             </Routes>
           </Suspense>
         </main>

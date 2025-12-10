@@ -1,0 +1,33 @@
+{
+  "config": {
+    "output_dir": "dataset",
+    "images_per_category": 500,
+    "output_size": [
+      256,
+      256
+    ],
+    "enhance_images": false
+  },
+  "categories": [
+    "orange",
+    "strawberry",
+    "blackberry",
+    "pineapple",
+    "banana"
+  ],
+  "results": {
+    "orange": 500,
+    "strawberry": 500,
+    "blackberry": 500,
+    "pineapple": 500,
+    "banana": 500
+  },
+  "statistics": {
+    "total_attempted": 1619,
+    "total_downloaded": 1000,
+    "total_filtered": 11,
+    "total_duplicates": 607,
+    "total_errors": 1
+  },
+  "timestamp": "2025-12-09 17:16:31"
+}

@@ -21,6 +21,12 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Python
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
 README_RNN.md
 CLAUDE.md
 RNN_Activity_Guide.md
@@ -42,7 +48,6 @@ RAILWAY_DEPLOYMENT.md
 backend/app/routers/project6/imageData/*
 backend/app/routers/project6/rawData/*
 backend/app/routers/project6/prompts/
-backend/app/routers/project6/__pycache__/
 backend/app/routers/project6/markdowns/
 backend/app/routers/project6/future_project_idea.txt
 # backend/app/routers/project6/models/**/*.png
@@ -51,7 +56,6 @@ backend/app/routers/Project7/imageData/
 backend/app/routers/Project7/npzData/
 backend/app/routers/Project7/models/
 backend/app/routers/Project7/temp_download/
-backend/app/routers/Project7/__pycache__/
 backend/app/routers/Project8/
 backend/app/routers/Project9/models/
 

@@ -3,14 +3,16 @@ import {
   AiOutlinePicture,
   AiOutlineInfoCircle,
   AiOutlineYoutube,
+  AiOutlineFileText,
 } from 'react-icons/ai';
 
 // Lazy load all tab components for performance
 const ImageColorizer = lazy(() => import('./ImageColorizer.tsx'));
 const ModelInformation = lazy(() => import('./ModelInformation.tsx'));
 const YouTubeLink = lazy(() => import('./YouTubeLink.tsx'));
+const AssignmentDetails = lazy(() => import('./AssignmentDetails.tsx'));
 
-type TabType = 'image-colorizer' | 'model-info' | 'youtube';
+type TabType = 'image-colorizer' | 'model-info' | 'youtube' | 'assignment-details';
 
 function LoadingSpinner() {
   return (
@@ -42,6 +44,11 @@ function Project9() {
       id: 'model-info' as TabType,
       label: 'Model Information',
       icon: <AiOutlineInfoCircle size={20} />,
+    },
+    {
+      id: 'assignment-details' as TabType,
+      label: 'Assignment Details',
+      icon: <AiOutlineFileText size={20} />,
     },
     {
       id: 'youtube' as TabType,
@@ -123,6 +130,7 @@ function Project9() {
         <Suspense fallback={<LoadingSpinner />}>
           {activeTab === 'image-colorizer' && <ImageColorizer />}
           {activeTab === 'model-info' && <ModelInformation />}
+          {activeTab === 'assignment-details' && <AssignmentDetails />}
           {activeTab === 'youtube' && <YouTubeLink />}
         </Suspense>
       </div>

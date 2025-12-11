@@ -2,8 +2,10 @@ import React from 'react';
 import { AiOutlineYoutube } from 'react-icons/ai';
 
 function YouTubeLink() {
-  // Update this URL when you have a YouTube video for Project 9
-  const youtubeUrl = 'https://youtube.com';
+  // Extract video ID from YouTube URL
+  const videoUrl = 'https://youtu.be/mfvitRk1f4s';
+  const videoId = videoUrl.split('/').pop()?.split('?')[0] || '';
+  const embedUrl = `https://www.youtube.com/embed/${videoId}`;
 
   return (
     <div style={{ padding: '20px' }}>
@@ -17,7 +19,7 @@ function YouTubeLink() {
       >
         <span
           style={{
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            background: 'linear-gradient(135deg, #FF0000, #CC0000)',
             color: 'white',
             width: '40px',
             height: '40px',
@@ -30,70 +32,92 @@ function YouTubeLink() {
         >
           <AiOutlineYoutube size={24} />
         </span>
-        YouTube Video
+        YouTube Showcase
       </h2>
 
       <div
         style={{
-          textAlign: 'center',
-          padding: '40px',
-          background: '#f9f9ff',
+          backgroundColor: '#f8f9ff',
+          border: '2px solid #667eea',
           borderRadius: '12px',
-          border: '1px solid #e0e0ff',
+          padding: '40px',
+          maxWidth: '900px',
+          margin: '0 auto',
         }}
       >
-        <AiOutlineYoutube size={64} color="#667eea" style={{ marginBottom: '20px' }} />
-        <h3 style={{ color: '#667eea', marginBottom: '15px' }}>
-          Project 9: Fruit Image Colorization
-        </h3>
-        <p style={{ color: '#666', marginBottom: '25px', lineHeight: '1.6' }}>
-          Watch our demonstration video showcasing the U-Net based image colorization model
-          in action. See how our model transforms grayscale fruit images into vibrant,
-          colorized versions.
-        </p>
-        <a
-          href={youtubeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        {/* YouTube Embed */}
+        <div
           style={{
-            display: 'inline-block',
-            padding: '14px 32px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            color: 'white',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            position: 'relative',
+            width: '100%',
+            paddingBottom: '56.25%', // 16:9 aspect ratio
+            height: 0,
+            overflow: 'hidden',
             borderRadius: '8px',
-            textDecoration: 'none',
-            transition: 'all 0.3s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
+            marginBottom: '30px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
           }}
         >
-          Watch on YouTube
-        </a>
-      </div>
+          <iframe
+            src={embedUrl}
+            title="Project 9: Fruit Image Colorization Demonstration"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              borderRadius: '8px',
+            }}
+            allowFullScreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          />
+        </div>
 
-      {/* Additional Info */}
-      <div
-        style={{
-          marginTop: '30px',
-          padding: '20px',
-          background: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        }}
-      >
-        <h4 style={{ marginTop: 0, color: '#667eea' }}>What you'll see in the video:</h4>
-        <div style={{ color: '#666', lineHeight: '1.8' }}>
-          <div>• Overview of the U-Net architecture used for colorization</div>
-          <div>• Live demonstration of fruit image colorization</div>
-          <div>• Technical challenges and solutions during development</div>
+        <h3 style={{ fontSize: '20px', marginBottom: '15px', color: '#333', textAlign: 'center' }}>
+          Project Demonstration
+        </h3>
+        <p style={{ fontSize: '14px', color: '#666', marginBottom: '20px', lineHeight: '1.6', textAlign: 'center' }}>
+          Watch the comprehensive video walkthrough of this U-Net image colorization project covering:
+        </p>
+        <div
+          style={{
+            padding: 0,
+            fontSize: '14px',
+            color: '#666',
+            lineHeight: '2',
+            maxWidth: '600px',
+            margin: '0 auto',
+            textAlign: 'center',
+          }}
+        >
+          <div>- U-Net architecture and model training process</div>
+          <div>- Image colorization with different fruit types</div>
+          <div>- Performance analysis and results</div>
+          <div>- Technical challenges and solutions</div>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: '25px' }}>
+          <a
+            href={videoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-block',
+              padding: '12px 24px',
+              backgroundColor: '#FF0000',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              transition: 'background-color 0.3s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#CC0000')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF0000')}
+          >
+            Watch on YouTube
+          </a>
         </div>
       </div>
     </div>
